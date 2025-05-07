@@ -28,6 +28,12 @@ from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
 import os
+sys.path.append("/ragflow/")
+sys.path.append(os.getcwd())
+sys.path.remove("/ragflow/.venv/lib/python3.10/site-packages")#/root/anaconda3/lib/python3.12")
+sys.path.append("/usr/local/lib/python3.10/dist-packages/")
+sys.path.append("/ragflow/.venv/lib/python3.10/site-packages")
+
 from datetime import datetime
 import json
 import xxhash
@@ -227,8 +233,8 @@ async def get_storage_binary(bucket, name):
 
 async def build_chunks(task, progress_callback):
     if task["size"] > DOC_MAXIMUM_SIZE:
-        set_progress(task["id"], prog=-1, msg="File size exceeds( <= %dMb )" %
-                                              (int(DOC_MAXIMUM_SIZE / 1024 / 1024)))
+        set_progress(task["id"], prog=-1, msg="File size exceeds(doc size {},but should <= {}Mb )".format(
+            task["size"],(int(DOC_MAXIMUM_SIZE / 1024 / 1024))))
         return []
 
     chunker = FACTORY[task["parser_id"].lower()]
@@ -254,7 +260,7 @@ async def build_chunks(task, progress_callback):
         async with chunk_limiter:
             cks = await trio.to_thread.run_sync(lambda: chunker.chunk(task["name"], binary=binary, from_page=task["from_page"],
                                 to_page=task["to_page"], lang=task["language"], callback=progress_callback,
-                                kb_id=task["kb_id"], parser_config=task["parser_config"], tenant_id=task["tenant_id"]))
+                                kb_id=task["kb_id"], parser_config=task["parser_config"], tenant_id=task["tenant_id"],doc_id=task["doc_id"]))
         logging.info("Chunking({}) {}/{} done".format(timer() - st, task["location"], task["name"]))
     except TaskCanceledException:
         raise

@@ -19,8 +19,11 @@ import copy
 import re
 
 from api.db import ParserType
+from api.db.services.file2document_service import File2DocumentService
+
 from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bullets_category, title_frequency, tokenize_chunks
 from deepdoc.parser import PdfParser, PlainParser
+from minerU.parser import MinerUPdf
 import numpy as np
 
 
@@ -144,7 +147,8 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         The abstract of the paper will be sliced as an entire chunk, and will not be sliced partly.
     """
     if re.search(r"\.pdf$", filename, re.IGNORECASE):
-        if kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC") == "Plain Text":
+        parser_config_ = kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC")
+        if parser_config_ ==  "Plain Text":
             pdf_parser = PlainParser()
             paper = {
                 "title": filename,
@@ -153,6 +157,11 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
                 "sections": pdf_parser(filename if not binary else binary, from_page=from_page, to_page=to_page)[0],
                 "tables": []
             }
+        elif parser_config_ == "MinerU":
+            pdf_parser = MinerUPdf()
+            bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
+            logging.info("log MaXiao bucket {} name {}".format(bucket,name))
+            paper = pdf_parser.call_function(bucket,name,binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
         else:
             pdf_parser = Pdf()
             paper = pdf_parser(filename if not binary else binary,
