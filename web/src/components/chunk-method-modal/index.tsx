@@ -130,7 +130,7 @@ const ChunkMethodModal: React.FC<IProps> = ({
       const pages =
         parserConfig?.pages?.map((x) => ({ from: x[0], to: x[1] })) ?? [];
       form.setFieldsValue({
-        pages: pages.length > 0 ? pages : [{ from: 1, to: 1024 }],
+        pages: pages.length > 0 ? pages : [{ from: 1, to: 1000000000 }],
         parser_config: {
           ...omit(parserConfig, 'pages'),
           graphrag: {
@@ -302,7 +302,7 @@ const ChunkMethodModal: React.FC<IProps> = ({
                     },
                   ]}
                 >
-                  <InputNumber min={1} max={128} />
+                  <InputNumber min={1} max={1000000000} />
                 </Form.Item>
               )
             }
