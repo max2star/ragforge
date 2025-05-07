@@ -324,6 +324,7 @@ def add_positions(d, poss):
     page_num_int = []
     position_int = []
     top_int = []
+    logging.info("add_positions {}".format(poss))
     for pn, left, right, top, bottom in poss:
         page_num_int.append(int(pn + 1))
         top_int.append(int(top))
