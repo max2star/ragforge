@@ -8,7 +8,7 @@ import { useMemo } from 'react';
 const enum DocumentType {
   DeepDOC = 'DeepDOC',
   PlainText = 'Plain Text',
-  MinerU = 'minerU',
+  MinerU = 'MinerU',
 }
 
 const LayoutRecognize = () => {
