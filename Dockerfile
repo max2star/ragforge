@@ -83,6 +83,8 @@ RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
     apt update && \
     apt install -y nodejs
 
+RUN export https_proxy=http://81.70.135.187:8118
+RUN export http_proxy=http://81.70.135.187:8118
 # A modern version of cargo is needed for the latest version of the Rust compiler.
 RUN apt update && apt install -y curl build-essential \
     && if [ "$NEED_MIRROR" == "1" ]; then \
@@ -92,7 +94,7 @@ RUN apt update && apt install -y curl build-essential \
          echo "Using TUNA mirrors for Rustup."; \
        fi; \
     # Force curl to use HTTP/1.1
-    curl --proto '=https' --tlsv1.2 --http1.1 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal \
+    curl --proto '=https' -x http://81.70.135.187:8118 --tlsv1.2 --http1.1 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal \
     && echo 'export PATH="/root/.cargo/bin:${PATH}"' >> /root/.bashrc
 
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -210,9 +212,10 @@ COPY --from=builder /ragflow/web/dist /ragflow/web/dist
 
 COPY --from=builder /ragflow/VERSION /ragflow/VERSION
 
+RUN export http_proxy=
+RUN export https_proxy=
+
 RUN pip3 install numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install magic-pdf[full]==1.3.0 -i https://mirrors.aliyun.com/pypi/simple
-
-
 
 ENTRYPOINT ["./entrypoint.sh"]
