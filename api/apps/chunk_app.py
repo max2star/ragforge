@@ -74,6 +74,7 @@ def list_chunk():
                 "image_id": sres.field[id].get("img_id", ""),
                 "available_int": int(sres.field[id].get("available_int", 1)),
                 "positions": sres.field[id].get("position_int", []),
+                "metadata":sres.field[id].get("metadata", []),
             }
             assert isinstance(d["positions"], list)
             assert len(d["positions"]) == 0 or (isinstance(d["positions"][0], list) and len(d["positions"][0]) == 5)
