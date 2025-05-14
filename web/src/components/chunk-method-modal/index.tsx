@@ -294,7 +294,7 @@ const ChunkMethodModal: React.FC<IProps> = ({
                   name={['parser_config', 'task_page_size']}
                   label={t('taskPageSize')}
                   tooltip={t('taskPageSizeTip')}
-                  initialValue={12}
+                  initialValue={1000000000}
                   rules={[
                     {
                       required: true,
@@ -302,7 +302,7 @@ const ChunkMethodModal: React.FC<IProps> = ({
                     },
                   ]}
                 >
-                  <InputNumber min={1} max={1000000000} />
+                  <InputNumber    className={styles.pageInputNumber} min={1} max={1000000000} />
                 </Form.Item>
               )
             }
