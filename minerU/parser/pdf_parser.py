@@ -197,7 +197,7 @@ class MinerUPdf:
             middle_content = pipe_result.get_middle_json()
             middle_json_content = json.loads(middle_content)
             callback(prog=0.8,msg="MinerU 获取处理结果完成 ({:.2f}s)".format(timer()-start))
-            logging.info('[MinerU] 获取content_list长度 {},middle_content长度 {},middle_json_content长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
+            #logging.info('[MinerU] 获取content_list长度 {},middle_content长度 {},middle_json_content长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
             start = timer()
             # 解析middle_json_content 并提取块信息，结果保存在block_info_list
             block_info_list = []
@@ -220,11 +220,23 @@ class MinerUPdf:
                                         "bbox": block_bbox
                                     })
                             else:
-                                logging.error(f"[MinerU] 块的 bbox 格式无效: {block_bbox}，跳过。")
+                                #试着从blocks中获取
+                                blocks_bbox = block.get('blocks',None)
+                                if blocks_bbox and type(blocks_bbox) is list:
+                                    block_bbox_to_get = blocks_bbox[0]
+                                    if block_bbox_to_get:
+                                        block_bbox = get_bbox_from_block(block_bbox_to_get)
+                                block_info_list.append({
+                                       "page_idx": page_idx,
+                                       "bbox": block_bbox
+                                   })
+                                logging.error("[MinerU] 块的 bbox 无效: {}, block 是 {}。".format(block_bbox,block))
                         logging.info(f"[MinerU] 已从 middle_data 提取了 {len(block_info_list)} 个块的信息。")
                     logging.info(f"[MinerU] 总计提取了 {len(block_info_list)} 个块的信息。")
                 except Exception as e:
                     logging.error(f"[MinerU] 处理 middle_json_content 时出错: {e}")
+            logging.info("MinerU 解析 bucketname {} filename {} 得到的 content_list {},提供的块信息{}".format(bucketname,filename,len(content_list),len(block_info_list)))
+            assert(len(content_list)==len(block_info_list))
             chunk_count = 0
             chunk_ids_list = []
             middle_block_idx = 0 # 用于按顺序匹配 block_info_list
@@ -283,8 +295,6 @@ class MinerUPdf:
                         caption_str = ""
                     # 将处理后的标题字符串和表格主体拼接
                     content = caption_str + table_body
-                    chunk_object['text'] = content
-
                     #读取image信息
                     img_path_relative = chunk_data.get('img_path')
                     if img_path_relative:
@@ -293,6 +303,9 @@ class MinerUPdf:
                         image_bytes = reader_stored_files.read(img_path_relative)
                     else:
                         image_bytes = None
+                    if not content:
+                        content = img_path_relative
+                    chunk_object['text'] = content
                     chunk_object['image'] = image_bytes
                     chunk_object['image_url'] = img_path_relative
                     sections.append(chunk_object)
@@ -317,6 +330,8 @@ class MinerUPdf:
                         # 其他情况（如空列表、None 或非字符串列表），使用空字符串
                         caption_str = ""
                     content = caption_str
+                    if not content:
+                        content = img_path_relative
                     chunk_object['text'] = content
                     chunk_object['image'] = image_bytes
                     chunk_object['image_url'] = img_path_relative
