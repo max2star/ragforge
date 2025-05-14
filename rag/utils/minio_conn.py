@@ -87,8 +87,11 @@ class RAGFlowMinio:
             try:
                 r = self.conn.get_object(bucket, filename)
                 return r.read()
-            except Exception:
+            except Exception as e:
                 logging.exception(f"Fail to get {bucket}/{filename}")
+                import traceback
+                traceback.print_exc()
+                logging.error("Exception {} ,info is {}".format(e,traceback.format_exc()))
                 self.__open__()
                 time.sleep(1)
         return
