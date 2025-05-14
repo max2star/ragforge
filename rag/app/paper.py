@@ -19,7 +19,7 @@ import copy
 import re
 
 from api.db import ParserType
-from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bullets_category, title_frequency, tokenize_chunks
+from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bullets_category, title_frequency, tokenize_chunks, tokenize_chunks_for_mineru
 from deepdoc.parser import PdfParser, PlainParser
 import numpy as np
 from api.db.services.file2document_service import File2DocumentService
@@ -155,10 +155,10 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
                 "sections": pdf_parser(filename if not binary else binary, from_page=from_page, to_page=to_page)[0],
                 "tables": []
             }
-        elif parser_method == "MinerU" or parser_method == "minerU":
+        elif parser_method in ["MinerU","minerU"]:
             pdf_parser = MinerUPdf()
             bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
-            logging.info("parser MinerU for bucket {} doc name {}".format(bucket,name))
+            logging.info("MinerU parser for bucket {} doc name {}".format(bucket,name))
             paper = pdf_parser.call_function(bucket,name,binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
         else:
             pdf_parser = Pdf()
@@ -167,7 +167,8 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
     else:
         raise NotImplementedError("file type not supported yet(pdf supported)")
 
-    if parser_method == "MinerU":
+    if parser_method in ["MinerU","minerU"]:
+        res = []
         from timeit import default_timer as timer
         start = timer()
         callback(msg="开始进行分词")
@@ -182,8 +183,9 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
 
         callback(prog=0.95,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
         start = timer()
-        res = tokenize_table(paper["tables"], doc, eng)
-        callback(prog=0.96,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
+        if paper["tables"]:
+            res = tokenize_table(paper["tables"], doc, eng)
+            callback(prog=0.96,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
         if paper["abstract"]:
@@ -196,14 +198,11 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             add_positions(d, poss)
             tokenize(d, txt, eng)
             res.append(d)
-        callback(prog=0.96,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.96,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
         sorted_sections = paper["sections"]
-        chunks = []
-        for (txt, _) in sorted_sections:
-            chunks.append(txt)
-        res.extend(tokenize_chunks(chunks, doc, eng, pdf_parser))
+        res.extend(tokenize_chunks_for_mineru(sorted_sections, doc, eng, pdf_parser))
         callback(prog=0.98,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
         return res
 

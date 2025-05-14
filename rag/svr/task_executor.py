@@ -606,7 +606,7 @@ async def do_handle_task(task):
         c_count = c_count + len(c_['content_with_weight'])
         if c_count >=10000:
             break
-    logging.info(f"do_handle_task {content}")
+    logging.debug(f"do_handle_task current content {content}")
     dict_result = await run_extract(task, chat_model, content,progress_callback)
 
     if dict_result:
