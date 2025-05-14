@@ -20,11 +20,12 @@ import sys
 
 print(os.getcwd()+'/../../')
 
-sys.path.append("/ragflow/")
-sys.path.append(os.getcwd())
+#sys.path.append("/ragflow/")
+#sys.path.append(os.getcwd())
 #sys.path.remove("/ragflow/.venv/lib/python3.10/site-packages")#/root/anaconda3/lib/python3.12")
-#sys.path.append("/usr/local/lib/python3.10/dist-packages/")
 #sys.path.append("/ragflow/.venv/lib/python3.10/site-packages")
+#搜索minerU所使用的类库
+sys.path.append("/usr/local/lib/python3.10/dist-packages/")
 print(sys.path)
 import time
 import random
