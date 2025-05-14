@@ -28,11 +28,6 @@ from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
 import os
-sys.path.append("/ragflow/")
-sys.path.append(os.getcwd())
-sys.path.remove("/ragflow/.venv/lib/python3.10/site-packages")#/root/anaconda3/lib/python3.12")
-sys.path.append("/usr/local/lib/python3.10/dist-packages/")
-sys.path.append("/ragflow/.venv/lib/python3.10/site-packages")
 
 from datetime import datetime
 import json
