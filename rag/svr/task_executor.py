@@ -600,6 +600,7 @@ async def do_handle_task(task):
     chunk_count = len(set([chunk["id"] for chunk in chunks]))
 
 
+    start_ts = timer()
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
     #运行
@@ -618,6 +619,7 @@ async def do_handle_task(task):
             for key, value in dict_result.items():
                 c_[key]=value
 
+    progress_callback(prog=0.99,msg="完成大模型要素提取 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
     es_bulk_size = 4
