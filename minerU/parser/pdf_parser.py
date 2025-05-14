@@ -22,9 +22,9 @@ print(os.getcwd()+'/../../')
 
 sys.path.append("/ragflow/")
 sys.path.append(os.getcwd())
-sys.path.remove("/ragflow/.venv/lib/python3.10/site-packages")#/root/anaconda3/lib/python3.12")
-sys.path.append("/usr/local/lib/python3.10/dist-packages/")
-sys.path.append("/ragflow/.venv/lib/python3.10/site-packages")
+#sys.path.remove("/ragflow/.venv/lib/python3.10/site-packages")#/root/anaconda3/lib/python3.12")
+#sys.path.append("/usr/local/lib/python3.10/dist-packages/")
+#sys.path.append("/ragflow/.venv/lib/python3.10/site-packages")
 print(sys.path)
 import time
 import random
@@ -53,7 +53,7 @@ from rag.nlp import rag_tokenizer
 
 #导入对象存储实现
 #from rag.utils.storage_factory import STORAGE_IMPL
-os.environ['CUDA_VISIBLE_DEVICES']="0,1,2,3"
+os.environ['CUDA_VISIBLE_DEVICES']="0,1"
 
 from magic_pdf.data.data_reader_writer import S3DataReader, S3DataWriter
 from magic_pdf.data.dataset import PymuDocDataset
@@ -1296,24 +1296,27 @@ class MinerUPdf(MinerUPdfParser):
             image_writer = S3DataWriter('minerU/images/', bucket_name, ak, sk, endpoint_url)
             #从对象存储读取文件
             pdf_bytes = reader.read(pdf_file_name)
+            callback(prog=0.05,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)".format(timer()-start))
             ## Create Dataset Instance
+            start = timer()
             ds = PymuDocDataset(pdf_bytes)
+            callback(prog=0.1,msg="MinerU 创建解析器完成 ({:.2f}s)".format(timer()-start))
+            start = timer()
+            use_ocr = False
             if ds.classify() == SupportedPdfParseMethod.OCR:
-                logging.info("MaXiao 使用OCR")
-                infer_result = ds.apply(doc_analyze, ocr=True)
+                use_ocr=True
+                infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_ocr_mode(image_writer)
             else:
-                logging.info("MaXiao 不使用OCR")
-                infer_result = ds.apply(doc_analyze, ocr=False)
+                infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_txt_mode(image_writer)
-            callback(prog=0.3,msg="MinerU 分析处理 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.6,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}".format(timer()-start,use_ocr))
             
             #TODO
             # get model inference result
             #model_inference_result = infer_result.get_infer_res()
-            print("------") 
             start = timer()
             ### draw model result on each page
             #infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
@@ -1321,10 +1324,12 @@ class MinerUPdf(MinerUPdfParser):
             #pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
             ## draw spans result on each page
             #pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
-            callback(prog=0.6,msg="MinerU 绘制处理结果 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)".format(timer()-start))
             
             #获取MD文件
+            start = timer()
             md_content = pipe_result.get_markdown(image_writer)#image_dir)
+            callback(prog=0.7,msg="MinerU 获取MD文件完成 ({:.2f}s)".format(timer()-start))
             
             start = timer()
             #将MarkDown文件进行输出
@@ -1333,17 +1338,16 @@ class MinerUPdf(MinerUPdfParser):
             pipe_result.dump_content_list(writer, f"{name_without_suff}_content_list.json", "images")
             #将middle json文件进行输出
             pipe_result.dump_middle_json(writer, f'{name_without_suff}_middle.json')
-
-            print("------") 
-
-            callback(prog=0.8,msg="MinerU 保存处理结果到对象存储 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.75,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)".format(timer()-start))
             
             start = timer()
-            content_list = pipe_result.get_content_list("")#tmp/images")
+            content_list = pipe_result.get_content_list("")
             middle_content = pipe_result.get_middle_json()
             middle_json_content = json.loads(middle_content)
-            print('获取到的 content_list 长度 {},middle_content 长度 {},middle_json_content 长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
-            # 解析 middle_json_content 并提取块信息，结果保存在block_info_list
+            callback(prog=0.8,msg="MinerU 获取处理结果完成 ({:.2f}s)".format(timer()-start))
+            logging.info('[MinerU] 获取content_list长度 {},middle_content长度 {},middle_json_content长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
+            start = timer()
+            # 解析middle_json_content 并提取块信息，结果保存在block_info_list
             block_info_list = []
             sections = []
             if middle_json_content:
@@ -1352,7 +1356,7 @@ class MinerUPdf(MinerUPdfParser):
                         middle_data = middle_json_content # 直接赋值
                     else:
                         middle_data = None
-                        print(f"[Parser-WARNING] middle_json_content 不是预期的字典格式，实际类型: {type(middle_json_content)}。")
+                        logging.error(f"[MinerU] middle_json_content 不是预期的字典格式，实际类型: {type(middle_json_content)}。")
                     # 提取信息 
                     for page_idx, page_data in enumerate(middle_data.get("pdf_info", [])):
                         for block in page_data.get("preproc_blocks", []):
@@ -1364,14 +1368,11 @@ class MinerUPdf(MinerUPdfParser):
                                         "bbox": block_bbox
                                     })
                             else:
-                                print(f"[Parser-WARNING] 块的 bbox 格式无效: {bbox}，跳过。")
-
-                        print(f"[Parser-INFO] 从 middle_data 提取了 {len(block_info_list)} 个块的信息。")
-
-                except json.JSONDecodeError:
-                    print("[Parser-ERROR] 解析 middle_json_content 失败。")
+                                logging.error(f"[MinerU] 块的 bbox 格式无效: {block_bbox}，跳过。")
+                        logging.info(f"[MinerU] 已从 middle_data 提取了 {len(block_info_list)} 个块的信息。")
+                    logging.info(f"[MinerU] 总计提取了 {len(block_info_list)} 个块的信息。")
                 except Exception as e:
-                    print(f"[Parser-ERROR] 处理 middle_json_content 时出错: {e}")
+                    logging.error(f"[MinerU] 处理 middle_json_content 时出错: {e}")
             chunk_count = 0
             chunk_ids_list = []
             middle_block_idx = 0 # 用于按顺序匹配 block_info_list
@@ -1391,13 +1392,13 @@ class MinerUPdf(MinerUPdfParser):
                     bbox = block_info.get("bbox", [0, 0, 0, 0])
                     # 验证 bbox 是否有效，如果无效则重置为默认值 (可选，取决于是否需要严格验证)
                     if not (isinstance(bbox, list) and len(bbox) == 4 and all(isinstance(n, (int, float)) for n in bbox)):
-                        print(f"[Parser-WARNING] Chunk {chunk_idx} 对应的 bbox 格式无效: {bbox}，将使用默认值。")
+                        logging.error(f"[MinerU] Chunk {chunk_idx} 对应的 bbox 格式无效: {bbox}，将使用默认值。")
                         bbox = [0, 0, 0, 0]
                 else:
                     # 如果 block_info_list 的长度小于 content_list，打印警告
                     # 仅在第一次索引越界时打印一次警告，避免刷屏
                     #if chunk_idx == len(block_info_list):
-                    logging.error("MinerU middle_data 提供的块信息少于 content_list 中的文本块数量!")
+                    logging.error("MinerU middle_data 提供的块信息{} 少于 content_list 中的文本块数量{}!".format())
  
                 # 转换坐标格式
                 x1, y1, x2, y2 = bbox
@@ -1412,7 +1413,6 @@ class MinerUPdf(MinerUPdfParser):
                             continue
                         # 过滤 markdown 特殊符号
                         content = re.sub(r"[!#\\$/]", "", content)
-                        print("section is {},page_idx is {}".format(content+self._line_tag_(page_idx,bbox_reordered),page_idx))
                         logging.info("section is {},page_idx is {}".format(content+self._line_tag_(page_idx,bbox_reordered),page_idx))
                         object_section = (content+self._line_tag_(page_idx,bbox_reordered),chunk_data["type"])
                         sections.append(object_section)
@@ -1451,6 +1451,15 @@ class MinerUPdf(MinerUPdfParser):
                         image_info_list.append(image_info)
                         res.append((image_bytes,content))
                         positions.append(poss)
+                elif chunk_data["type"] == "equation":
+                        content = chunk_data["text"]
+                        if not content or not content.strip():
+                            continue
+                        # 过滤 markdown 特殊符号
+                        content = re.sub(r"[!#\\$/]", "", content)
+                        logging.info("section is {},page_idx is {}".format(content+self._line_tag_(page_idx,bbox_reordered),page_idx))
+                        object_section = (content+self._line_tag_(page_idx,bbox_reordered),chunk_data["type"])
+                        sections.append(object_section)
                 elif chunk_data["type"] == "image":
                     #图片为了后续结构化及与text内容关联，需要图片信息、图片标题信息、位置信息
                     #tbls里存储的是 （image,rows）,poss;这里rows直接用图片标题即可
@@ -1471,7 +1480,7 @@ class MinerUPdf(MinerUPdfParser):
                     else:
                         # 其他情况（如空列表、None 或非字符串列表），使用空字符串
                         caption_str = ""
-
+                    content = caption_str
                     # 记录图片信息，包括URL和位置信息
                     image_info = {
                         "image":image_bytes,
@@ -1485,8 +1494,7 @@ class MinerUPdf(MinerUPdfParser):
             assert len(positions) == len(res)
             tbls = list(zip(res, positions))
 
-            callback(prog=0.9,msg="MinerU 解析处理结果 ({:.2f}s)".format(timer()-start))
-            callback(prog=1,msg="MinerU 处理完成")
+            callback(prog=0.81,msg="MinerU 解析处理结果完成 ({:.2f}s)".format(timer()-start))
             md_content_to = md_content[:10000]
            
             time_end_process = time.time()
@@ -1494,7 +1502,6 @@ class MinerUPdf(MinerUPdfParser):
             logging.info('file {} MinerU 解析花费 {} md_content 长度 {} md_content_to 长度 {}'.format(filename,time_cost,len(md_content),len(md_content_to)))
         except Exception as e:
             logging.info("发生错误,文件 {},错误 {}".format(filename,e))
-            print("发生错误,文件 {},错误 {}".format(filename,e))
             import traceback
             traceback.print_exc()
             print("Exception {} ,excetion info is {}".format(e,traceback.format_exc()))
@@ -1504,11 +1511,52 @@ class MinerUPdf(MinerUPdfParser):
             return re.match(
                 "[0-9. 一、i]*(introduction|abstract|摘要|引言|keywords|key words|关键词|background|背景|目录|前言|contents)",
                 txt.lower().strip())
+        start = timer()
+        ## get title and authors
+        #title = ""
+        #authors = []
+        #i = 0
+        #while i < min(32, len(self.boxes)-1):
+        #    b = self.boxes[i]
+        #    i += 1
+        #    if b.get("layoutno", "").find("title") >= 0:
+        #        title = b["text"]
+        #        if _begin(title):
+        #            title = ""
+        #            break
+        #        for j in range(3):
+        #            if _begin(self.boxes[i + j]["text"]):
+        #                break
+        #            authors.append(self.boxes[i + j]["text"])
+        #            break
+        #        break
+        ## get abstract
+        #abstr = ""
+        #i = 0
+        #while i + 1 < min(32, len(self.boxes)):
+        #    b = self.boxes[i]
+        #    i += 1
+        #    txt = b["text"].lower().strip()
+        #    if re.match("(abstract|摘要)", txt):
+        #        if len(txt.split()) > 32 or len(txt) > 64:
+        #            abstr = txt + self._line_tag(b, zoomin)
+        #            break
+        #        txt = self.boxes[i]["text"].lower().strip()
+        #        if len(txt.split()) > 32 or len(txt) > 64:
+        #            abstr = txt + self._line_tag(self.boxes[i], zoomin)
+        #        i += 1
+        #        break
+        #if not abstr:
+        #    i = 0
+
+
         #TODO
         #content_list实际是内容
         title = ""
         authors = []
         abstr = ""
+        callback(prog=0.82,msg="MinerU 解析信息提取完成({:.2f}s)".format(timer()-start))
+        callback(prog=0.85,msg="MinerU 处理完成")
         # 返回的sections需要包括 text+_line_tag、layoutno。其中_line_tag表达了text的坐标信息，它用特殊字符进行分隔，以方便后续处理匹配到这些坐标信息.
         return {
             "title": title,

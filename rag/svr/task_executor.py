@@ -64,6 +64,7 @@ from rag.app import laws, paper, presentation, manual, qa, table, book, resume, 
     email, tag
 from rag.nlp import search, rag_tokenizer
 from rag.raptor import RecursiveAbstractiveProcessing4TreeOrganizedRetrieval as Raptor
+from rag.paper_extractor import PaperExtractor as PaperExtractor
 from rag.settings import DOC_MAXIMUM_SIZE, SVR_CONSUMER_GROUP_NAME, get_svr_queue_name, get_svr_queue_names, print_rag_settings, TAG_FLD, PAGERANK_FLD
 from rag.utils import num_tokens_from_string, truncate
 from rag.utils.redis_conn import REDIS_CONN, RedisDistributedLock
@@ -233,9 +234,9 @@ async def get_storage_binary(bucket, name):
 
 async def build_chunks(task, progress_callback):
     if task["size"] > DOC_MAXIMUM_SIZE:
-        set_progress(task["id"], prog=-1, msg="File size exceeds(doc size {},but should <= {}Mb )".format(
-            task["size"],(int(DOC_MAXIMUM_SIZE / 1024 / 1024))))
-        return []
+        set_progress(task["id"], prog=-1, msg="File size exceeds(doc size {}Mb,but should <= {}Mb )".format(
+            int(task["size"]/1024/1024),int(DOC_MAXIMUM_SIZE / 1024 / 1024)))
+        #return []
 
     chunker = FACTORY[task["parser_id"].lower()]
     try:
@@ -484,6 +485,29 @@ async def run_raptor(row, chat_mdl, embd_mdl, vector_size, callback=None):
     return res, tk_count
 
 
+async def run_extract(row, chat_mdl, content,callback=None):
+    extractor_config = row["parser_config"].get('extractor')
+    prompt = None
+    key = None
+    if extractor_config:
+        prompt = extractor_config.get("prompt",None)
+        key = extractor_config.get("key",None)
+    extractor = PaperExtractor(
+        chat_mdl,
+        prompt,
+        key
+    )
+    result = await extractor(content,None,callback)
+    logging.info(f"run_extract result {result}")
+    doc = {
+        "doc_id": row["doc_id"],
+        "kb_id": [str(row["kb_id"])],
+        "docnm_kwd": row["name"],
+        "title_tks": rag_tokenizer.tokenize(row["name"])
+    }
+    return result
+
+
 async def do_handle_task(task):
     task_id = task["id"]
     task_from_page = task["from_page"]
@@ -572,7 +596,28 @@ async def do_handle_task(task):
         logging.info(progress_message)
         progress_callback(msg=progress_message)
 
+
     chunk_count = len(set([chunk["id"] for chunk in chunks]))
+
+
+    # 进行要素提取和分类
+    chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
+    #运行
+    c_count = 0
+    content = ""
+    for c_ in chunks:
+        content = content + "\n"+ c_['content_with_weight']
+        c_count = c_count + len(c_['content_with_weight'])
+        if c_count >=10000:
+            break
+    logging.info(f"do_handle_task {content}")
+    dict_result = await run_extract(task, chat_model, content,progress_callback)
+
+    if dict_result:
+        for c_ in chunks:
+            for key, value in dict_result.items():
+                c_[key]=value
+
     start_ts = timer()
     doc_store_result = ""
     es_bulk_size = 4
