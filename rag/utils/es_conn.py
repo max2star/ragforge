@@ -218,7 +218,7 @@ class ESConnection(DocStoreConnection):
             orders = list()
             for field, order in orderBy.fields:
                 order = "asc" if order == 0 else "desc"
-                if field in ["page_num_int", "top_int"]:
+                if field in ["page_num_int", "top_int", "left_int", "chunk_idx"]:
                     order_info = {"order": order, "unmapped_type": "float",
                                   "mode": "avg", "numeric_type": "double"}
                 elif field.endswith("_int") or field.endswith("_flt"):
