@@ -611,9 +611,9 @@ async def do_handle_task(task):
 
     if dict_result:
         for c_ in chunks:
+            c_['metadata'] = dict_result
             for key, value in dict_result.items():
                 c_[key]=value
-
     progress_callback(prog=0.99,msg="完成大模型要素提取 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
