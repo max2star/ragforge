@@ -501,7 +501,7 @@ class InfinityConnection(DocStoreConnection):
                     assert isinstance(v, list)
                     arr = [num for row in v for num in row]
                     d[k] = "_".join(f"{num:08x}" for num in arr)
-                elif k in ["page_num_int", "top_int"]:
+                elif k in ["page_num_int", "top_int", "left_int", "chunk_idx"]:
                     assert isinstance(v, list)
                     d[k] = "_".join(f"{num:08x}" for num in v)
                 else:
@@ -550,7 +550,7 @@ class InfinityConnection(DocStoreConnection):
                 assert isinstance(v, list)
                 arr = [num for row in v for num in row]
                 newValue[k] = "_".join(f"{num:08x}" for num in arr)
-            elif k in ["page_num_int", "top_int"]:
+            elif k in ["page_num_int", "top_int", "left_int", "chunk_idx"]:
                 assert isinstance(v, list)
                 newValue[k] = "_".join(f"{num:08x}" for num in v)
             elif k == "remove":
@@ -624,7 +624,7 @@ class InfinityConnection(DocStoreConnection):
                         v = []
                     return v
                 res2[column] = res2[column].apply(to_position_int)
-            elif k in ["page_num_int", "top_int"]:
+            elif k in ["page_num_int", "top_int", "left_int", "chunk_idx"]:
                 res2[column] = res2[column].apply(lambda v:[int(hex_val, 16) for hex_val in v.split('_')] if v else [])
             else:
                 pass

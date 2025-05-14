@@ -82,7 +82,7 @@ class Dealer:
 
         src = req.get("fields",
                       ["docnm_kwd", "content_ltks", "kb_id", "img_id", "title_tks", "important_kwd", "position_int",
-                       "doc_id", "page_num_int", "top_int", "create_timestamp_flt", "knowledge_graph_kwd",
+                       "doc_id", "page_num_int", "top_int", "left_int", "chunk_idx", "create_timestamp_flt", "knowledge_graph_kwd",
                        "question_kwd", "question_tks",
                        "available_int", "content_with_weight", PAGERANK_FLD, TAG_FLD,"metadata"])
         kwds = set([])
@@ -92,7 +92,9 @@ class Dealer:
         if not qst:
             if req.get("sort"):
                 orderBy.asc("page_num_int")
+                orderBy.asc("chunk_idx")
                 orderBy.asc("top_int")
+                orderBy.asc("left_int")
                 orderBy.desc("create_timestamp_flt")
             res = self.dataStore.search(src, [], filters, [], orderBy, offset, limit, idx_names, kb_ids)
             total = self.dataStore.getTotal(res)

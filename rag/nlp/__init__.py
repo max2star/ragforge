@@ -277,6 +277,22 @@ def tokenize_chunks(chunks, doc, eng, pdf_parser=None):
     return res
 
 
+def tokenize_chunks_for_mineru(chunks, doc, eng, pdf_parser=None):
+    res = []
+    # wrap up as es documents
+    for ck in chunks:
+        if len(ck['text'].strip()) == 0:
+            continue
+        logging.debug("-- {}".format(ck))
+        d = copy.deepcopy(doc)
+        d['type'] = ck['type']
+        d['chunk_idx'] = [int(ck['chunk_idx'])]
+        d['image'] = ck.get('image')
+        add_positions(d, ck['poss'])
+        tokenize(d, ck['text'], eng)
+        res.append(d)
+    return res
+
 def tokenize_chunks_docx(chunks, doc, eng, images):
     res = []
     # wrap up as es documents
@@ -324,15 +340,17 @@ def add_positions(d, poss):
     page_num_int = []
     position_int = []
     top_int = []
+    left_int = []
     logging.info("add_positions {}".format(poss))
     for pn, left, right, top, bottom in poss:
         page_num_int.append(int(pn + 1))
         top_int.append(int(top))
+        left_int.append(int(left))
         position_int.append((int(pn + 1), int(left), int(right), int(top), int(bottom)))
     d["page_num_int"] = page_num_int
     d["position_int"] = position_int
     d["top_int"] = top_int
-
+    d["left_int"] = left_int
 
 def remove_contents_table(sections, eng=False):
     i = 0
