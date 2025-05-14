@@ -19,13 +19,11 @@ import copy
 import re
 
 from api.db import ParserType
-from api.db.services.file2document_service import File2DocumentService
-
 from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bullets_category, title_frequency, tokenize_chunks
 from deepdoc.parser import PdfParser, PlainParser
-from minerU.parser import MinerUPdf
 import numpy as np
-
+from api.db.services.file2document_service import File2DocumentService
+from minerU.parser import MinerUPdf
 
 class Pdf(PdfParser):
     def __init__(self):
@@ -147,8 +145,8 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         The abstract of the paper will be sliced as an entire chunk, and will not be sliced partly.
     """
     if re.search(r"\.pdf$", filename, re.IGNORECASE):
-        parser_config_ = kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC")
-        if parser_config_ ==  "Plain Text":
+        parser_method = kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC")
+        if parser_method == "Plain Text":
             pdf_parser = PlainParser()
             paper = {
                 "title": filename,
@@ -157,22 +155,57 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
                 "sections": pdf_parser(filename if not binary else binary, from_page=from_page, to_page=to_page)[0],
                 "tables": []
             }
-        else:# parser_config_ == "MinerU":
-            logging.info("log MaXiao parser MinerU ")
+        elif parser_method == "MinerU" or parser_method == "minerU":
             pdf_parser = MinerUPdf()
             bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
-            logging.info("log MaXiao bucket {} name {}".format(bucket,name))
+            logging.info("parser MinerU for bucket {} doc name {}".format(bucket,name))
             paper = pdf_parser.call_function(bucket,name,binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
-        #else:
-        #    pdf_parser = Pdf()
-        #    paper = pdf_parser(filename if not binary else binary,
-        #                       from_page=from_page, to_page=to_page, callback=callback)
+        else:
+            pdf_parser = Pdf()
+            paper = pdf_parser(filename if not binary else binary,
+                               from_page=from_page, to_page=to_page, callback=callback)
     else:
         raise NotImplementedError("file type not supported yet(pdf supported)")
 
-    from timeit import default_timer as timer
-    start = timer()
-    callback(msg="开始进行分词")
+    if parser_method == "MinerU":
+        from timeit import default_timer as timer
+        start = timer()
+        callback(msg="开始进行分词")
+
+        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"]),
+               "title_tks": rag_tokenizer.tokenize(paper["title"] if paper["title"] else filename)}
+        doc["title_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["title_tks"])
+        doc["authors_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["authors_tks"])
+        # is it English
+        eng = lang.lower() == "english"  # pdf_parser.is_english
+        logging.debug("It's English.....{}".format(eng))
+
+        callback(prog=0.95,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
+        start = timer()
+        res = tokenize_table(paper["tables"], doc, eng)
+        callback(prog=0.96,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
+
+        start = timer()
+        if paper["abstract"]:
+            d = copy.deepcopy(doc)
+            txt = pdf_parser.remove_tag(paper["abstract"])
+            d["important_kwd"] = ["abstract", "总结", "概括", "summary", "summarize"]
+            d["important_tks"] = " ".join(d["important_kwd"])
+            d["image"], poss = pdf_parser.crop(
+                paper["abstract"], need_position=True)
+            add_positions(d, poss)
+            tokenize(d, txt, eng)
+            res.append(d)
+        callback(prog=0.96,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
+
+        start = timer()
+        sorted_sections = paper["sections"]
+        chunks = []
+        for (txt, _) in sorted_sections:
+            chunks.append(txt)
+        res.extend(tokenize_chunks(chunks, doc, eng, pdf_parser))
+        callback(prog=0.98,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
+        return res
 
     doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"]),
            "title_tks": rag_tokenizer.tokenize(paper["title"] if paper["title"] else filename)}
@@ -182,12 +215,8 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
     eng = lang.lower() == "english"  # pdf_parser.is_english
     logging.debug("It's English.....{}".format(eng))
 
-    callback(prog=0.95,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
-    start = timer()
     res = tokenize_table(paper["tables"], doc, eng)
-    callback(prog=0.96,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
 
-    start = timer()
     if paper["abstract"]:
         d = copy.deepcopy(doc)
         txt = pdf_parser.remove_tag(paper["abstract"])
@@ -198,36 +227,31 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         add_positions(d, poss)
         tokenize(d, txt, eng)
         res.append(d)
-    callback(prog=0.96,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
 
-    start = timer()
     sorted_sections = paper["sections"]
-    ## set pivot using the most frequent type of title,
-    ## then merge between 2 pivot
-    #bull = bullets_category([txt for txt, _ in sorted_sections])
-    #most_level, levels = title_frequency(bull, sorted_sections)
-    #assert len(sorted_sections) == len(levels)
-    #sec_ids = []
-    #sid = 0
-    #for i, lvl in enumerate(levels):
-    #    if lvl <= most_level and i > 0 and lvl != levels[i - 1]:
-    #        sid += 1
-    #    sec_ids.append(sid)
-    #    logging.debug("{} {} {} {}".format(lvl, sorted_sections[i][0], most_level, sid))
+    # set pivot using the most frequent type of title,
+    # then merge between 2 pivot
+    bull = bullets_category([txt for txt, _ in sorted_sections])
+    most_level, levels = title_frequency(bull, sorted_sections)
+    assert len(sorted_sections) == len(levels)
+    sec_ids = []
+    sid = 0
+    for i, lvl in enumerate(levels):
+        if lvl <= most_level and i > 0 and lvl != levels[i - 1]:
+            sid += 1
+        sec_ids.append(sid)
+        logging.debug("{} {} {} {}".format(lvl, sorted_sections[i][0], most_level, sid))
 
     chunks = []
-    #last_sid = -2
-    #for (txt, _), sec_id in zip(sorted_sections, sec_ids):
-    #    if sec_id == last_sid:
-    #        if chunks:
-    #            chunks[-1] += "\n" + txt
-    #            continue
-    #    chunks.append(txt)
-    #    last_sid = sec_id
-    for (txt, _) in sorted_sections:
+    last_sid = -2
+    for (txt, _), sec_id in zip(sorted_sections, sec_ids):
+        if sec_id == last_sid:
+            if chunks:
+                chunks[-1] += "\n" + txt
+                continue
         chunks.append(txt)
+        last_sid = sec_id
     res.extend(tokenize_chunks(chunks, doc, eng, pdf_parser))
-    callback(prog=0.98,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
     return res
 
 
