@@ -105,6 +105,7 @@ services:
       - ${MINIO_CONSOLE_PORT}:9001
     env_file: .env
     environment:
+      - MINIO_SERVER_URL=${MINIO_SERVER_URL}
       - MINIO_ROOT_USER=${MINIO_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
       - TZ=${TIMEZONE}
