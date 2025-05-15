@@ -2,7 +2,7 @@ import { useFetchNextChunkList, useSwitchChunk } from '@/hooks/chunk-hooks';
 import type { PaginationProps } from 'antd';
 import { Divider, Flex, Pagination, Space, Spin, message } from 'antd';
 import classNames from 'classnames';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChunkCard from './components/chunk-card';
 import CreatingModal from './components/chunk-creating-modal';
@@ -45,6 +45,11 @@ const Chunk = () => {
     chunkUpdatingVisible,
     documentId,
   } = useUpdateChunk();
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  const toggleMinimize = () => {
+    setIsMinimized((prev) => !prev);
+  };
 
   const onPaginationChange: PaginationProps['onShowSizeChange'] = (
     page,
@@ -95,6 +100,7 @@ const Chunk = () => {
   const handleSwitchChunk = useCallback(
     async (available?: number, chunkIds?: string[]) => {
       let ids = chunkIds;
+      console.log('handleSwitchChunk');
       if (!chunkIds) {
         ids = selectedChunkIds;
         if (selectedChunkIds.length === 0) {
@@ -117,6 +123,47 @@ const Chunk = () => {
   const { highlights, setWidthAndHeight } =
     useGetChunkHighlights(selectedChunkId);
 
+  const safeJsonParse = (str: string): Record<string, any> => {
+    try {
+      // 用正则替换掉 key 的单引号或无引号，变成合法 JSON
+      const fixedStr = str
+        .replace(/([{,])\s*'([^']+?)'\s*:/g, '$1"$2":') // 替换 key
+        .replace(/:\s*'([^']*?)'/g, ': "$1"'); // 替换 value
+      return JSON.parse(fixedStr);
+    } catch (e) {
+      console.warn('Invalid metadata JSON', e);
+      return {};
+    }
+  };
+  const chunkMetaList = useMemo(() => {
+    console.log('chunkMetaList >>>>', selectedChunkId);
+    const selectedChunks = data.filter((chunk) =>
+      selectedChunkId.includes(chunk.chunk_id),
+    );
+
+    let parsedMeta: Record<string, any> = {};
+    selectedChunks.forEach((chunk) => {
+      try {
+        console.log('chunk.metadata ', chunk.metadata);
+        const meta = safeJsonParse(chunk.metadata || '{}');
+        parsedMeta = { ...parsedMeta, ...meta };
+      } catch (e) {
+        console.warn('Invalid metadata JSON', e);
+      }
+    });
+
+    const selectedChunkMeta = Object.entries(parsedMeta).map(([key, value]) => {
+      const cleanedKey = key.replace(/@@@AI$/, ''); // 去掉末尾的 @@@AI
+      return {
+        key: cleanedKey,
+        desc: cleanedKey,
+        value: String(value),
+      };
+    });
+
+    return [...selectedChunkMeta];
+  }, [documentInfo, data, selectedChunkId]);
+
   return (
     <>
       <div className={styles.chunkPage}>
@@ -134,6 +181,55 @@ const Chunk = () => {
         ></ChunkToolBar>
         <Divider></Divider>
         <Flex flex={1} gap={'middle'}>
+          <div
+           className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
+            style={{
+              width: isMinimized ? 100 : 300, // Adjust width dynamically
+              background: '#fafafa',
+              borderRadius: 8,
+              padding: 16,
+              border: '1px solid #eee',
+              height: 'fit-content',
+              alignSelf: 'flex-start',
+              overflowX: 'auto',
+                overflowY: 'auto',
+              position: 'relative', // For button positioning
+            }}
+          >
+            <div
+              onClick={toggleMinimize}
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {isMinimized ? 'Expand' : 'Min'}
+            </div>
+            <table style={{ width: '100%', fontSize: 14, minWidth: 300 }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', paddingBottom: 8 }}>Key</th>
+                  <th style={{ textAlign: 'left', paddingBottom: 8 }}>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chunkMetaList.map((item) => (
+                  <tr key={item.key}>
+                    <td style={{ padding: '4px 8px 4px 0', color: '#888' }}>
+                      {item.key}
+                    </td>
+                    <td style={{ padding: '4px 0', color: '#222' }}>
+                      {item.value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Flex
             vertical
             className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
