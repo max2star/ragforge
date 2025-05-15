@@ -12,7 +12,7 @@ import { ChunkMethodItem, EmbeddingModelItem } from './common-item';
 export function PaperConfiguration() {
   return (
     <>
-      <LayoutRecognize></LayoutRecognize>
+      <LayoutRecognize isPdf></LayoutRecognize>
       <EmbeddingModelItem></EmbeddingModelItem>
       <ChunkMethodItem></ChunkMethodItem>
 

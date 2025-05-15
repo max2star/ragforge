@@ -71,6 +71,20 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
     setFinalParserId(knowledgeDetails.parser_id as DocumentParserType);
   }, [knowledgeDetails.parser_id]);
 
+
+  useEffect(() => {
+    const currentValue = form.getFieldValue([
+      'parser_config',
+      'layout_recognize',
+    ]);
+    if (
+      finalParserId !== DocumentParserType.Paper &&
+      currentValue === 'MinerU'
+    ) {
+      form.setFieldValue(['parser_config', 'layout_recognize'], '');
+    }
+  }, [form, finalParserId]);
+
   return (
     <Form form={form} name="validateOnly" layout="vertical" autoComplete="off">
       <Form.Item name="name" label={t('name')} rules={[{ required: true }]}>
