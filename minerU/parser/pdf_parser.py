@@ -220,6 +220,7 @@ class MinerUPdf:
                                         "bbox": block_bbox
                                     })
                             else:
+                                logging.warning("[MinerU] 块的 bbox 无效: {}, block 是 {}。".format(block_bbox,block))
                                 #试着从blocks中获取
                                 blocks_bbox = block.get('blocks',None)
                                 if blocks_bbox and type(blocks_bbox) is list:
@@ -230,7 +231,6 @@ class MinerUPdf:
                                        "page_idx": page_idx,
                                        "bbox": block_bbox
                                    })
-                                logging.error("[MinerU] 块的 bbox 无效: {}, block 是 {}。".format(block_bbox,block))
                         logging.info(f"[MinerU] 已从 middle_data 提取了 {len(block_info_list)} 个块的信息。")
                     logging.info(f"[MinerU] 总计提取了 {len(block_info_list)} 个块的信息。")
                 except Exception as e:
@@ -303,7 +303,9 @@ class MinerUPdf:
                         image_bytes = reader_stored_files.read(img_path_relative)
                     else:
                         image_bytes = None
-                    if not content:
+                    if content:
+                        content = content+"\t\n"+img_path_relative
+                    else:
                         content = img_path_relative
                     chunk_object['text'] = content
                     chunk_object['image'] = image_bytes
@@ -330,7 +332,11 @@ class MinerUPdf:
                         # 其他情况（如空列表、None 或非字符串列表），使用空字符串
                         caption_str = ""
                     content = caption_str
-                    if not content:
+                    #if not content:
+                    #    content = img_path_relative
+                    if content:
+                        content = content+"\t\n"+img_path_relative
+                    else:
                         content = img_path_relative
                     chunk_object['text'] = content
                     chunk_object['image'] = image_bytes

@@ -60,6 +60,7 @@ from rag.app import laws, paper, presentation, manual, qa, table, book, resume, 
 from rag.nlp import search, rag_tokenizer
 from rag.raptor import RecursiveAbstractiveProcessing4TreeOrganizedRetrieval as Raptor
 from rag.paper_extractor import PaperExtractor as PaperExtractor
+from rag.paper_classifier import PaperClassifier as PaperClassifier
 from rag.settings import DOC_MAXIMUM_SIZE, SVR_CONSUMER_GROUP_NAME, get_svr_queue_name, get_svr_queue_names, print_rag_settings, TAG_FLD, PAGERANK_FLD
 from rag.utils import num_tokens_from_string, truncate
 from rag.utils.redis_conn import REDIS_CONN, RedisDistributedLock
@@ -494,12 +495,22 @@ async def run_extract(row, chat_mdl, content,callback=None):
     )
     result = await extractor(content,None,callback)
     logging.info(f"run_extract result {result}")
-    doc = {
-        "doc_id": row["doc_id"],
-        "kb_id": [str(row["kb_id"])],
-        "docnm_kwd": row["name"],
-        "title_tks": rag_tokenizer.tokenize(row["name"])
-    }
+    return result
+
+
+async def run_classify(row, chat_mdl, content, callback=None):
+    classify_config = row["parser_config"].get('classify')
+    prompt = None
+    key = None
+    if classify_config:
+        prompt = classify_config.get("prompt",None)
+        key = classify_config.get("key",None)
+    classifier = PaperClassifier(
+        chat_mdl,
+        prompt
+    )
+    result = await classifier(content,callback)
+    logging.info(f"run_classify result {result}")
     return result
 
 
@@ -607,6 +618,7 @@ async def do_handle_task(task):
         if c_count >=10000:
             break
     logging.debug(f"do_handle_task current content {content}")
+
     dict_result = await run_extract(task, chat_model, content,progress_callback)
 
     if dict_result:
@@ -614,6 +626,17 @@ async def do_handle_task(task):
             c_['metadata'] = dict_result
             for key, value in dict_result.items():
                 c_[key]=value
+
+    classification_result = await run_classify(task, chat_model, content,progress_callback)
+    classify_result = []
+    if classification_result:
+        for key, value in classification_result.items():
+            classify_obj = {"类别编号":key,"分类类别":value}
+            classify_result.append(classify_obj)
+        for c_ in chunks:
+            if not c_.get('metadata',None):
+                c_['metadata']={}
+            c_['metadata']['classification'] = classify_result
     progress_callback(prog=0.99,msg="完成大模型要素提取 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
