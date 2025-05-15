@@ -181,55 +181,6 @@ const Chunk = () => {
         ></ChunkToolBar>
         <Divider></Divider>
         <Flex flex={1} gap={'middle'}>
-          <div
-           className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
-            style={{
-              width: isMinimized ? 100 : 300, // Adjust width dynamically
-              background: '#fafafa',
-              borderRadius: 8,
-              padding: 16,
-              border: '1px solid #eee',
-              height: 'fit-content',
-              alignSelf: 'flex-start',
-              overflowX: 'auto',
-                overflowY: 'auto',
-              position: 'relative', // For button positioning
-            }}
-          >
-            <div
-              onClick={toggleMinimize}
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              {isMinimized ? 'Expand' : 'Min'}
-            </div>
-            <table style={{ width: '100%', fontSize: 14, minWidth: 300 }}>
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'left', paddingBottom: 8 }}>Key</th>
-                  <th style={{ textAlign: 'left', paddingBottom: 8 }}>Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chunkMetaList.map((item) => (
-                  <tr key={item.key}>
-                    <td style={{ padding: '4px 8px 4px 0', color: '#888' }}>
-                      {item.key}
-                    </td>
-                    <td style={{ padding: '4px 0', color: '#222' }}>
-                      {item.value}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
           <Flex
             vertical
             className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
@@ -269,6 +220,66 @@ const Chunk = () => {
                 onChange={onPaginationChange}
               />
             </div>
+          </Flex>
+          <Flex
+            // flex={1}
+            className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
+            style={{
+              width: isMinimized ? 100 : 600, // Adjust width dynamically
+              background: '#fafafa',
+              borderRadius: 8,
+              padding: 16,
+              border: '1px solid #eee',
+              height: 'fit-content',
+              alignSelf: 'flex-start',
+              overflowX: 'auto',
+              // overflowY: 'auto',
+              position: 'relative', // For button positioning
+            }}
+          >
+            <Space
+              direction="vertical"
+              size={'middle'}
+              className={classNames(styles.chunkContainer, {
+                [styles.chunkOtherContainer]: !isPdf,
+              })}
+            >
+              <div
+                onClick={toggleMinimize}
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {isMinimized ? 'Expand' : 'Min'}
+              </div>
+              <table style={{ width: '100%', fontSize: 14, minWidth: 300 }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', paddingBottom: 8 }}>Key</th>
+                    <th style={{ textAlign: 'left', paddingBottom: 8 }}>
+                      Value
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chunkMetaList.map((item) => (
+                    <tr key={item.key}>
+                      <td style={{ padding: '4px 8px 4px 0', color: '#888' }}>
+                        {item.key}
+                      </td>
+                      <td style={{ padding: '4px 0', color: '#222' }}>
+                        {item.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Space>
           </Flex>
           {isPdf && (
             <section className={styles.documentPreview}>

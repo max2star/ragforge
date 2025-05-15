@@ -95,6 +95,8 @@ const ChunkMethodModal: React.FC<IProps> = ({
     onOk(selectedTag, parser_config);
   };
 
+  console.log('selectedTag >>>', selectedTag);
+
   const isPdf = documentExtension === 'pdf';
 
   const showPages = useMemo(() => {
@@ -150,6 +152,17 @@ const ChunkMethodModal: React.FC<IProps> = ({
     useGraphRag,
     visible,
   ]);
+
+  useEffect(() => {
+    const currentValue = form.getFieldValue([
+      'parser_config',
+      'layout_recognize',
+    ]);
+    console.log('currentValue >>>', currentValue);
+    if (selectedTag !== DocumentParserType.Paper && currentValue === 'MinerU') {
+      form.setFieldValue(['parser_config', 'layout_recognize'], '');
+    }
+  }, [form, selectedTag]);
 
   return (
     <Modal
@@ -302,14 +315,22 @@ const ChunkMethodModal: React.FC<IProps> = ({
                     },
                   ]}
                 >
-                  <InputNumber    className={styles.pageInputNumber} min={1} max={1000000000} />
+                  <InputNumber
+                    className={styles.pageInputNumber}
+                    min={1}
+                    max={1000000000}
+                  />
                 </Form.Item>
               )
             }
           </Form.Item>
         )}
         <DatasetConfigurationContainer show={showOne || showMaxTokenNumber}>
-          {showOne && <LayoutRecognize></LayoutRecognize>}
+          {showOne && (
+            <LayoutRecognize
+              isPdf={selectedTag === DocumentParserType.Paper}
+            ></LayoutRecognize>
+          )}
           {showMaxTokenNumber && (
             <>
               <MaxTokenNumber

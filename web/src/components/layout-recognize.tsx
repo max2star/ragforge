@@ -5,22 +5,21 @@ import { Form, Select } from 'antd';
 import { camelCase } from 'lodash';
 import { useMemo } from 'react';
 
-const enum DocumentType {
+export const enum DocumentType {
   DeepDOC = 'DeepDOC',
   PlainText = 'Plain Text',
   MinerU = 'MinerU',
 }
 
-const LayoutRecognize = () => {
+const LayoutRecognize = ({ isPdf }: { isPdf: boolean }) => {
   const { t } = useTranslate('knowledgeDetails');
   const allOptions = useSelectLlmOptionsByModelType();
 
   const options = useMemo(() => {
-    const list = [
-      DocumentType.DeepDOC,
-      DocumentType.PlainText,
-      DocumentType.MinerU,
-    ].map((x) => ({
+    const tepmOptions = isPdf
+      ? [DocumentType.DeepDOC, DocumentType.PlainText, DocumentType.MinerU]
+      : [DocumentType.DeepDOC, DocumentType.PlainText];
+    const list = tepmOptions.map((x) => ({
       label: x === DocumentType.PlainText ? t(camelCase(x)) : x,
       value: x,
     }));
@@ -43,7 +42,7 @@ const LayoutRecognize = () => {
     });
 
     return [...list, ...image2TextList];
-  }, [allOptions, t]);
+  }, [allOptions, t, isPdf]);
 
   return (
     <Form.Item
