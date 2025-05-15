@@ -172,6 +172,8 @@ class ESConnection(DocStoreConnection):
 
         s = Search()
         vector_similarity_weight = 0.5
+        #TODO MaXiao
+        bqry_for_vector = copy.deepcopy(bqry)
         for m in matchExprs:
             if isinstance(m, FusionExpr) and m.method == "weighted_sum" and "weights" in m.fusion_params:
                 assert len(matchExprs) == 3 and isinstance(matchExprs[0], MatchTextExpr) and isinstance(matchExprs[1],
@@ -188,7 +190,12 @@ class ESConnection(DocStoreConnection):
                                    type="best_fields", query=m.matching_text,
                                    minimum_should_match=minimum_should_match,
                                    boost=1))
+                bqry_for_vector.should.append(Q("query_string", fields=m.fields,
+                                   type="best_fields", query=m.matching_text,
+                                   minimum_should_match=minimum_should_match,
+                                   boost=1))
                 bqry.boost = 1.0 - vector_similarity_weight
+                bqry_for_vector.boost = 1.0 - vector_similarity_weight
 
             elif isinstance(m, MatchDenseExpr):
                 assert (bqry is not None)
@@ -199,7 +206,7 @@ class ESConnection(DocStoreConnection):
                           m.topn,
                           m.topn * 2,
                           query_vector=list(m.embedding_data),
-                          filter=bqry.to_dict(),
+                          filter=bqry_for_vector.to_dict(),
                           similarity=similarity,
                           )
 
