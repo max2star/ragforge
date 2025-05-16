@@ -22,3 +22,8 @@ export function transformTagFeaturesObjectToArray(
     return pre;
   }, []);
 }
+
+export function shouldRenderAsHTML(content: string): boolean {
+  const htmlTagPattern = /<\/?[a-z][\s\S]*>/i;
+  return htmlTagPattern.test(content);
+}

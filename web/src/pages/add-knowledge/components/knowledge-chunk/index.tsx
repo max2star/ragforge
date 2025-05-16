@@ -100,7 +100,6 @@ const Chunk = () => {
   const handleSwitchChunk = useCallback(
     async (available?: number, chunkIds?: string[]) => {
       let ids = chunkIds;
-      console.log('handleSwitchChunk');
       if (!chunkIds) {
         ids = selectedChunkIds;
         if (selectedChunkIds.length === 0) {
@@ -114,8 +113,6 @@ const Chunk = () => {
         available_int: available,
         doc_id: documentId,
       });
-      if (!chunkIds && resCode === 0) {
-      }
     },
     [switchChunk, documentId, selectedChunkIds, showSelectedChunkWarning],
   );
@@ -125,44 +122,129 @@ const Chunk = () => {
 
   const safeJsonParse = (str: string): Record<string, any> => {
     try {
-      // 用正则替换掉 key 的单引号或无引号，变成合法 JSON
       const fixedStr = str
-        .replace(/([{,])\s*'([^']+?)'\s*:/g, '$1"$2":') // 替换 key
-        .replace(/:\s*'([^']*?)'/g, ': "$1"'); // 替换 value
+        .replace(/([{,])\s*'([^']+?)'\s*:/g, '$1"$2":')
+        .replace(/:\s*'([^']*?)'/g, ': "$1"');
       return JSON.parse(fixedStr);
     } catch (e) {
       console.warn('Invalid metadata JSON', e);
       return {};
     }
   };
+
+  const renderValue = (value: any): React.ReactNode => {
+    if (Array.isArray(value)) {
+      return (
+        <table
+          style={{
+            borderCollapse: 'collapse',
+            width: '100%',
+            marginTop: 4,
+            background: '#fdfdfd',
+          }}
+        >
+          <tbody>
+            {value.map((item, index) => (
+              <tr key={index}>
+                <td
+                  style={{
+                    border: '1px solid #ccc',
+                    padding: 4,
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {renderValue(item)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    } else if (typeof value === 'object' && value !== null) {
+      return (
+        <table
+          style={{
+            borderCollapse: 'collapse',
+            width: '100%',
+            marginTop: 4,
+            background: '#fdfdfd',
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                style={{
+                  border: '1px solid #ccc',
+                  padding: 4,
+                  background: '#f3f3f3',
+                  textAlign: 'left',
+                }}
+              >
+                Key
+              </th>
+              <th
+                style={{
+                  border: '1px solid #ccc',
+                  padding: 4,
+                  background: '#f3f3f3',
+                  textAlign: 'left',
+                }}
+              >
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(value).map(([k, v]) => (
+              <tr key={k}>
+                <td
+                  style={{
+                    border: '1px solid #ccc',
+                    padding: 4,
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {k}
+                </td>
+                <td
+                  style={{
+                    border: '1px solid #ccc',
+                    padding: 4,
+                    verticalAlign: 'top',
+                  }}
+                >
+                  {renderValue(v)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    } else {
+      return <span>{String(value)}</span>;
+    }
+  };
+
   const chunkMetaList = useMemo(() => {
-    console.log('chunkMetaList >>>>', selectedChunkId);
     const selectedChunks = data.filter((chunk) =>
       selectedChunkId.includes(chunk.chunk_id),
     );
 
+    console.log('data >>>', data);
+
+    const firstData = data?.[0] ?? {};
+    const mateData = firstData.metadata;
     let parsedMeta: Record<string, any> = {};
-    selectedChunks.forEach((chunk) => {
-      try {
-        console.log('chunk.metadata ', chunk.metadata);
-        const meta = safeJsonParse(chunk.metadata || '{}');
-        parsedMeta = { ...parsedMeta, ...meta };
-      } catch (e) {
-        console.warn('Invalid metadata JSON', e);
-      }
-    });
+    // selectedChunks.forEach((chunk) => {
+      const meta = safeJsonParse(mateData|| '{}');
+      parsedMeta = { ...parsedMeta, ...meta };
+    // });
 
-    const selectedChunkMeta = Object.entries(parsedMeta).map(([key, value]) => {
-      const cleanedKey = key.replace(/@@@AI$/, ''); // 去掉末尾的 @@@AI
-      return {
-        key: cleanedKey,
-        desc: cleanedKey,
-        value: String(value),
-      };
-    });
-
-    return [...selectedChunkMeta];
-  }, [documentInfo, data, selectedChunkId]);
+    return Object.entries(parsedMeta).map(([key, value]) => ({
+      key,
+      value,
+    }));
+  }, [data, selectedChunkId]);
 
   return (
     <>
@@ -178,8 +260,8 @@ const Chunk = () => {
           handleInputChange={handleInputChange}
           available={available}
           handleSetAvailable={handleSetAvailable}
-        ></ChunkToolBar>
-        <Divider></Divider>
+        />
+        <Divider />
         <Flex flex={1} gap={'middle'}>
           <Flex
             vertical
@@ -207,7 +289,7 @@ const Chunk = () => {
                       clickChunkCard={handleChunkCardClick}
                       selected={item.chunk_id === selectedChunkId}
                       textMode={textMode}
-                    ></ChunkCard>
+                    />
                   ))}
                 </Space>
               </div>
@@ -222,10 +304,9 @@ const Chunk = () => {
             </div>
           </Flex>
           <Flex
-            // flex={1}
             className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
             style={{
-              width: isMinimized ? 100 : 600, // Adjust width dynamically
+              width: isMinimized ? 100 : 600,
               background: '#fafafa',
               borderRadius: 8,
               padding: 16,
@@ -233,8 +314,7 @@ const Chunk = () => {
               height: 'fit-content',
               alignSelf: 'flex-start',
               overflowX: 'auto',
-              // overflowY: 'auto',
-              position: 'relative', // For button positioning
+              position: 'relative',
             }}
           >
             <Space
@@ -257,11 +337,34 @@ const Chunk = () => {
               >
                 {isMinimized ? 'Expand' : 'Min'}
               </div>
-              <table style={{ width: '100%', fontSize: 14, minWidth: 300 }}>
+              <table
+                style={{
+                  width: '100%',
+                  fontSize: 14,
+                  borderCollapse: 'collapse',
+                  border: '1px solid #ccc',
+                }}
+              >
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left', paddingBottom: 8 }}>Key</th>
-                    <th style={{ textAlign: 'left', paddingBottom: 8 }}>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: 8,
+                        background: '#f3f3f3',
+                        border: '1px solid #ccc',
+                      }}
+                    >
+                      Key
+                    </th>
+                    <th
+                      style={{
+                        textAlign: 'left',
+                        padding: 8,
+                        background: '#f3f3f3',
+                        border: '1px solid #ccc',
+                      }}
+                    >
                       Value
                     </th>
                   </tr>
@@ -269,11 +372,24 @@ const Chunk = () => {
                 <tbody>
                   {chunkMetaList.map((item) => (
                     <tr key={item.key}>
-                      <td style={{ padding: '4px 8px 4px 0', color: '#888' }}>
+                      <td
+                        style={{
+                          padding: 8,
+                          border: '1px solid #ccc',
+                          verticalAlign: 'top',
+                          color: '#555',
+                        }}
+                      >
                         {item.key}
                       </td>
-                      <td style={{ padding: '4px 0', color: '#222' }}>
-                        {item.value}
+                      <td
+                        style={{
+                          padding: 8,
+                          border: '1px solid #ccc',
+                          verticalAlign: 'top',
+                        }}
+                      >
+                        {renderValue(item.value)}
                       </td>
                     </tr>
                   ))}
@@ -286,7 +402,7 @@ const Chunk = () => {
               <DocumentPreview
                 highlights={highlights}
                 setWidthAndHeight={setWidthAndHeight}
-              ></DocumentPreview>
+              />
             </section>
           )}
         </Flex>
