@@ -210,6 +210,7 @@ async def collect():
         return None, None
 
     canceled = False
+    #Task是从数据库获取的；所以有些在doc或msg中的信息，需要添加进去
     task = TaskService.get_task(msg["id"])
     if task:
         _, doc = DocumentService.get_by_id(task["doc_id"])
@@ -221,6 +222,7 @@ async def collect():
         redis_msg.ack()
         return None, None
     task["task_type"] = msg.get("task_type", "")
+    task["meta_fields"] = doc.meta_fields
     return redis_msg, task
 
 
@@ -605,6 +607,10 @@ async def do_handle_task(task):
 
 
     start_ts = timer()
+
+    #先获取现有的元数据
+    dict_result = task.get('meta_fields',{})
+    key_now = dict_result.keys()
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
     #运行
@@ -617,14 +623,13 @@ async def do_handle_task(task):
             break
     logging.debug(f"do_handle_task current content {content}")
 
-    dict_result = await run_extract(task, chat_model, content,progress_callback)
-    if not dict_result:
-        dict_result = {}
-    #抽取失败用空覆盖之前
-    for c_ in chunks:
-        c_['metadata'] = dict_result
-    #    for key, value in dict_result.items():
-    #        c_[key]=value
+    dict_result_add = await run_extract(task, chat_model, content,progress_callback)
+    for key,value in dict_result_add.items():
+        if key in key_now:
+            logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+        else:
+            dict_result[key] = value
+
     classification_result = await run_classify(task, chat_model, content,progress_callback)
     #抽取失败用空覆盖之前
     classify_result = []
@@ -632,10 +637,18 @@ async def do_handle_task(task):
         for key, value in classification_result.items():
             classify_obj = {"类别编号":key,"分类类别":value}
             classify_result.append(classify_obj)
+    dict_result['分类标签'] =  classify_result
+
     for c_ in chunks:
-        if not c_.get('metadata',None):
-            c_['metadata']={}
-        c_['metadata']['分类标签'] = classify_result
+        c_['metadata']=dict_result
+
+    #将元数据更新到Chunk
+    for key,value in dict_result_add.items():
+        c_[key] = value
+
+    #更新元数据到文档
+    DocumentService.update_by_id(task["doc_id"], {"meta_fields": dict_result})
+
     progress_callback(prog=0.99,msg="完成大模型要素提取 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
