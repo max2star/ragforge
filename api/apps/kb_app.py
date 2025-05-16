@@ -103,6 +103,21 @@ def update():
                 code=settings.RetCode.OPERATING_ERROR
             )
 
+        parser_config =  req.get("parser_config", None)
+        if parser_config:
+            extractor = parser_config.get('extractor',None)
+            classifier= parser_config.get('classifier',None)
+            import logging
+            logging.info('MaXiao Current {}'.format(kb.parser_config))
+            if not extractor:
+                pre_configed_0 = kb.parser_config.get('extractor',None)
+                if pre_configed_0:
+                    parser_config['extractor'] = pre_configed_0
+            if not classifier:
+                pre_configed_1 = kb.parser_config.get('classifier',None)
+                if pre_configed_1:
+                    parser_config['classifier'] = pre_configed_1
+
         if req["name"].lower() != kb.name.lower() \
                 and len(
             KnowledgebaseService.query(name=req["name"], tenant_id=current_user.id, status=StatusEnum.VALID.value)) > 1:

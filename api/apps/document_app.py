@@ -380,6 +380,7 @@ def run():
                 doc = doc.to_dict()
                 doc["tenant_id"] = tenant_id
                 bucket, name = File2DocumentService.get_storage_address(doc_id=doc["id"])
+                #添加任务的时候使用的是从DocumentService中获取的doc，里边具备任务的parser_id/parser_config等信息
                 queue_tasks(doc, bucket, name, 0)
 
         return get_json_result(data=True)
