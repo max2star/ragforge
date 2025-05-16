@@ -37,10 +37,10 @@ export const useSubmitKnowledgeConfiguration = (form: FormInstance) => {
       };
 
       console.log('values >>>', mergedValues);
-      return;
-      const avatar = await getBase64FromUploadFileList(values.avatar);
+      // return;
+      const avatar = await getBase64FromUploadFileList(mergedValues.avatar);
       saveKnowledgeConfiguration({
-        ...values,
+        ...mergedValues,
         avatar,
       });
       navigateToDataset();
