@@ -32,6 +32,7 @@ from playhouse.pool import PooledMySQLDatabase, PooledPostgresqlDatabase
 
 from api import settings, utils
 from api.db import ParserType, SerializedType
+from api.db import constant
 
 
 def singleton(cls, *args, **kw):
@@ -601,7 +602,9 @@ class Knowledgebase(DataBaseModel):
     vector_similarity_weight = FloatField(default=0.3, index=True)
 
     parser_id = CharField(max_length=32, null=False, help_text="default parser ID", default=ParserType.NAIVE.value, index=True)
-    parser_config = JSONField(null=False, default={"pages": [[1, 1000000]]})
+    parser_config = JSONField(null=False, default={"pages": [[1, 1000000]],
+        "extractor":{"keyvalues":constant.keyvalues_mapping['default']},
+        "classifier":{}})
     pagerank = IntegerField(default=0, index=False)
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
@@ -617,7 +620,9 @@ class Document(DataBaseModel):
     thumbnail = TextField(null=True, help_text="thumbnail base64 string")
     kb_id = CharField(max_length=256, null=False, index=True)
     parser_id = CharField(max_length=32, null=False, help_text="default parser ID", index=True)
-    parser_config = JSONField(null=False, default={"pages": [[1, 1000000]]})
+    parser_config = JSONField(null=False, default={"pages": [[1, 1000000]],
+        "extractor":{"keyvalues":constant.keyvalues_mapping['default']},
+        "classifier":{}})
     source_type = CharField(max_length=128, null=False, default="local", help_text="where dose this document come from", index=True)
     type = CharField(max_length=32, null=False, help_text="file extension", index=True)
     created_by = CharField(max_length=32, null=False, help_text="who created it", index=True)
