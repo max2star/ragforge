@@ -81,6 +81,6 @@ class PaperClassifier:
 
         if callback:
             callback(
-                msg="Classify Successed"
+                msg="文本分类打标签完成"
             )
         return results 

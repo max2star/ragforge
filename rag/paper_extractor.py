@@ -96,6 +96,6 @@ class PaperExtractor:
 
         if callback:
             callback(
-                msg="Extract Successed"
+                msg="要素抽取完成"
             )
         return results 

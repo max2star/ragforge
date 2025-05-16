@@ -623,11 +623,12 @@ class Document(DataBaseModel):
     parser_config = JSONField(null=False, default={"pages": [[1, 1000000]],
         "extractor":{"keyvalues":constant.keyvalues_mapping['default']},
         "classifier":{}})
-    source_type = CharField(max_length=128, null=False, default="local", help_text="where dose this document come from", index=True)
+    source_type = CharField(max_length=128, null=False, default="local", help_text="where does this document come from", index=True)
     type = CharField(max_length=32, null=False, help_text="file extension", index=True)
     created_by = CharField(max_length=32, null=False, help_text="who created it", index=True)
     name = CharField(max_length=255, null=True, help_text="file name", index=True)
-    location = CharField(max_length=255, null=True, help_text="where dose it store", index=True)
+    location = CharField(max_length=255, null=True, help_text="where does it store", index=True)
+    md_location = CharField(max_length=255, null=True, help_text="where does mineru markdown store", index=True)
     size = IntegerField(default=0, index=True)
     token_num = IntegerField(default=0, index=True)
     chunk_num = IntegerField(default=0, index=True)
@@ -650,10 +651,10 @@ class File(DataBaseModel):
     tenant_id = CharField(max_length=32, null=False, help_text="tenant id", index=True)
     created_by = CharField(max_length=32, null=False, help_text="who created it", index=True)
     name = CharField(max_length=255, null=False, help_text="file name or folder name", index=True)
-    location = CharField(max_length=255, null=True, help_text="where dose it store", index=True)
+    location = CharField(max_length=255, null=True, help_text="where does it store", index=True)
     size = IntegerField(default=0, index=True)
     type = CharField(max_length=32, null=False, help_text="file extension", index=True)
-    source_type = CharField(max_length=128, null=False, default="", help_text="where dose this document come from", index=True)
+    source_type = CharField(max_length=128, null=False, default="", help_text="where does this document come from", index=True)
 
     class Meta:
         db_table = "file"
@@ -804,7 +805,7 @@ class UserCanvasVersion(DataBaseModel):
 def migrate_db():
     migrator = DatabaseMigrator[settings.DATABASE_TYPE.upper()].value(DB)
     try:
-        migrate(migrator.add_column("file", "source_type", CharField(max_length=128, null=False, default="", help_text="where dose this document come from", index=True)))
+        migrate(migrator.add_column("file", "source_type", CharField(max_length=128, null=False, default="", help_text="where does this document come from", index=True)))
     except Exception:
         pass
     try:
@@ -890,5 +891,9 @@ def migrate_db():
         pass
     try:
         migrate(migrator.add_column("llm", "is_tools", BooleanField(null=False, help_text="support tools", default=False)))
+    except Exception:
+        pass
+    try:
+        migrate(migrator.add_column("document", "md_location", CharField(max_length=255, null=True, help_text="where does mineru markdown store", index=True)))
     except Exception:
         pass
