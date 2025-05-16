@@ -21,15 +21,32 @@ export const useSubmitKnowledgeConfiguration = (form: FormInstance) => {
   const { saveKnowledgeConfiguration, loading } = useUpdateKnowledge();
   const navigateToDataset = useNavigateToDataset();
 
-  const submitKnowledgeConfiguration = useCallback(async () => {
-    const values = await form.validateFields();
-    const avatar = await getBase64FromUploadFileList(values.avatar);
-    saveKnowledgeConfiguration({
-      ...values,
-      avatar,
-    });
-    navigateToDataset();
-  }, [saveKnowledgeConfiguration, form, navigateToDataset]);
+  const submitKnowledgeConfiguration = useCallback(
+    async (editorValue: any, editorClassifierValue: any) => {
+      const values = await form.validateFields();
+
+      const parserConfig = {
+        ...(values.parser_config || {}),
+        extractor: JSON.parse(editorValue),
+        classifier: JSON.parse(editorClassifierValue),
+      };
+
+      const mergedValues = {
+        ...values,
+        parser_config: parserConfig,
+      };
+
+      console.log('values >>>', mergedValues);
+      return;
+      const avatar = await getBase64FromUploadFileList(values.avatar);
+      saveKnowledgeConfiguration({
+        ...values,
+        avatar,
+      });
+      navigateToDataset();
+    },
+    [saveKnowledgeConfiguration, form, navigateToDataset],
+  );
 
   return {
     submitKnowledgeConfiguration,
