@@ -1,10 +1,6 @@
 import logging
-DEFAULT_KEYS_TO_EXTRACT= {
-        #"paper":"标题、系列信息、作者",
-        "paper":"标题、摘要、关键词、系列信息、作者、其他作者、责任单位、其他责任单位、内容简介、前言、序言、总序、分类、其他分类、DOI、ISBN、ISSN、出版机构、收录机构、出版时间"
-}
 
-def paper_extraction_prompt(content, key_to_extract=DEFAULT_KEYS_TO_EXTRACT['paper']):
+def paper_extraction_prompt(content, key_to_extract):
     prompt_1 = """
 Role: You're a text analyzer.
 Task: Your task is to extract keyvalue information from the input text content. Don't make it up, get the text directly, pay attention to the restrictions, and don't return only part of the content. Extract the keyvalue information from the text content.
@@ -52,7 +48,7 @@ Requirements:
     #    return ""
     #return kwd
 
-def paper_classification_prompt(content, key_to_extract=DEFAULT_KEYS_TO_EXTRACT['paper']):
+def paper_classification_prompt(content):
     prompt_1 = """
 角色: 你是核领域的专家，请帮助对文献资料进行分析。
 任务: 你的任务是对输入的文本内容进行分类。请严格按以下步骤判定文本内容的文档类别（仅需输出分类编号和名称）。
