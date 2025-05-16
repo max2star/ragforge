@@ -454,6 +454,35 @@ def get(doc_id):
         return server_error_response(e)
 
 
+@manager.route('/get_md/<doc_id>', methods=['GET'])  # noqa: F821
+# @login_required
+def get_md(doc_id):
+    try:
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            return get_data_error_result(message="Document not found!")
+
+        if doc.md_location:
+            res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
+            response = flask.make_response(re)
+        else:
+            return get_data_error_result(message="Document MarkDown not found!")
+
+        ext = re.search(r"\.([^.]+)$", doc.name)
+        if ext:
+            if doc.type == FileType.VISUAL.value:
+                response.headers.set('Content-Type', 'image/%s' % ext.group(1))
+            else:
+                response.headers.set(
+                    'Content-Type',
+                    'application/%s' %
+                    ext.group(1))
+        return response
+    except Exception as e:
+        return server_error_response(e)
+
+
+
 @manager.route('/change_parser', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("doc_id", "parser_id")

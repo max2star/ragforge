@@ -52,6 +52,7 @@ from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
 from magic_pdf.config.enums import SupportedPdfParseMethod
 from magic_pdf.data.read_api import read_local_office
+from api.db.services.document_service import DocumentService
 
 
 def _has_color(o):
@@ -124,7 +125,7 @@ class MinerUPdf:
         return "@@{}\t{:.1f}\t{:.1f}\t{:.1f}\t{:.1f}##" \
             .format("-".join([str(page_idx)+"--"+str(content_index)]),bx[0], bx[1], bx[2], bx[3])
 
-    def call_function(self, bucketname,filename, binary=None, from_page=0,
+    def call_function(self, bucketname,filename,kb_id,doc_id,binary=None, from_page=0,
                  to_page=100000, zoomin=3, callback=None):
 
         time_start_process= time.time()
@@ -140,12 +141,13 @@ class MinerUPdf:
         # 使用MinerU处理
         try:
             start = timer()
+            store_bucket_name = kb_id
             pdf_file_name = filename
             name_without_suff = pdf_file_name.split(".")[0]
             reader = S3DataReader('/', bucket_name, ak, sk, endpoint_url)
             reader_stored_files = S3DataReader('minerU/images/', bucket_name, ak, sk, endpoint_url)
-            writer = S3DataWriter('minerU/', bucket_name, ak, sk, endpoint_url)
-            image_writer = S3DataWriter('minerU/images/', bucket_name, ak, sk, endpoint_url)
+            writer = S3DataWriter('minerU/', store_bucket_name, ak, sk, endpoint_url)
+            image_writer = S3DataWriter('minerU/images/', store_bucket_name, ak, sk, endpoint_url)
             #从对象存储读取文件
             pdf_bytes = reader.read(pdf_file_name)
             callback(prog=0.05,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)".format(timer()-start))
@@ -170,12 +172,12 @@ class MinerUPdf:
             # get model inference result
             #model_inference_result = infer_result.get_infer_res()
             start = timer()
-            ### draw model result on each page
-            #infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
-            ## draw layout result on each page
-            #pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
-            ## draw spans result on each page
-            #pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
+            ## draw model result on each page
+            infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
+            # draw layout result on each page
+            pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
+            # draw spans result on each page
+            pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
             callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)".format(timer()-start))
             
             #获取MD文件
@@ -185,11 +187,14 @@ class MinerUPdf:
             
             start = timer()
             #将MarkDown文件进行输出
-            pipe_result.dump_md(writer, f"{name_without_suff}.md",'tmp/md')
+            pipe_result.dump_md(writer, f"{name_without_suff}.md",'')
             #将content list文件进行输出
-            pipe_result.dump_content_list(writer, f"{name_without_suff}_content_list.json", "images")
+            pipe_result.dump_content_list(writer, f"{name_without_suff}_content_list.json", "")
             #将middle json文件进行输出
             pipe_result.dump_middle_json(writer, f'{name_without_suff}_middle.json')
+
+            DocumentService.update_md_location_fields(doc_id,f"minerU/{name_without_suff}.md")
+
             callback(prog=0.75,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)".format(timer()-start))
             
             start = timer()
@@ -282,6 +287,7 @@ class MinerUPdf:
                     #表格数据为了后续做向量化，需要图片信息、文本信息、位置信息
                     #tbls里存储的是 （image,rows）,poss
                     caption_list = chunk_data.get("table_caption", []) # 获取列表
+                    table_footnote = chunk_data.get("table_footnote", []) # 获取列表
                     table_body = chunk_data.get("table_body", "")     # 获取表格主体
                     # 检查 caption_list 是否为列表，并且包含字符串元素
                     if isinstance(caption_list, list) and all(isinstance(item, str) for item in caption_list):
@@ -293,8 +299,18 @@ class MinerUPdf:
                     else:
                         # 其他情况（如空列表、None 或非字符串列表），使用空字符串
                         caption_str = ""
+                    if isinstance(table_footnote, list) and all(isinstance(item, str) for item in table_footnote):
+                        # 使用空格将列表中的所有字符串拼接起来
+                        table_footnote_str= " ".join(table_footnote)
+                    elif isinstance(caption_list, str):
+                        # 如果 caption 本身就是字符串，直接使用
+                        table_footnote_str =table_footnote
+                    else:
+                        # 其他情况（如空列表、None 或非字符串列表），使用空字符串
+                        table_footnote_str = ""
+
                     # 将处理后的标题字符串和表格主体拼接
-                    content = caption_str + table_body
+                    content = caption_str + table_body + table_footnote_str
                     #读取image信息
                     img_path_relative = chunk_data.get('img_path')
                     if img_path_relative:
@@ -331,7 +347,17 @@ class MinerUPdf:
                     else:
                         # 其他情况（如空列表、None 或非字符串列表），使用空字符串
                         caption_str = ""
-                    content = caption_str
+                    image_footnote = chunk_data.get("image_footnote", []) # 获取列表
+                    if isinstance(image_footnote, list) and all(isinstance(item, str) for item in image_footnote):
+                        # 使用空格将列表中的所有字符串拼接起来
+                        image_footnote_str= " ".join(image_footnote)
+                    elif isinstance(image_footnote, str):
+                        # 如果 caption 本身就是字符串，直接使用
+                        image_footnote_str= image_footnote
+                    else:
+                        # 其他情况（如空列表、None 或非字符串列表），使用空字符串
+                        image_footnote_str = ""
+                    content = caption_str+image_footnote_str
                     #if not content:
                     #    content = img_path_relative
                     if content:
