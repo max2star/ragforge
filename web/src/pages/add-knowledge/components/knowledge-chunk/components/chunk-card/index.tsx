@@ -4,11 +4,12 @@ import { Card, Checkbox, CheckboxProps, Flex, Popover, Switch } from 'antd';
 import classNames from 'classnames';
 import DOMPurify from 'dompurify';
 import { useEffect, useState } from 'react';
-// import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from 'react-markdown';
 
 import { useTheme } from '@/components/theme-provider';
 import { ChunkTextMode } from '../../constant';
 import styles from './index.less';
+import { shouldRenderAsHTML } from '../../utils';
 
 interface IProps {
   item: IChunk;
@@ -81,21 +82,29 @@ const ChunkCard = ({
           onClick={handleContentClick}
           className={styles.content}
         >
-          {/* <ReactMarkdown
-            className={classNames(styles.contentText, {
-              [styles.contentEllipsis]: textMode === ChunkTextMode.Ellipse,
-            })}
-          >
-            {item.content_with_weight}
-          </ReactMarkdown> */}
-          <div
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(item.content_with_weight),
-            }}
-            className={classNames(styles.contentText, {
-              [styles.contentEllipsis]: textMode === ChunkTextMode.Ellipse,
-            })}
-          ></div>
+          {shouldRenderAsHTML(item.content_with_weight) ? (
+            <div
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(item.content_with_weight),
+              }}
+              className={classNames(styles.contentText, {
+                [styles.contentEllipsis]: textMode === ChunkTextMode.Ellipse,
+              })}
+            >
+              {/* <span>md</span> */}
+            </div>
+          ) : (
+            <>
+              <ReactMarkdown
+                className={classNames(styles.contentText, {
+                  [styles.contentEllipsis]: textMode === ChunkTextMode.Ellipse,
+                })}
+              >
+                {item.content_with_weight}
+              </ReactMarkdown>
+              {/* <span>html</span> */}
+            </>
+          )}
         </section>
 
         <div>
