@@ -389,6 +389,11 @@ class DocumentService(CommonService):
 
     @classmethod
     @DB.connection_context()
+    def update_layout_location_fields(cls, doc_id, layout_location):
+        return cls.update_by_id(doc_id, {"layout_location": layout_location})
+
+    @classmethod
+    @DB.connection_context()
     def update_progress(cls):
         docs = cls.get_unfinished_docs()
         for d in docs:

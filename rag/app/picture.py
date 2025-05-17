@@ -40,7 +40,7 @@ def chunk(filename, binary, tenant_id, lang, callback=None, **kwargs):
     callback(0.4, "Finish OCR: (%s ...)" % txt[:12])
     if (eng and len(txt.split()) > 32) or len(txt) > 32:
         tokenize(doc, txt, eng)
-        callback(0.8, "OCR results is too long to use CV LLM.")
+        callback(0.8, "OCR results is too long to use CV LLM,not use cv llm to describe the picture.")
         return [doc]
 
     try:
