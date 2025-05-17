@@ -24,7 +24,16 @@ redis:
   db: 1
   password: '${REDIS_PASSWORD:-infini_rag_flow}'
   host: '${REDIS_HOST:-redis}:6379'
-
+user_default_llm:
+  factory: 'OpenAI-API-Compatible'
+  api_key: 'gpustack_9ee4961bc8fbe141_317180d1e53cb4eee68633d301adfd15'
+  base_url: 'http://101.52.216.178:890'
+  default_models:
+    chat_model: 'deepseek-r1-70B-Q8'
+    embedding_model: 'bge-m3'
+    rerank_model: 'jina-reranker-v2-base-multilingual'
+    asr_model: ''
+    image2text_model: ''
 # postgres:
 #   name: '${POSTGRES_DBNAME:-rag_flow}'
 #   user: '${POSTGRES_USER:-rag_flow}'
