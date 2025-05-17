@@ -44,6 +44,7 @@ from rag.nlp import rag_tokenizer
 
 os.environ['CUDA_VISIBLE_DEVICES']="0,1"
 
+import fitz
 from magic_pdf.data.data_reader_writer import S3DataReader, S3DataWriter
 from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
@@ -52,6 +53,9 @@ from magic_pdf.data.dataset import PymuDocDataset
 from magic_pdf.model.doc_analyze_by_custom_model import doc_analyze
 from magic_pdf.config.enums import SupportedPdfParseMethod
 from magic_pdf.data.read_api import read_local_office
+from magic_pdf.config.ocr_content_type import (BlockType, CategoryId,
+                                               ContentType)
+from magic_pdf.libs.draw_bbox import draw_bbox_without_number,draw_bbox_with_number
 from api.db.services.document_service import DocumentService
 
 
@@ -88,6 +92,139 @@ def get_bbox_from_block(block):
             print(f"[Parser-WARNING] 块的 bbox 格式无效: {bbox}，将使用默认值。")
     # 如果 block 不是字典或没有 bbox 键，或 bbox 格式无效，返回默认值
     return [0, 0, 0, 0]
+
+def draw_layout_bbox_(pdf_info, pdf_bytes,writer,file_dst):
+    dropped_bbox_list = []
+    tables_list, tables_body_list = [], []
+    tables_caption_list, tables_footnote_list = [], []
+    imgs_list, imgs_body_list, imgs_caption_list = [], [], []
+    imgs_footnote_list = []
+    titles_list = []
+    texts_list = []
+    interequations_list = []
+    lists_list = []
+    indexs_list = []
+    for page in pdf_info:
+
+        page_dropped_list = []
+        tables, tables_body, tables_caption, tables_footnote = [], [], [], []
+        imgs, imgs_body, imgs_caption, imgs_footnote = [], [], [], []
+        titles = []
+        texts = []
+        interequations = []
+        lists = []
+        indices = []
+
+        for dropped_bbox in page['discarded_blocks']:
+            page_dropped_list.append(dropped_bbox['bbox'])
+        dropped_bbox_list.append(page_dropped_list)
+        for block in page['para_blocks']:
+            bbox = block['bbox']
+            if block['type'] == BlockType.Table:
+                tables.append(bbox)
+                for nested_block in block['blocks']:
+                    bbox = nested_block['bbox']
+                    if nested_block['type'] == BlockType.TableBody:
+                        tables_body.append(bbox)
+                    elif nested_block['type'] == BlockType.TableCaption:
+                        tables_caption.append(bbox)
+                    elif nested_block['type'] == BlockType.TableFootnote:
+                        tables_footnote.append(bbox)
+            elif block['type'] == BlockType.Image:
+                imgs.append(bbox)
+                for nested_block in block['blocks']:
+                    bbox = nested_block['bbox']
+                    if nested_block['type'] == BlockType.ImageBody:
+                        imgs_body.append(bbox)
+                    elif nested_block['type'] == BlockType.ImageCaption:
+                        imgs_caption.append(bbox)
+                    elif nested_block['type'] == BlockType.ImageFootnote:
+                        imgs_footnote.append(bbox)
+            elif block['type'] == BlockType.Title:
+                titles.append(bbox)
+            elif block['type'] == BlockType.Text:
+                texts.append(bbox)
+            elif block['type'] == BlockType.InterlineEquation:
+                interequations.append(bbox)
+            elif block['type'] == BlockType.List:
+                lists.append(bbox)
+            elif block['type'] == BlockType.Index:
+                indices.append(bbox)
+
+        tables_list.append(tables)
+        tables_body_list.append(tables_body)
+        tables_caption_list.append(tables_caption)
+        tables_footnote_list.append(tables_footnote)
+        imgs_list.append(imgs)
+        imgs_body_list.append(imgs_body)
+        imgs_caption_list.append(imgs_caption)
+        imgs_footnote_list.append(imgs_footnote)
+        titles_list.append(titles)
+        texts_list.append(texts)
+        interequations_list.append(interequations)
+        lists_list.append(lists)
+        indexs_list.append(indices)
+
+    layout_bbox_list = []
+
+    table_type_order = {
+        'table_caption': 1,
+        'table_body': 2,
+        'table_footnote': 3
+    }
+    for page in pdf_info:
+        page_block_list = []
+        for block in page['para_blocks']:
+            if block['type'] in [
+                BlockType.Text,
+                BlockType.Title,
+                BlockType.InterlineEquation,
+                BlockType.List,
+                BlockType.Index,
+            ]:
+                bbox = block['bbox']
+                page_block_list.append(bbox)
+            elif block['type'] in [BlockType.Image]:
+                for sub_block in block['blocks']:
+                    bbox = sub_block['bbox']
+                    page_block_list.append(bbox)
+            elif block['type'] in [BlockType.Table]:
+                sorted_blocks = sorted(block['blocks'], key=lambda x: table_type_order[x['type']])
+                for sub_block in sorted_blocks:
+                    bbox = sub_block['bbox']
+                    page_block_list.append(bbox)
+
+        layout_bbox_list.append(page_block_list)
+
+    pdf_docs = fitz.open('pdf', pdf_bytes)
+
+    for i, page in enumerate(pdf_docs):
+
+        draw_bbox_without_number(i, dropped_bbox_list, page, [158, 158, 158], True)
+        # draw_bbox_without_number(i, tables_list, page, [153, 153, 0], True)  # color !
+        draw_bbox_without_number(i, tables_body_list, page, [204, 204, 0], True)
+        draw_bbox_without_number(i, tables_caption_list, page, [255, 255, 102], True)
+        draw_bbox_without_number(i, tables_footnote_list, page, [229, 255, 204], True)
+        # draw_bbox_without_number(i, imgs_list, page, [51, 102, 0], True)
+        draw_bbox_without_number(i, imgs_body_list, page, [153, 255, 51], True)
+        draw_bbox_without_number(i, imgs_caption_list, page, [102, 178, 255], True)
+        draw_bbox_without_number(i, imgs_footnote_list, page, [255, 178, 102], True),
+        draw_bbox_without_number(i, titles_list, page, [102, 102, 255], True)
+        draw_bbox_without_number(i, texts_list, page, [153, 0, 76], True)
+        draw_bbox_without_number(i, interequations_list, page, [0, 255, 0], True)
+        draw_bbox_without_number(i, lists_list, page, [40, 169, 92], True)
+        draw_bbox_without_number(i, indexs_list, page, [40, 169, 92], True)
+
+        draw_bbox_with_number(
+            i, layout_bbox_list, page, [255, 0, 0], False, draw_bbox=False
+        )
+
+    # Save the PDF
+    pdf_stream = BytesIO()
+    pdf_docs.save(pdf_stream)
+    pdf_stream.seek(0)
+
+    writer.write(file_dst, pdf_stream)
 
 class MinerUPdf:
     def __init__(self, **kwargs):
@@ -167,17 +304,22 @@ class MinerUPdf:
                 ## pipeline
                 pipe_result = infer_result.pipe_txt_mode(image_writer)
             callback(prog=0.6,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}".format(timer()-start,use_ocr))
-            
-            #TODO
-            # get model inference result
-            #model_inference_result = infer_result.get_infer_res()
+
             start = timer()
-            ## draw model result on each page
-            infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
-            # draw layout result on each page
-            pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
-            # draw spans result on each page
-            pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
+            pdf_info = pipe_result._pipe_res['pdf_info']
+            pdf_bytes= pipe_result._dataset.data_bits()
+            draw_layout_bbox_(pdf_info, pdf_bytes,writer,f"{name_without_suff}_layout.pdf")
+            DocumentService.update_layout_location_fields(doc_id,f"minerU/{name_without_suff}_layout.pdf")
+
+            #TODO
+            ## get model inference result
+            ##model_inference_result = infer_result.get_infer_res()
+            ### draw model result on each page
+            #infer_result.draw_model(os.path.join(local_md_dir, f"{name_without_suff}_model.pdf"))
+            ## draw layout result on each page
+            #pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
+            ## draw spans result on each page
+            #pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
             callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)".format(timer()-start))
             
             #获取MD文件

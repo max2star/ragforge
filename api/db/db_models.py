@@ -629,6 +629,7 @@ class Document(DataBaseModel):
     name = CharField(max_length=255, null=True, help_text="file name", index=True)
     location = CharField(max_length=255, null=True, help_text="where does it store", index=True)
     md_location = CharField(max_length=255, null=True, help_text="where does mineru markdown store", index=True)
+    layout_location = CharField(max_length=255, null=True, help_text="where does mineru markdown store", index=True)
     size = IntegerField(default=0, index=True)
     token_num = IntegerField(default=0, index=True)
     chunk_num = IntegerField(default=0, index=True)
@@ -895,5 +896,9 @@ def migrate_db():
         pass
     try:
         migrate(migrator.add_column("document", "md_location", CharField(max_length=255, null=True, help_text="where does mineru markdown store", index=True)))
+    except Exception:
+        pass
+    try:
+        migrate(migrator.add_column("document", "layout_location", CharField(max_length=255, null=True, help_text="where does mineru layout pdf store", index=True)))
     except Exception:
         pass
