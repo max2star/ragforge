@@ -483,7 +483,7 @@ def get_md(doc_id):
 
 @manager.route('/get_layout/<doc_id>', methods=['GET'])  # noqa: F821
 # @login_required
-def get_md(doc_id):
+def get_layout(doc_id):
     try:
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
