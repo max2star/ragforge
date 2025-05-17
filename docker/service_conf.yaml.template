@@ -27,7 +27,9 @@ redis:
 user_default_llm:
   factory: 'OpenAI-API-Compatible'
   api_key: 'gpustack_9ee4961bc8fbe141_317180d1e53cb4eee68633d301adfd15'
-  base_url: 'http://101.52.216.178:890'
+  #同样是GPUStack，使用OpenAI-API-Compatible时要带着v1，直接使用GPUStack不需要带v1
+  base_url: 'http://101.52.216.178:890/v1'
+  #base_url: 'http://101.52.216.178:890'
   default_models:
     chat_model: 'deepseek-r1-70B-Q8'
     embedding_model: 'bge-m3'
