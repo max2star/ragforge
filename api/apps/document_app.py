@@ -466,7 +466,7 @@ def get_md(doc_id):
             res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
             response = flask.make_response(re)
         else:
-            return get_data_error_result(message="Document MarkDown not found!")
+            return get_data_error_result(message="Document MarkDown not found, maybe not parsed by MinerU!")
 
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:
@@ -493,7 +493,7 @@ def get_layout(doc_id):
             res = STORAGE_IMPL.get(doc.kb_id, doc.layout_location)
             response = flask.make_response(re)
         else:
-            return get_data_error_result(message="Document Layout not found!")
+            return get_data_error_result(message="Document Layout not found, maybe not parsed by MinerU!")
 
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:
