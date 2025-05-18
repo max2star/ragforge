@@ -36,6 +36,16 @@ class UserCanvasService(CommonService):
 
     @classmethod
     @DB.connection_context()
+    def accessible(cls, canvas_id, user_id):
+        canvas = cls.model.select(
+            cls.model.id).where(cls.model.id == canvas_id, cls.model.user_id== user_id).paginate(0, 1)
+        canvas = canvas.dicts()
+        if not canvas:
+            return False
+        return True
+
+    @classmethod
+    @DB.connection_context()
     def get_list(cls, tenant_id,
                  page_number, items_per_page, orderby, desc, id, title):
         agents = cls.model.select()

@@ -50,6 +50,14 @@ def list_chunk():
         tenant_id = DocumentService.get_tenant_id(req["doc_id"])
         if not tenant_id:
             return get_data_error_result(message="Tenant not found!")
+
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
             return get_data_error_result(message="Document not found!")
@@ -97,6 +105,8 @@ def get():
             return get_data_error_result(message="Tenant not found!")
         for tenant in tenants:
             kb_ids = KnowledgebaseService.get_kb_ids(tenant.tenant_id)
+            #查看所有这个用户所关联的空间下，与这个空间下kb_ids和chunk_id相同的chunk。
+            #这种做法能有权限验证的作用，但是不太好。目前没有太好的办法，因为chunk是存储到ES里的。
             chunk = settings.docStoreConn.get(chunk_id, search.index_name(tenant.tenant_id), kb_ids)
             if chunk:
                 break
@@ -146,6 +156,10 @@ def set():
         if not tenant_id:
             return get_data_error_result(message="Tenant not found!")
 
+        usertenants = UserTenantService.query(user_id=current_user.id,tenant_id=tenant_id)
+        if not usertenants:
+            return get_data_error_result(message="该用户不具备该文档所在空间的访问权限!")
+
         embd_id = DocumentService.get_embd_id(req["doc_id"])
         embd_mdl = LLMBundle(tenant_id, LLMType.EMBEDDING, embd_id)
 
@@ -177,9 +191,18 @@ def set():
 def switch():
     req = request.json
     try:
+
         e, doc = DocumentService.get_by_id(req["doc_id"])
         if not e:
             return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.accessible(req["doc_id"], current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         for cid in req["chunk_ids"]:
             if not settings.docStoreConn.update({"id": cid},
                                                 {"available_int": int(req["available_int"])},
@@ -200,6 +223,13 @@ def rm():
         e, doc = DocumentService.get_by_id(req["doc_id"])
         if not e:
             return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.accessible(req["doc_id"], current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
         if not settings.docStoreConn.delete({"id": req["chunk_ids"]}, search.index_name(current_user.id), doc.kb_id):
             return get_data_error_result(message="Index updating failure")
         deleted_chunk_ids = req["chunk_ids"]
@@ -230,6 +260,14 @@ def create():
         e, doc = DocumentService.get_by_id(req["doc_id"])
         if not e:
             return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.accessible(req["doc_id"], current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         d["kb_id"] = [doc.kb_id]
         d["docnm_kwd"] = doc.name
         d["title_tks"] = rag_tokenizer.tokenize(doc.name)
@@ -306,6 +344,7 @@ def retrieval_test():
             question += keyword_extraction(chat_mdl, question)
 
         labels = label_question(question, [kb])
+        #搜索该用户所有的空间下的，所有传入的kb_ids和doc_ids下的文档
         ranks = settings.retrievaler.retrieval(question, embd_mdl, tenant_ids, kb_ids, page, size,
                                similarity_threshold, vector_similarity_weight, top,
                                doc_ids, rerank_mdl=rerank_mdl, highlight=req.get("highlight"),
@@ -336,12 +375,21 @@ def retrieval_test():
 @login_required
 def knowledge_graph():
     doc_id = request.args["doc_id"]
+
+    if not DocumentService.accessible(doc_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
     tenant_id = DocumentService.get_tenant_id(doc_id)
     kb_ids = KnowledgebaseService.get_kb_ids(tenant_id)
     req = {
         "doc_ids": [doc_id],
         "knowledge_graph_kwd": ["graph", "mind_map"]
     }
+    #搜索与tenant id 对应的特定index下的kb_ids和doc_id,knowledge_graph_kwd下的内容
     sres = settings.retrievaler.search(req, search.index_name(tenant_id), kb_ids)
     obj = {"graph": {}, "mind_map": {}}
     for id in sres.ids[:2]:

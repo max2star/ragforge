@@ -518,6 +518,9 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     if not e:
         raise LookupError("Can't find this knowledgebase!")
 
+    if not KnowledgebaseService.accessible(kb_id, user_id):
+        raise Exception(f"You don't own the dataset {kb_id}.")
+
     embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING, llm_name=kb.embd_id, lang=kb.language)
 
     err, files = FileService.upload_document(kb, file_objs, user_id)

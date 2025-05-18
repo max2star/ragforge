@@ -71,6 +71,21 @@ def upload():
     if not e:
         raise LookupError("Can't find this knowledgebase!")
 
+    if not KnowledgebaseService.accessible(kb_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    #tenant_id = kb.tenant_id
+    #if not tenant_id:
+    #    return get_data_error_result(message="Tenant not found!")
+
+    #usertenants = UserTenantService.query(user_id=current_user.id,tenant_id=tenant_id)
+    #if not usertenants:
+    #    return get_data_error_result(message="该用户不具备该文档所在空间的访问权限!")
+
     err, files = FileService.upload_document(kb, file_objs, current_user.id)
     files = [f[0] for f in files] # remove the blob
     
@@ -96,6 +111,13 @@ def web_crawl():
     e, kb = KnowledgebaseService.get_by_id(kb_id)
     if not e:
         raise LookupError("Can't find this knowledgebase!")
+
+    if not KnowledgebaseService.accessible(kb_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
 
     blob = html2pdf(url)
     if not blob:
@@ -166,6 +188,21 @@ def create():
         if DocumentService.query(name=req["name"], kb_id=kb_id):
             return get_data_error_result(
                 message="Duplicated document name in the same knowledgebase.")
+
+        #tenant_id = kb.tenant_id
+        #if not tenant_id:
+        #    return get_data_error_result(message="Tenant not found!")
+
+        #usertenants = UserTenantService.query(user_id=current_user.id,tenant_id=tenant_id)
+        #if not usertenants:
+        #    return get_data_error_result(message="该用户不具备该文档所在空间的访问权限!")
+
+        if not KnowledgebaseService.accessible(kb_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
         doc = DocumentService.insert({
             "id": get_uuid(),
@@ -241,6 +278,14 @@ def thumbnails():
     if not doc_ids:
         return get_json_result(
             data=False, message='Lack of "Document ID"', code=settings.RetCode.ARGUMENT_ERROR)
+    #TODO
+    for doc_id in doc_ids:
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
     try:
         docs = DocumentService.get_thumbnails(doc_ids)
@@ -269,7 +314,8 @@ def change_status():
         return get_json_result(
             data=False,
             message='No authorization.',
-            code=settings.RetCode.AUTHENTICATION_ERROR)
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
 
     try:
         e, doc = DocumentService.get_by_id(req["doc_id"])
@@ -437,6 +483,13 @@ def get(doc_id):
         if not e:
             return get_data_error_result(message="Document not found!")
 
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
         response = flask.make_response(STORAGE_IMPL.get(b, n))
 
@@ -461,6 +514,13 @@ def get_md(doc_id):
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
             return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
         if doc.md_location:
             res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
@@ -488,6 +548,13 @@ def get_layout(doc_id):
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
             return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
         if doc.location:
             res = STORAGE_IMPL.get(doc.kb_id, doc.layout_location)
@@ -558,7 +625,7 @@ def change_parser():
     except Exception as e:
         return server_error_response(e)
 
-
+#TODO 干啥的
 @manager.route('/image/<image_id>', methods=['GET'])  # noqa: F821
 # @login_required
 def get_image(image_id):
@@ -574,6 +641,7 @@ def get_image(image_id):
         return server_error_response(e)
 
 
+#TODO 干啥的
 @manager.route('/upload_and_parse', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("conversation_id")
@@ -593,6 +661,7 @@ def upload_and_parse():
     return get_json_result(data=doc_ids)
 
 
+#TODO 干啥的
 @manager.route('/parse', methods=['POST'])  # noqa: F821
 @login_required
 def parse():

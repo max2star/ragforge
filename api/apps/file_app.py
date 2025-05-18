@@ -55,9 +55,19 @@ def upload():
                 data=False, message='No file selected!', code=settings.RetCode.ARGUMENT_ERROR)
     file_res = []
     try:
+
         e, pf_folder = FileService.get_by_id(pf_id)
         if not e:
             return get_data_error_result( message="Can't find this folder!")
+
+        if not FileService.accessible(pf_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
+
         for file_obj in file_objs:
             MAX_FILE_NUM_PER_USER = int(os.environ.get('MAX_FILE_NUM_PER_USER', 0))
             if MAX_FILE_NUM_PER_USER > 0 and DocumentService.get_doc_count(current_user.id) >= MAX_FILE_NUM_PER_USER:
@@ -141,6 +151,13 @@ def create():
         else:
             file_type = FileType.VIRTUAL.value
 
+        if not FileService.accessible(pf_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         file = FileService.insert({
             "id": get_uuid(),
             "parent_id": pf_id,
@@ -177,6 +194,13 @@ def list_files():
         if not e:
             return get_data_error_result(message="Folder not found!")
 
+        if not FileService.accessible(pf_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         files, total = FileService.get_by_pf_id(
             current_user.id, pf_id, page_number, items_per_page, orderby, desc, keywords)
 
@@ -208,6 +232,13 @@ def get_parent_folder():
         if not e:
             return get_data_error_result(message="Folder not found!")
 
+        if not FileService.accessible(file_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         parent_folder = FileService.get_parent_folder(file_id)
         return get_json_result(data={"parent_folder": parent_folder.to_json()})
     except Exception as e:
@@ -222,6 +253,13 @@ def get_all_parent_folders():
         e, file = FileService.get_by_id(file_id)
         if not e:
             return get_data_error_result(message="Folder not found!")
+
+        if not FileService.accessible(file_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
         parent_folders = FileService.get_all_parent_folders(file_id)
         parent_folders_res = []
@@ -239,6 +277,14 @@ def rm():
     req = request.json
     file_ids = req["file_ids"]
     try:
+        for file_id in file_ids:
+            if not FileService.accessible(file_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message='No authorization.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+
         for file_id in file_ids:
             e, file = FileService.get_by_id(file_id)
             if not e:
@@ -290,6 +336,14 @@ def rename():
         e, file = FileService.get_by_id(req["file_id"])
         if not e:
             return get_data_error_result(message="File not found!")
+
+        if not FileService.accessible(file_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         if file.type != FileType.FOLDER.value \
             and pathlib.Path(req["name"].lower()).suffix != pathlib.Path(
                 file.name.lower()).suffix:
@@ -327,6 +381,13 @@ def get(file_id):
         if not e:
             return get_data_error_result(message="Document not found!")
 
+        if not FileService.accessible(file_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         blob = STORAGE_IMPL.get(file.parent_id, file.location)
         if not blob:
             b, n = File2DocumentService.get_storage_address(file_id=file_id)
@@ -355,12 +416,30 @@ def move():
     try:
         file_ids = req["src_file_ids"]
         parent_id = req["dest_file_id"]
+
+        if not FileService.accessible(parent_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for dest_file_id {parent_id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
+
         files = FileService.get_by_ids(file_ids)
         files_dict = {}
         for file in files:
             files_dict[file.id] = file
 
         for file_id in file_ids:
+            if not FileService.accessible(file_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for src_file_id {file_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+
+        for file_id in file_ids:
+
             file = files_dict[file_id]
             if not file:
                 return get_data_error_result(message="File or Folder not found!")

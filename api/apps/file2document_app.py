@@ -41,6 +41,49 @@ def convert():
         files = FileService.get_by_ids(file_ids)
         files_set = dict({file.id: file for file in files})
         for file_id in file_ids:
+
+            if not FileService.accessible(file_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for file_id {file_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+
+            file = files_set[file_id]
+            if not file:
+                return get_data_error_result(message="File not found!")
+            file_ids_list = [file_id]
+            if file.type == FileType.FOLDER.value:
+                file_ids_list = FileService.get_all_innermost_file_ids(file_id, [])
+            for id in file_ids_list:
+                informs = File2DocumentService.get_by_file_id(id)
+                # check delete
+                for inform in informs:
+                    doc_id = inform.document_id
+                    if not DocumentService.accessible(doc_id, current_user.id):
+                        return get_json_result(
+                            data=False,
+                            message=f'No authorization for doc_id {doc_id}.',
+                            code=settings.RetCode.AUTHENTICATION_ERROR
+                        )
+
+        for kb_id in kb_ids:
+
+            e, kb = KnowledgebaseService.get_by_id(kb_id)
+            if not e:
+                return get_data_error_result(
+                    message="Can't find this knowledgebase!")
+
+            if not KnowledgebaseService.accessible(kb_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for kb_id {kb_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+
+
+        for file_id in file_ids:
+
             file = files_set[file_id]
             if not file:
                 return get_data_error_result(message="File not found!")
@@ -62,13 +105,13 @@ def convert():
                         return get_data_error_result(
                             message="Database error (Document removal)!")
                 File2DocumentService.delete_by_file_id(id)
-
                 # insert
                 for kb_id in kb_ids:
                     e, kb = KnowledgebaseService.get_by_id(kb_id)
                     if not e:
                         return get_data_error_result(
                             message="Can't find this knowledgebase!")
+
                     e, file = FileService.get_by_id(id)
                     if not e:
                         return get_data_error_result(
@@ -107,6 +150,28 @@ def rm():
         return get_json_result(
             data=False, message='Lack of "Files ID"', code=settings.RetCode.ARGUMENT_ERROR)
     try:
+        for file_id in file_ids:
+
+            if not FileService.accessible(file_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for file_id {file_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+            informs = File2DocumentService.get_by_file_id(file_id)
+            if not informs:
+                continue
+            for inform in informs:
+                if not inform:
+                    continue
+                doc_id = inform.document_id
+                if not DocumentService.accessible(doc_id, current_user.id):
+                    return get_json_result(
+                        data=False,
+                        message=f'No authorization for doc_id {doc_id}.',
+                        code=settings.RetCode.AUTHENTICATION_ERROR
+                    )
+
         for file_id in file_ids:
             informs = File2DocumentService.get_by_file_id(file_id)
             if not informs:
