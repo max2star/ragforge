@@ -37,6 +37,19 @@ class FileService(CommonService):
     # Service class for managing file operations and storage
     model = File
 
+
+    #判断某个用户是否对该文件/文件夹具有权限
+    @classmethod
+    @DB.connection_context()
+    def accessible(cls, file_id, user_id):
+        docs = cls.model.select(
+            cls.model.id).where(cls.model.tenant_id == user_id)
+        docs = docs.dicts()
+        if not docs:
+            return False
+        return True
+
+
     @classmethod
     @DB.connection_context()
     def get_by_pf_id(cls, tenant_id, pf_id, page_number, items_per_page,

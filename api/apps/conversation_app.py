@@ -45,6 +45,14 @@ def set_conversation():
     if not is_new:
         del req["conversation_id"]
         try:
+
+            if not ConversationService.accessible(conv_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for conv_id {conv_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
+
             if not ConversationService.update_by_id(conv_id, req):
                 return get_data_error_result(message="Conversation not found!")
             e, conv = ConversationService.get_by_id(conv_id)
@@ -56,6 +64,14 @@ def set_conversation():
             return server_error_response(e)
 
     try:
+
+        if not DialogService.accessible(req["dialog_id"], current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for dialog_id {req["dialog_id"]}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         e, dia = DialogService.get_by_id(req["dialog_id"])
         if not e:
             return get_data_error_result(message="Dialog not found")
@@ -109,7 +125,7 @@ def get():
     except Exception as e:
         return server_error_response(e)
 
-
+#TODO
 @manager.route("/getsse/<dialog_id>", methods=["GET"])  # type: ignore # noqa: F821
 def getsse(dialog_id):
     token = request.headers.get("Authorization").split()
@@ -184,6 +200,14 @@ def completion():
         e, conv = ConversationService.get_by_id(req["conversation_id"])
         if not e:
             return get_data_error_result(message="Conversation not found!")
+
+        if not ConversationService.accessible(req["conversation_id"], current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for conv_id {req["conversation_id"]}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         conv.message = deepcopy(req["messages"])
         e, dia = DialogService.get_by_id(conv.dialog_id)
         if not e:
@@ -251,8 +275,19 @@ def completion():
 
 @manager.route("/tts", methods=["POST"])  # noqa: F821
 @login_required
+@validate_request("conversation_id")
 def tts():
     req = request.json
+
+    conv_id = req.get("conversation_id")
+
+    if not ConversationService.accessible(conv_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization for conv_id {conv_id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
     text = req["text"]
 
     tenants = TenantService.get_info_by(current_user.id)
@@ -290,6 +325,14 @@ def delete_msg():
     if not e:
         return get_data_error_result(message="Conversation not found!")
 
+    if not ConversationService.accessible(req["conversation_id"], current_user.id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization for conv_id {req["conversation_id"]}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+
     conv = conv.to_dict()
     for i, msg in enumerate(conv["message"]):
         if req["message_id"] != msg.get("id", ""):
@@ -312,6 +355,14 @@ def thumbup():
     e, conv = ConversationService.get_by_id(req["conversation_id"])
     if not e:
         return get_data_error_result(message="Conversation not found!")
+
+    if not ConversationService.accessible(req["conversation_id"], current_user.id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization for conv_id {req["conversation_id"]}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
     up_down = req.get("thumbup")
     feedback = req.get("feedback", "")
     conv = conv.to_dict()

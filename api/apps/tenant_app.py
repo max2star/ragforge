@@ -33,7 +33,8 @@ def user_list(tenant_id):
         return get_json_result(
             data=False,
             message='No authorization.',
-            code=settings.RetCode.AUTHENTICATION_ERROR)
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
 
     try:
         users = UserTenantService.get_by_tenant_id(tenant_id)
@@ -52,7 +53,8 @@ def create(tenant_id):
         return get_json_result(
             data=False,
             message='No authorization.',
-            code=settings.RetCode.AUTHENTICATION_ERROR)
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
 
     req = request.json
     invite_user_email = req["email"]
@@ -87,11 +89,15 @@ def create(tenant_id):
 @manager.route('/<tenant_id>/user/<user_id>', methods=['DELETE'])  # noqa: F821
 @login_required
 def rm(tenant_id, user_id):
+    #如果操作的空间不是自己，则必须用户是自己
+    #如果操作的空间是自己，则用户可以不是自己
+    #TODO 自己可以把自己从自己空间里删除吗？
     if current_user.id != tenant_id and current_user.id != user_id:
         return get_json_result(
             data=False,
             message='No authorization.',
-            code=settings.RetCode.AUTHENTICATION_ERROR)
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
 
     try:
         UserTenantService.filter_delete([UserTenant.tenant_id == tenant_id, UserTenant.user_id == user_id])
@@ -116,6 +122,7 @@ def tenant_list():
 @login_required
 def agree(tenant_id):
     try:
+        #UserTenant.user_id 只能是自己，限制了只能同意对自己的邀约请求
         UserTenantService.filter_update([UserTenant.tenant_id == tenant_id, UserTenant.user_id == current_user.id], {"role": UserTenantRole.NORMAL})
         return get_json_result(data=True)
     except Exception as e:

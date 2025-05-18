@@ -97,6 +97,10 @@ def token_list():
 @login_required
 def rm():
     req = request.json
+    if not request['tenant_id']==current_user.id:
+        return get_json_result(
+            data=False, message='Only owner of tokens authorized for this operation.',
+            code=RetCode.OPERATING_ERROR)
     try:
         for token in req["tokens"]:
             APITokenService.filter_delete(
@@ -829,7 +833,8 @@ def retrieval():
         if len(embd_nms) != 1:
             return get_json_result(
                 data=False, message='Knowledge bases use different embedding models or does not exist."',
-                code=settings.RetCode.AUTHENTICATION_ERROR)
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
 
         embd_mdl = TenantLLMService.model_instance(
             kbs[0].tenant_id, LLMType.EMBEDDING.value, llm_name=kbs[0].embd_id)

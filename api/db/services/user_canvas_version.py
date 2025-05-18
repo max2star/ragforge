@@ -5,7 +5,20 @@ from peewee import DoesNotExist
 class UserCanvasVersionService(CommonService):
     model = UserCanvasVersion
     
-    
+    @classmethod
+    @DB.connection_context()
+    def accessible(cls, version_id, user_id):
+        canvas = cls.model.select(
+            cls.model.id).join(
+            UserCanvas, on=(
+                cls.model.user_canvas_id == UserCanvas.id)
+        ).where(cls.model.user_canvas_id == version_id, UserCanvas.user_id == user_id).paginate(0, 1)
+
+        canvas = canvas.dicts()
+        if not canvas:
+            return False
+        return True
+
     @classmethod
     @DB.connection_context()
     def list_by_canvas_id(cls, user_canvas_id):

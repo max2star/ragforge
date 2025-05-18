@@ -79,6 +79,7 @@ def save():
         UserCanvasService.update_by_id(req["id"], req)
     # save version    
     UserCanvasVersionService.insert( user_canvas_id=req["id"], dsl=req["dsl"], title="{0}_{1}".format(req["title"], time.strftime("%Y_%m_%d_%H_%M_%S")))
+    #这个的作用是只保留最近的20个
     UserCanvasVersionService.delete_all_versions(req["id"])
     return get_json_result(data=req)
 
@@ -88,6 +89,14 @@ def save():
 @manager.route('/get/<canvas_id>', methods=['GET'])  # noqa: F821
 @login_required
 def get(canvas_id):
+
+    if not UserCanvasService.accessible(canvas_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization for canvas {canvas_id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
     e, c = UserCanvasService.get_by_tenant_id(canvas_id)
     logging.info(f"get canvas_id: {canvas_id} c: {c}")
     if not e:
@@ -296,6 +305,12 @@ def test_db_connect():
 @login_required
 def getlistversion(canvas_id):
     try:
+        if not UserCanvasService.accessible(canvas_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for canvas {canvas_id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
         list =sorted([c.to_dict() for c in UserCanvasVersionService.list_by_canvas_id(canvas_id)], key=lambda x: x["update_time"]*-1)
         return get_json_result(data=list)
     except Exception as e:
@@ -305,7 +320,13 @@ def getlistversion(canvas_id):
 @login_required
 def getversion( version_id):
     try:
-      
+        if not UserCanvasVersionService.accessible(version_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for canvas {req["id"]}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         e, version = UserCanvasVersionService.get_by_id(version_id)
         if version:
             return get_json_result(data=version.to_dict())
@@ -336,6 +357,7 @@ def setting():
     e,flow = UserCanvasService.get_by_id(req["id"])
     if not e:
         return get_data_error_result(message="canvas not found.")
+
     flow = flow.to_dict()
     flow["title"] = req["title"]
     if req["description"]:
