@@ -44,6 +44,7 @@ elif STORAGE_IMPL_TYPE == 'AWS_S3':
     S3 = get_base_config("s3", {})
 elif STORAGE_IMPL_TYPE == 'MINIO':
     MINIO = decrypt_database_config(name="minio")
+    S3 = get_base_config("s3", {})
 elif STORAGE_IMPL_TYPE == 'OSS':
     OSS = get_base_config("oss", {})
 
