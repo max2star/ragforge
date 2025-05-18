@@ -70,6 +70,14 @@ def set_dialog():
         e, tenant = TenantService.get_by_id(current_user.id)
         if not e:
             return get_data_error_result(message="Tenant not found!")
+
+        for kb_id in req.get("kb_ids",[]):
+            if not KnowledgebaseService.accessible(kb_id, current_user.id):
+                return get_json_result(
+                    data=False,
+                    message=f'No authorization for kb_id {kb_id}.',
+                    code=settings.RetCode.AUTHENTICATION_ERROR
+                )
         kbs = KnowledgebaseService.get_by_ids(req.get("kb_ids", []))
         embd_ids = [TenantLLMService.split_model_name_and_factory(kb.embd_id)[0] for kb in kbs]  # remove vendor suffix for comparison
         embd_count = len(set(embd_ids))
@@ -119,6 +127,14 @@ def set_dialog():
 def get():
     dialog_id = request.args["dialog_id"]
     try:
+
+        if not DialogService.accessible(dialog_id,current_user.id):
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+
         e, dia = DialogService.get_by_id(dialog_id)
         if not e:
             return get_data_error_result(message="Dialog not found!")
@@ -174,6 +190,7 @@ def rm():
                     data=False, message='Only owner of dialog authorized for this operation.',
                     code=settings.RetCode.OPERATING_ERROR)
             dialog_list.append({"id": id,"status":StatusEnum.INVALID.value})
+        #以标志位的方式隐藏删除
         DialogService.update_many_by_id(dialog_list)
         return get_json_result(data=True)
     except Exception as e:

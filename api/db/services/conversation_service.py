@@ -31,6 +31,16 @@ class ConversationService(CommonService):
 
     @classmethod
     @DB.connection_context()
+    def accessible(cls, session_id, user_id):
+        docs = cls.model.select(
+            cls.model.id).where(cls.model.id == session_id, cls.model.tenant_id== user_id).paginate(0, 1)
+        docs = docs.dicts()
+        if not docs:
+            return False
+        return True
+
+    @classmethod
+    @DB.connection_context()
     def get_list(cls, dialog_id, page_number, items_per_page, orderby, desc, id, name, user_id=None):
         sessions = cls.model.select().where(cls.model.dialog_id == dialog_id)
         if id:

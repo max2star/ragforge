@@ -706,6 +706,12 @@ def set_tenant_info():
     req = request.json
     try:
         tid = req.pop("tenant_id")
+        if tid!=current_user.id:
+            return get_json_result(
+                data=False,
+                message='No authorization.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+        )
         TenantService.update_by_id(tid, req)
         return get_json_result(data=True)
     except Exception as e:

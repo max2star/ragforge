@@ -45,6 +45,16 @@ class DialogService(CommonService):
     model = Dialog
 
     @classmethod
+    @DB.connection_context()
+    def accessible(cls, diag_id, user_id):
+        docs = cls.model.select(
+            cls.model.id).where(cls.model.id == diag_id, cls.model.tenant_id== user_id).paginate(0, 1)
+        docs = docs.dicts()
+        if not docs:
+            return False
+        return True
+
+    @classmethod
     def save(cls, **kwargs):
         """Save a new record to database.
 
