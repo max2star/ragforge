@@ -36,6 +36,10 @@ user_default_llm:
     rerank_model: 'jina-reranker-v2-base-multilingual'
     asr_model: ''
     image2text_model: ''
+s3:
+  access_key: '${MINIO_USER:-rag_flow}'
+  secret_key: '${MINIO_PASSWORD:-infini_rag_flow}'
+  endpoint_url: 'http://${MINIO_HOST:-minio}:9000'
 # postgres:
 #   name: '${POSTGRES_DBNAME:-rag_flow}'
 #   user: '${POSTGRES_USER:-rag_flow}'

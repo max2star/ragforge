@@ -57,6 +57,7 @@ from magic_pdf.config.ocr_content_type import (BlockType, CategoryId,
                                                ContentType)
 from magic_pdf.libs.draw_bbox import draw_bbox_without_number,draw_bbox_with_number
 from api.db.services.document_service import DocumentService
+from rag import settings
 
 
 def _has_color(o):
@@ -229,6 +230,7 @@ def draw_layout_bbox_(pdf_info, pdf_bytes,writer,file_dst):
 class MinerUPdf:
     def __init__(self, **kwargs):
         self.page_from = 0
+
     def remove_tag(self, txt):
         return re.sub(r"@@[\t0-9.-]+?##", "", txt)
 
@@ -266,11 +268,12 @@ class MinerUPdf:
                  to_page=100000, zoomin=3, callback=None):
 
         time_start_process= time.time()
+        self.s3_config = settings.S3
+        ak = self.s3_config.get('access_key', None)
+        sk = self.s3_config.get('secret_key', None)
+        endpoint_url = self.s3_config.get('endpoint_url', None)
         bucket_name = bucketname
-        ak = "D6Mdnsb3HvpyEVLQmmOX"
-        sk = "kUkrVtKBCwdRycKbobHygRI7QBdw0no38gW8Gqef"
-        endpoint_url = "http://101.52.216.178:19000/"
-        local_image_dir, local_md_dir = "/var/lib/gpustack/output/images", "/var/lib/gpustack/output/output"
+        #local_image_dir, local_md_dir = "/var/lib/gpustack/output/images", "/var/lib/gpustack/output/output"
 
         from timeit import default_timer as timer
         callback(msg="MinerU处理开始")
