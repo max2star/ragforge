@@ -13,7 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-
+import os
+os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
 import logging
 import time
 from minio import Minio
@@ -22,7 +23,6 @@ from io import BytesIO
 from rag import settings
 from rag.utils import singleton
 from minio.commonconfig import CopySource
-
 @singleton
 class RAGFlowMinio:
     def __init__(self):
@@ -40,7 +40,7 @@ class RAGFlowMinio:
             self.conn = Minio(settings.MINIO["host"],
                               access_key=settings.MINIO["user"],
                               secret_key=settings.MINIO["password"],
-                              secure=False
+                              secure=True
                               )
         except Exception:
             logging.exception(
