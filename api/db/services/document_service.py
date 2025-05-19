@@ -99,6 +99,23 @@ class DocumentService(CommonService):
 
     @classmethod
     @DB.connection_context()
+    def get_by_location(cls, kb_id, location):
+        # Get a record by ID
+        # Args:
+        #     pid: Record ID
+        # Returns:
+        #     Tuple of (success, record)
+        try:
+            obj = cls.model.get_or_none(cls.model.kb_id==kb_id,cls.model.location == location)
+            if obj:
+                return True, obj
+        except Exception:
+            pass
+        return False, None
+
+
+    @classmethod
+    @DB.connection_context()
     def remove_document(cls, doc, tenant_id):
         cls.clear_chunk_num(doc.id)
         try:
@@ -111,9 +128,72 @@ class DocumentService(CommonService):
                                          search.index_name(tenant_id), doc.kb_id)
             settings.docStoreConn.delete({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "must_not": {"exists": "source_id"}},
                                          search.index_name(tenant_id), doc.kb_id)
-        except Exception:
+        except Exception as e:
+            logging.exception("remove_document {} exception {}".format(doc.id,e))
             pass
         return cls.delete_by_id(doc.id)
+
+
+    @classmethod
+    @DB.connection_context()
+    def move_document(cls, doc, dst_kb_id,src_tenant_id,dst_tenant_id):
+        if src_tenant_id==dst_tenant_id:
+            try:
+                settings.docStoreConn.update({"doc_id": doc.id}, {"kb_id": dst_kb_id},search.index_name(dst_tenant_id), doc.kb_id)
+                settings.docStoreConn.update({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "source_id": doc.id},
+                                             {"kb_id": dst_kb_id},
+                                             search.index_name(dst_tenant_id), doc.kb_id)
+            except Exception:
+                logging.exception("move document {} exception {}".format(doc.id,e))
+                pass
+        else:
+            #doc里边不能带_id
+            doc_chunks = settings.docStoreConn.get_chunks(doc.id,search.index_name(src_tenant_id))
+            # 构造有效文档集合
+            valid_docs = []
+            for chunk_d in doc_chunks:
+                valid_docs.append(chunk_d)
+            settings.docStoreConn.insert(valid_docs,search.index_name(dst_tenant_id),dst_kb_id)
+            #从原始的Index中删除
+            settings.docStoreConn.delete({"doc_id": doc.id}, search.index_name(src_tenant_id), doc.kb_id)
+            settings.docStoreConn.update({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "source_id": doc.id},
+                                         {"remove": {"source_id": doc.id}},
+                                         search.index_name(src_tenant_id), doc.kb_id)
+            settings.docStoreConn.update({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["graph"]},
+                                         {"removed_kwd": "Y"},
+                                         search.index_name(src_tenant_id), doc.kb_id)
+            settings.docStoreConn.delete({"kb_id": doc.kb_id, "knowledge_graph_kwd": ["entity", "relation", "graph", "subgraph", "community_report"], "must_not": {"exists": "source_id"}},
+                                         search.index_name(src_tenant_id), doc.kb_id)
+
+        #需要在对象存储中也移动,因为会根据kb作为bucket去查找对象
+        #如果目标下有同名文件咋办,会在上层检查下同名的拒绝执行
+        thumbnail_location = f'thumbnail_{doc.id}.png'
+        STORAGE_IMPL.mv(doc.kb_id,doc.location,dst_kb_id)
+        STORAGE_IMPL.mv(doc.kb_id,thumbnail_location,dst_kb_id)
+        STORAGE_IMPL.mv(doc.kb_id,doc.md_location,dst_kb_id)
+        STORAGE_IMPL.mv(doc.kb_id,doc.layout_location,dst_kb_id)
+
+        mineru_objects = STORAGE_IMPL.list_objs(doc.kb_id, prefix=f'minerU/{doc.id}', recursive=True)
+        for m_obj in mineru_objects:
+            logging.debug("move object {} from bucket {} to bucket {}".format(m_obj.object_name,doc.kb_id,dst_kb_id))
+            STORAGE_IMPL.mv(doc.kb_id,m_obj.object_name,dst_kb_id)
+
+        #更新Mysql中文档记录
+        cls.update_by_id(doc.id, {"kb_id": dst_kb_id})
+
+        #减少原来的kb里的chunk统计
+        cls.clear_chunk_num(doc.id)
+        #更新KB中的Chunk统计
+        num = Knowledgebase.update(
+            token_num=Knowledgebase.token_num +
+            doc.token_num,
+            chunk_num=Knowledgebase.chunk_num +
+            doc.chunk_num,
+            doc_num=Knowledgebase.doc_num + 1
+        ).where(
+            Knowledgebase.id == dst_kb_id).execute()
+        return
+
 
     @classmethod
     @DB.connection_context()
