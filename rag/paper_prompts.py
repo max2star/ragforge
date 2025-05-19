@@ -8,6 +8,7 @@ Requirements:
   - The key is in Chinese, and the value is output in the language of the original text.  
   - Don't perform summarization and other operations.
   - Don't get information other than the key. Some keys have no value, so just set the value to an empty character. 
+#IMPORTANT
   - Please output the keyvalues in JSON format as the following schema:
     EXAMPLE JSON OUTPUT:
     {
@@ -210,3 +211,10 @@ def paper_classification_prompt(content):
     #if kwd.find("**ERROR**") >= 0:
     #    return ""
     #return kwd
+
+#如使用qwen-vl-plus、qwen-vl-plus_latest、qwen-vl-plus_2025-01-25进行文字提取类型的任务时，为提高准确率，建议设置presence_penalty为1.5，repetition_penalty为1.0。
+def vision_llm_paper_extraction_prompt(key_to_extract_list) ->str:
+    prompt = f"""
+提取图中的：{key_to_extract_list}，请你以JSON格式输出，不要输出```json```代码段”。
+"""
+    return prompt
