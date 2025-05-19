@@ -99,7 +99,7 @@ services:
   minio-ragflow:
     image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
     container_name: ragflow-minio
-    command: server --console-address ":9001" /data
+    command: server --console-address ":9001" /data --certs-dir /etc/.minio/certs/
     ports:
       - ${MINIO_PORT}:9000
       - ${MINIO_CONSOLE_PORT}:9001
@@ -111,6 +111,8 @@ services:
       - TZ=${TIMEZONE}
     volumes:
       - minio_data:/data
+      - ./nginx/public.crt:/etc/.minio/certs/public.crt
+      - ./nginx/private.key:/etc/.minio/certs/private.key
     networks:
       - ragflow
     restart: on-failure
@@ -148,3 +150,6 @@ volumes:
 networks:
   ragflow:
     driver: bridge
+    ipam:
+       config:
+       - subnet: 172.20.0.0/16

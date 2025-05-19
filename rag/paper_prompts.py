@@ -9,7 +9,7 @@ Requirements:
   - Don't perform summarization and other operations.
   - Don't get information other than the key. Some keys have no value, so just set the value to an empty character. 
 #IMPORTANT
-  - Please output the keyvalues in JSON format as the following schema:
+  - Please output the keyvalues in JSON format as the following EXAMPLE:
     EXAMPLE JSON OUTPUT:
     {
         "标题": "How to improve the performance of OCR",
