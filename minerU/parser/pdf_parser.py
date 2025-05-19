@@ -36,7 +36,7 @@ from PIL import Image
 from pypdf import PdfReader as pdf2_read
 from api.utils.file_utils import get_project_base_directory
 
-from deepdoc.vision import OCR, LayoutRecognizer, Recognizer, TableStructureRecognizer
+from minerU.parser.figure_parser import VisionFigureParser
 #from rag.app.picture import vision_llm_chunk as picture_vision_llm_chunk
 from rag.nlp import rag_tokenizer
 #from rag.prompts import vision_llm_describe_prompt
@@ -57,8 +57,12 @@ from magic_pdf.config.ocr_content_type import (BlockType, CategoryId,
                                                ContentType)
 from magic_pdf.libs.draw_bbox import draw_bbox_without_number,draw_bbox_with_number
 from api.db.services.document_service import DocumentService
+from api.db import constant
+
 from rag import settings
 
+from api.db import LLMType
+from api.db.services.llm_service import LLMBundle
 
 def _has_color(o):
     #Non-Stroking Color Space（非描边颜色空间），即文本/图形等的填充颜色所使用的颜色空间模型
@@ -264,7 +268,23 @@ class MinerUPdf:
         return "@@{}\t{:.1f}\t{:.1f}\t{:.1f}\t{:.1f}##" \
             .format("-".join([str(page_idx)+"--"+str(content_index)]),bx[0], bx[1], bx[2], bx[3])
 
-    def call_function(self, bucketname,filename,kb_id,doc_id,binary=None, from_page=0,
+    def vision_parser(self,tenant_id,figures,key_list_to_extract):
+        try:
+            vision_model = LLMBundle(tenant_id, LLMType.IMAGE2TEXT)
+        except Exception:
+            vision_model = None
+            logging.error(f"Not Found Vision Model For tenant_id {tenant_id}")
+        if vision_model:
+            try:
+                pdf_vision_parser = VisionFigureParser(vision_model=vision_model, figures_data=figures, key_list_to_extract=key_list_to_extract)
+                boosted_figures = pdf_vision_parser()
+                return boosted_figures
+                #tables.extend(boosted_figures)
+            except Exception as e:
+                logging.error(f"Visual model error: {e}")
+        return None
+
+    def call_function(self, bucketname,filename,kb_id,doc_id,tenant_id,parser_config,binary=None, from_page=0,
                  to_page=100000, zoomin=3, callback=None):
 
         time_start_process= time.time()
@@ -286,15 +306,57 @@ class MinerUPdf:
             name_without_suff = pdf_file_name.split(".")[0]
             reader = S3DataReader('/', bucket_name, ak, sk, endpoint_url)
             reader_stored_files = S3DataReader('minerU/images/', bucket_name, ak, sk, endpoint_url)
-            writer = S3DataWriter('minerU/', store_bucket_name, ak, sk, endpoint_url)
-            image_writer = S3DataWriter('minerU/images/', store_bucket_name, ak, sk, endpoint_url)
+            writer = S3DataWriter(f'minerU/{doc_id}', store_bucket_name, ak, sk, endpoint_url)
+            image_writer = S3DataWriter(f'minerU/{doc_id}/images', store_bucket_name, ak, sk, endpoint_url)
+
+            # 打开PDF流
+            pdf_bytes_new = reader.read(pdf_file_name)
+            pdf_doc = fitz.open('pdf', pdf_bytes_new)
+            img_results = []
+
+            for page_num in range(len(pdf_doc)):
+                page = pdf_doc.load_page(page_num)
+                # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
+                mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
+                pix = page.get_pixmap(matrix=mat)
+
+                # 转换为PIL Image对象
+                img_bytes = pix.tobytes()
+                img = Image.open(BytesIO(img_bytes))
+                img_results.append(img)
+                if page_num>=5:
+                    break
+            ## Save the PDF
+            #pdf_stream = BytesIO()
+            #pdf_docs[0].save(pdf_stream)
+            #pdf_stream.seek(0)
+            key_list_to_extract = constant.keyvalues_mapping['default']
+            extractor_config = parser_config.get('extractor')
+            if extractor_config:
+               key_list_to_extract = extractor_config.get("keyvalues",key_list_to_extract)
+            keys_to_use_list = []
+            for i in key_list_to_extract:
+                keys_to_use_list.append(i['name'])
+            vision_results = self.vision_parser(tenant_id,img_results,keys_to_use_list)
+            merged_results = {}
+            logging.info("视觉解析抽取{} 结果 {}".format(keys_to_use_list,vision_results))
+
+            for k_v_ in vision_results.values():
+                k_v_j = json.loads(k_v_)
+                for k_,v_ in k_v_j.items():
+                    if (not merged_results.get(k_,None)) and v_:
+                        merged_results[k_] = v_
+            logging.info("视觉解析抽取{} 结果 {},合并结果 {}".format(keys_to_use_list,vision_results,merged_results))
+            callback(prog=0.15,msg="MinerU 视觉大模型分析处理完成 ({:.2f}s),处理了{}页".format(timer()-start,page_num))
+
+            start = timer()
             #从对象存储读取文件
             pdf_bytes = reader.read(pdf_file_name)
-            callback(prog=0.05,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.25,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)".format(timer()-start))
             ## Create Dataset Instance
             start = timer()
             ds = PymuDocDataset(pdf_bytes)
-            callback(prog=0.1,msg="MinerU 创建解析器完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.3,msg="MinerU 创建解析器完成 ({:.2f}s)".format(timer()-start))
             start = timer()
             use_ocr = False
             if ds.classify() == SupportedPdfParseMethod.OCR:
@@ -524,7 +586,7 @@ class MinerUPdf:
             logging.info("发生错误,文件 {},错误 {}".format(filename,e))
             import traceback
             traceback.print_exc()
-            print("Exception {} ,excetion info is {}".format(e,traceback.format_exc()))
+            logging.info("Exception {} ,excetion info is {}".format(e,traceback.format_exc()))
             return
          #进一步对信息进行提取
         def _match_content(txt):

@@ -48,6 +48,7 @@ from api.utils.file_utils import filename_type, thumbnail, get_project_base_dire
 from api.utils.web_utils import html2pdf, is_valid_url
 from api.constants import IMG_BASE64_PREFIX
 
+import logging
 
 @manager.route('/upload', methods=['POST'])  # noqa: F821
 @login_required
@@ -94,6 +95,76 @@ def upload():
             data=files, message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
     return get_json_result(data=files)
 
+
+@manager.route('/mv_kb', methods=['POST'])  # noqa: F821
+@login_required
+@validate_request("src_kb_id","dst_kb_id","doc_ids")
+def mv_kb():
+    req = request.json
+    src_kb_id = req.get("src_kb_id")
+    dst_kb_id = req.get("dst_kb_id")
+    if not src_kb_id or not dst_kb_id:
+        return get_json_result(
+            data=False, message='Lack of "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+    if src_kb_id==dst_kb_id:
+        return get_json_result(
+            data=False, message='Same src and dst "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+
+    e, src_kb = KnowledgebaseService.get_by_id(src_kb_id)
+    if not e:
+        raise LookupError("Can't find this src knowledgebase!")
+
+    e, dst_kb = KnowledgebaseService.get_by_id(dst_kb_id)
+    if not e:
+        raise LookupError("Can't find this dst knowledgebase!")
+
+    if not KnowledgebaseService.accessible(src_kb_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    if not KnowledgebaseService.accessible(dst_kb_id, current_user.id):
+        return get_json_result(
+            data=False,
+            message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    #如果源和目的KB的embedding模型一致，则允许复制移动(其他的解析参数可以按文档粒度)；否则不允许移动到目标知识库。
+    if src_kb.embd_id!=dst_kb.embd_id:
+        raise LookupError("Can't move between the knowledgebases using diffrent embedding model id!")
+
+    dst_kb_exist_location = []
+    doc_ids = req["doc_ids"]
+    for doc_id in doc_ids:
+        e, src_d = DocumentService.get_by_id(doc_id)
+        if not e:
+            raise LookupError("Can't find document {} !".format(doc_id))
+        exist, dst_d = DocumentService.get_by_location(dst_kb_id,src_d.location)
+        if exist:
+            logging.info('doc {} name {} dumplicate in dst kb_id {} with doc {}'.format(doc_id,src_d.name,dst_kb_id,dst_d.id))
+            dst_kb_exist_location.append(dst_d.name)
+    if dst_kb_exist_location:
+        raise LookupError("Has same-name documents {} in destination kb!".format(dst_kb_exist_location))
+    for doc_id in doc_ids:
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for doc_id {doc_id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+    docs = DocumentService.get_by_ids(doc_ids)
+    for d in docs:
+        if d.kb_id==dst_kb_id:
+            logging.info('doc {} kb_id same with dst kb_id {}'.format(d.id,dst_kb_id))
+            continue
+        #如果是相同的tenant id，直接更新文档的kb_id Mysql数据库里更新+ES更新
+        #否则会做添加和删除操作
+        DocumentService.move_document(d,dst_kb_id,src_kb.tenant_id,dst_kb.tenant_id)
+    docs = DocumentService.get_by_ids(doc_ids)
+    return get_json_result(data=list(docs.dicts()))
 
 @manager.route('/web_crawl', methods=['POST'])  # noqa: F821
 @login_required
@@ -476,19 +547,19 @@ def rename():
 
 
 @manager.route('/get/<doc_id>', methods=['GET'])  # noqa: F821
-# @login_required
+#@login_required
 def get(doc_id):
     try:
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
             return get_data_error_result(message="Document not found!")
 
-        if not DocumentService.accessible(doc_id, current_user.id):
-            return get_json_result(
-                data=False,
-                message='No authorization.',
-                code=settings.RetCode.AUTHENTICATION_ERROR
-            )
+        #if not DocumentService.accessible(doc_id, current_user.id):
+        #    return get_json_result(
+        #        data=False,
+        #        message='No authorization.',
+        #        code=settings.RetCode.AUTHENTICATION_ERROR
+        #    )
 
         b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
         response = flask.make_response(STORAGE_IMPL.get(b, n))

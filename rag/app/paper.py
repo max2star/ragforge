@@ -158,8 +158,9 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         elif parser_method in ["MinerU","minerU"]:
             pdf_parser = MinerUPdf()
             bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
-            logging.info("MinerU parser for bucket {} doc name {}".format(bucket,name))
-            paper = pdf_parser.call_function(bucket,name,kb_id=kwargs.get('kb_id'),doc_id=kwargs.get('doc_id'),binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
+            logging.info("MinerU parser for bucket {} doc name {},kb_id {},doc_id {},tenant_id {}".format(bucket,name,kwargs.get('kb_id'),kwargs.get('doc_id'),kwargs.get('tenant_id')))
+            paper = pdf_parser.call_function(bucket,name,kb_id=kwargs.get('kb_id'),doc_id=kwargs.get('doc_id'),
+                    tenant_id=kwargs.get('tenant_id'),parser_config=kwargs.get('parser_config'),binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
         else:
             pdf_parser = Pdf()
             paper = pdf_parser(filename if not binary else binary,

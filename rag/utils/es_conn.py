@@ -284,6 +284,27 @@ class ESConnection(DocStoreConnection):
         logger.error("ESConnection.get timeout for 3 times!")
         raise Exception("ESConnection.get timeout.")
 
+
+    def get_chunks(self, doc_id: str, indexName: str) -> dict | None:
+        for i in range(ATTEMPT_TIME):
+            try:
+                res = self.es.mget(index=(indexName),
+                        body={'doc_id':doc_id}, source=True, )
+                if str(res.get("timed_out", "")).lower() == "true":
+                    raise Exception("Es Timeout.")
+                chunks = res["docs"]
+                return chunks
+            except NotFoundError:
+                return None
+            except Exception as e:
+                logger.exception(f"ESConnection.get({doc_id}) got exception")
+                if str(e).find("Timeout") > 0:
+                    continue
+                raise e
+        logger.error("ESConnection.get timeout for 3 times!")
+        raise Exception("ESConnection.get timeout.")
+
+
     def insert(self, documents: list[dict], indexName: str, knowledgebaseId: str = None) -> list[str]:
         # Refers to https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html
         operations = []

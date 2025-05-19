@@ -21,7 +21,7 @@ from minio.error import S3Error
 from io import BytesIO
 from rag import settings
 from rag.utils import singleton
-
+from minio.commonconfig import CopySource
 
 @singleton
 class RAGFlowMinio:
@@ -76,6 +76,10 @@ class RAGFlowMinio:
                 self.__open__()
                 time.sleep(1)
 
+    def list_objs(self,bucket,prefix,recursive):
+        if not prefix.endswith("/"): prefix += "/"
+        return self.conn.list_objects(bucket, prefix=prefix, recursive=recursive)
+
     def rm(self, bucket, fnm):
         try:
             self.conn.remove_object(bucket, fnm)
@@ -121,3 +125,25 @@ class RAGFlowMinio:
                 time.sleep(1)
         return
 
+
+    def mv(self, bucket,filename,dest_bucket):
+        for _ in range(1):
+            try:
+                if not self.conn.bucket_exists(dest_bucket):
+                    self.conn.make_bucket(dest_bucket)
+                copy_s = CopySource(bucket, filename)
+                copy_result = self.conn.copy_object(
+                     dest_bucket,
+                     filename,
+                     copy_s
+                     #f"/{bucket}/{filename}",
+                 )
+                self.conn.remove_object(bucket, filename)
+            except Exception as e:
+                logging.exception(f"Fail to mv {bucket}/{filename}")
+                import traceback
+                traceback.print_exc()
+                logging.error("Exception {} ,info is {}".format(e,traceback.format_exc()))
+                self.__open__()
+                time.sleep(1)
+        return
