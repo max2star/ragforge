@@ -20,6 +20,7 @@ import sys
 
 #增加minerU所使用的类库
 sys.path.append("/usr/local/lib/python3.10/dist-packages/")
+#os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
 import time
 import random
 import re
