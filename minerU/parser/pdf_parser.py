@@ -296,7 +296,7 @@ class MinerUPdf:
         #local_image_dir, local_md_dir = "/var/lib/gpustack/output/images", "/var/lib/gpustack/output/output"
 
         from timeit import default_timer as timer
-        callback(msg="MinerU处理开始")
+        callback(msg="MinerU处理开始。即将进行视觉大模型要素抽取")
         
         # 使用MinerU处理
         try:
@@ -305,9 +305,9 @@ class MinerUPdf:
             pdf_file_name = filename
             name_without_suff = pdf_file_name.split(".")[0]
             reader = S3DataReader('/', bucket_name, ak, sk, endpoint_url)
-            reader_stored_files = S3DataReader('minerU/images/', bucket_name, ak, sk, endpoint_url)
             writer = S3DataWriter(f'minerU/{doc_id}', store_bucket_name, ak, sk, endpoint_url)
             image_writer = S3DataWriter(f'minerU/{doc_id}/images', store_bucket_name, ak, sk, endpoint_url)
+            reader_stored_files = S3DataReader(f'/minerU/{doc_id}images', bucket_name, ak, sk, endpoint_url)
 
             # 打开PDF流
             pdf_bytes_new = reader.read(pdf_file_name)
@@ -315,6 +315,8 @@ class MinerUPdf:
             img_results = []
 
             for page_num in range(len(pdf_doc)):
+                if page_num>4:
+                    break
                 page = pdf_doc.load_page(page_num)
                 # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
                 mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
@@ -324,8 +326,6 @@ class MinerUPdf:
                 img_bytes = pix.tobytes()
                 img = Image.open(BytesIO(img_bytes))
                 img_results.append(img)
-                if page_num>=5:
-                    break
             ## Save the PDF
             #pdf_stream = BytesIO()
             #pdf_docs[0].save(pdf_stream)
@@ -340,24 +340,25 @@ class MinerUPdf:
             vision_results = self.vision_parser(tenant_id,img_results,keys_to_use_list)
             merged_results = {}
             logging.info("视觉解析抽取{} 结果 {}".format(keys_to_use_list,vision_results))
-
-            for k_v_ in vision_results.values():
-                k_v_j = json.loads(k_v_)
-                for k_,v_ in k_v_j.items():
-                    if (not merged_results.get(k_,None)) and v_:
-                        merged_results[k_] = v_
+            try:
+                if vision_results:
+                    for k_v_ in vision_results.values():
+                        k_v_j = json.loads(k_v_)
+                        for k_,v_ in k_v_j.items():
+                            if (not merged_results.get(k_,None)) and v_:
+                                merged_results[k_] = v_
+            except Exception as e:
+                logging.info("视觉解析错误,继续其他处理 {}".format(e))
             logging.info("视觉解析抽取{} 结果 {},合并结果 {}".format(keys_to_use_list,vision_results,merged_results))
-            callback(prog=0.15,msg="MinerU 视觉大模型分析处理完成 ({:.2f}s),处理了{}页".format(timer()-start,page_num))
+            callback(prog=0.15,msg="MinerU 视觉大模型分析处理完成 ({:.2f}s),处理了{}页。即将从对象存储获取文档".format(timer()-start,(page_num+1)))
 
             start = timer()
             #从对象存储读取文件
             pdf_bytes = reader.read(pdf_file_name)
-            callback(prog=0.25,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.25,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)。即将使用MinerU进行解析".format(timer()-start))
             ## Create Dataset Instance
             start = timer()
             ds = PymuDocDataset(pdf_bytes)
-            callback(prog=0.3,msg="MinerU 创建解析器完成 ({:.2f}s)".format(timer()-start))
-            start = timer()
             use_ocr = False
             if ds.classify() == SupportedPdfParseMethod.OCR:
                 use_ocr=True
@@ -368,7 +369,7 @@ class MinerUPdf:
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_txt_mode(image_writer)
-            callback(prog=0.6,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}".format(timer()-start,use_ocr))
+            callback(prog=0.6,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}。即将进行结果绘制".format(timer()-start,use_ocr))
 
             start = timer()
             pdf_info = pipe_result._pipe_res['pdf_info']
@@ -385,12 +386,10 @@ class MinerUPdf:
             #pipe_result.draw_layout(os.path.join(local_md_dir, f"{name_without_suff}_layout.pdf"))
             ## draw spans result on each page
             #pipe_result.draw_span(os.path.join(local_md_dir, f"{name_without_suff}_spans.pdf"))
-            callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)".format(timer()-start))
             
             #获取MD文件
-            start = timer()
             md_content = pipe_result.get_markdown(image_writer)#image_dir)
-            callback(prog=0.7,msg="MinerU 获取MD文件完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)完成。即将进行结果存储".format(timer()-start))
             
             start = timer()
             #将MarkDown文件进行输出
@@ -402,13 +401,11 @@ class MinerUPdf:
 
             DocumentService.update_md_location_fields(doc_id,f"minerU/{name_without_suff}.md")
 
-            callback(prog=0.75,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)".format(timer()-start))
             
-            start = timer()
             content_list = pipe_result.get_content_list("")
             middle_content = pipe_result.get_middle_json()
             middle_json_content = json.loads(middle_content)
-            callback(prog=0.8,msg="MinerU 获取处理结果完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.75,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)。即将进行结果分析".format(timer()-start))
             #logging.info('[MinerU] 获取content_list长度 {},middle_content长度 {},middle_json_content长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
             start = timer()
             # 解析middle_json_content 并提取块信息，结果保存在block_info_list
@@ -576,7 +573,7 @@ class MinerUPdf:
                     chunk_object['image_url'] = img_path_relative
                     sections.append(chunk_object)
 
-            callback(prog=0.81,msg="MinerU 解析处理结果完成 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.81,msg="MinerU 解析处理结果完成 ({:.2f}s)。".format(timer()-start))
             md_content_to = md_content[:10000]
            
             time_end_process = time.time()
