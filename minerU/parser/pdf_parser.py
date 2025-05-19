@@ -307,7 +307,7 @@ class MinerUPdf:
             reader = S3DataReader('/', bucket_name, ak, sk, endpoint_url)
             writer = S3DataWriter(f'minerU/{doc_id}', store_bucket_name, ak, sk, endpoint_url)
             image_writer = S3DataWriter(f'minerU/{doc_id}/images', store_bucket_name, ak, sk, endpoint_url)
-            reader_stored_files = S3DataReader(f'/minerU/{doc_id}images', bucket_name, ak, sk, endpoint_url)
+            reader_stored_files = S3DataReader(f'minerU/{doc_id}/images/', bucket_name, ak, sk, endpoint_url)
 
             # 打开PDF流
             pdf_bytes_new = reader.read(pdf_file_name)
