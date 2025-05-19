@@ -35,7 +35,7 @@ user_default_llm:
     embedding_model: 'bge-m3'
     rerank_model: 'jina-reranker-v2-base-multilingual'
     asr_model: ''
-    image2text_model: ''
+    image2text_model: 'qwen2-vl'
 s3:
   access_key: '${MINIO_USER:-rag_flow}'
   secret_key: '${MINIO_PASSWORD:-infini_rag_flow}'
