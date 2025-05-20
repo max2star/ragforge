@@ -649,7 +649,7 @@ async def do_handle_task(task):
     #更新元数据到文档
     DocumentService.update_by_id(task["doc_id"], {"meta_fields": dict_result})
 
-    progress_callback(prog=0.99,msg="完成大模型要素提取 ({:.2f}s)".format(timer()-start_ts))
+    progress_callback(prog=0.99,msg="完成大模型要素提取和分类打标 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
     es_bulk_size = 4
