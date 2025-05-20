@@ -15,7 +15,8 @@
 #
 
 from .pdf_parser import MinerUPdf as MinerUPdf 
-
+from .office_to_pdf import SecureDocConverter as SecureDocConverter
 __all__ = [
     "MinerUPdf",
+    "SecureDocConverter",
 ]
