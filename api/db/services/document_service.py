@@ -178,11 +178,12 @@ class DocumentService(CommonService):
             logging.debug("move object {} from bucket {} to bucket {}".format(m_obj.object_name,doc.kb_id,dst_kb_id))
             STORAGE_IMPL.mv(doc.kb_id,m_obj.object_name,dst_kb_id)
 
-        #更新Mysql中文档记录
-        cls.update_by_id(doc.id, {"kb_id": dst_kb_id})
-
         #减少原来的kb里的chunk统计
         cls.clear_chunk_num(doc.id)
+
+        #更新Mysql中文档记录为新的KB
+        cls.update_by_id(doc.id, {"kb_id": dst_kb_id})
+
         #更新KB中的Chunk统计
         num = Knowledgebase.update(
             token_num=Knowledgebase.token_num +

@@ -156,6 +156,7 @@ class KnowledgebaseService(CommonService):
             cls.model.token_num,
             cls.model.chunk_num,
             cls.model.parser_id,
+            cls.model.parser_config,
             cls.model.embd_id,
             User.nickname,
             User.avatar.alias('tenant_avatar'),
