@@ -285,9 +285,14 @@ class MinerUPdf:
                 logging.error(f"Visual model error: {e}")
         return None
 
-    def call_function(self, bucketname,filename,kb_id,doc_id,tenant_id,parser_config,binary=None, from_page=0,
+    def call_function(self, bucketname,filename,kb_id,doc_id,tenant_id,parser_config,pdf_flag,binary=None, from_page=0,
                  to_page=100000, zoomin=3, callback=None):
-
+        pdf_file_name = filename
+        prefix = ''
+        if not pdf_flag:
+            name_without_suff = filename.split(".")[0]
+            pdf_file_name = name_without_suff+".pdf"
+            prefix=f'minerU/{doc_id}'
         time_start_process= time.time()
         self.s3_config = settings.S3
         ak = self.s3_config.get('access_key', None)
@@ -303,14 +308,14 @@ class MinerUPdf:
         try:
             start = timer()
             store_bucket_name = kb_id
-            pdf_file_name = filename
             name_without_suff = pdf_file_name.split(".")[0]
-            reader = S3DataReader('/', bucket_name, ak, sk, endpoint_url)
+            reader = S3DataReader(f'/{prefix}', bucket_name, ak, sk, endpoint_url)
             writer = S3DataWriter(f'minerU/{doc_id}', store_bucket_name, ak, sk, endpoint_url)
             image_writer = S3DataWriter(f'minerU/{doc_id}/images', store_bucket_name, ak, sk, endpoint_url)
             reader_stored_files = S3DataReader(f'minerU/{doc_id}/images/', bucket_name, ak, sk, endpoint_url)
 
             # 打开PDF流
+            logging.info("正在读取prefix {} file name {}".format(prefix,pdf_file_name))
             pdf_bytes_new = reader.read(pdf_file_name)
             pdf_doc = fitz.open('pdf', pdf_bytes_new)
             img_results = []

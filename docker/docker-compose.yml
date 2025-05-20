@@ -10,6 +10,7 @@ services:
       redis-ragflow:
         condition: service_healthy
     image: ${RAGFLOW_IMAGE}
+    shm_size: '32gb'
     container_name: ragflow-server
     deploy:
       resources:

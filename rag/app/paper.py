@@ -23,7 +23,7 @@ from rag.nlp import rag_tokenizer, tokenize, tokenize_table, add_positions, bull
 from deepdoc.parser import PdfParser, PlainParser
 import numpy as np
 from api.db.services.file2document_service import File2DocumentService
-from minerU.parser import MinerUPdf
+from minerU.parser import MinerUPdf,SecureDocConverter
 
 class Pdf(PdfParser):
     def __init__(self):
@@ -144,8 +144,26 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         Only pdf is supported.
         The abstract of the paper will be sliced as an entire chunk, and will not be sliced partly.
     """
+    parser_method = kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC")
+
+    if(re.search(r"\.doc$", filename, re.IGNORECASE) or re.search(r"\.docx$", filename, re.IGNORECASE)):
+        #转换文档为pdf office_to_pdf
+        callback(msg="文件不是PDF在Paper解析情况下需要转为PDF")
+        bucket_name, file_name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
+        kb_id = kwargs.get("kb_id")
+        doc_id = kwargs.get("doc_id")
+        #s3_config = {
+        #        'access_key':'D6Mdnsb3HvpyEVLQmmOX',
+        #        'secret_key':'kUkrVtKBCwdRycKbobHygRI7QBdw0no38gW8Gqef',
+        #        'endpoint_url':'https://101.52.216.178:19000/'
+        #}
+        s= SecureDocConverter(None,bucket_name,file_name,kb_id,doc_id)
+        s.process_s3_object()
+        logging.info("成功将文件{} 转为PDF ,存储到bucket {}/minerU/{} 目录下".format(doc_id,bucket_name,doc_id))
+        parser_method = 'MinerU'
+        callback(msg="成功转为PDF")
+
     if re.search(r"\.pdf$", filename, re.IGNORECASE):
-        parser_method = kwargs.get("parser_config", {}).get("layout_recognize", "DeepDOC")
         if parser_method == "Plain Text":
             pdf_parser = PlainParser()
             paper = {
@@ -160,11 +178,17 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
             logging.info("MinerU parser for bucket {} doc name {},kb_id {},doc_id {},tenant_id {}".format(bucket,name,kwargs.get('kb_id'),kwargs.get('doc_id'),kwargs.get('tenant_id')))
             paper = pdf_parser.call_function(bucket,name,kb_id=kwargs.get('kb_id'),doc_id=kwargs.get('doc_id'),
-                    tenant_id=kwargs.get('tenant_id'),parser_config=kwargs.get('parser_config'),binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
+                    tenant_id=kwargs.get('tenant_id'),parser_config=kwargs.get('parser_config'),pdf_flag=True,binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
         else:
             pdf_parser = Pdf()
             paper = pdf_parser(filename if not binary else binary,
                                from_page=from_page, to_page=to_page, callback=callback)
+    elif(re.search(r"\.doc$", filename, re.IGNORECASE) or re.search(r"\.docx$", filename, re.IGNORECASE)):
+        pdf_parser = MinerUPdf()
+        bucket, name = File2DocumentService.get_storage_address(doc_id=kwargs.get("doc_id"))
+        logging.info("MinerU parser for bucket {} doc name {},kb_id {},doc_id {},tenant_id {}".format(bucket,name,kwargs.get('kb_id'),kwargs.get('doc_id'),kwargs.get('tenant_id')))
+        paper = pdf_parser.call_function(bucket,name,kb_id=kwargs.get('kb_id'),doc_id=kwargs.get('doc_id'),
+                tenant_id=kwargs.get('tenant_id'),parser_config=kwargs.get('parser_config'),pdf_flag=False,binary=None,from_page=from_page,to_page=to_page,zoomin=3,callback=callback)
     else:
         raise NotImplementedError("file type not supported yet(pdf supported)")
 
