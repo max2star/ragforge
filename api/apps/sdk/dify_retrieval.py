@@ -42,7 +42,7 @@ def retrieval(tenant_id):
             return build_error_result(message="Knowledgebase not found!", code=settings.RetCode.NOT_FOUND)
 
         if kb.tenant_id != tenant_id:
-            return build_error_result(message="Knowledgebase not found!", code=settings.RetCode.NOT_FOUND)
+            return build_error_result(message=f"Knowledgebase owner {kb.tenant_id} not same with {tenant_id} !", code=settings.RetCode.NOT_FOUND)
 
         embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING.value, llm_name=kb.embd_id)
 
@@ -56,7 +56,8 @@ def retrieval(tenant_id):
             similarity_threshold=similarity_threshold,
             vector_similarity_weight=0.3,
             top=top,
-            rank_feature=label_question(question, [kb])
+            rank_feature=label_question(question, [kb]),
+            limit_range = tenant_id
         )
 
         if use_kg:

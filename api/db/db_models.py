@@ -601,8 +601,10 @@ class Knowledgebase(DataBaseModel):
     similarity_threshold = FloatField(default=0.2, index=True)
     vector_similarity_weight = FloatField(default=0.3, index=True)
 
-    parser_id = CharField(max_length=32, null=False, help_text="default parser ID", default=ParserType.NAIVE.value, index=True)
-    parser_config = JSONField(null=False, default={"pages": [[1, 1000000]],
+    parser_id = CharField(max_length=32, null=False, help_text="default parser ID", default=ParserType.PAPER.value, index=True)
+    parser_config = JSONField(null=False, default={
+        "pages": [[1, 1000000]],
+        "layout_recognize":"MinerU",
         "extractor":{"keyvalues":constant.keyvalues_mapping['default']},
         "classifier":{}})
     pagerank = IntegerField(default=0, index=False)
@@ -638,7 +640,7 @@ class Document(DataBaseModel):
     process_begin_at = DateTimeField(null=True, index=True)
     process_duation = FloatField(default=0)
     meta_fields = JSONField(null=True, default={})
-
+    filter_fields = JSONField(null=True, default={'limit_range':[],'limit_level':1,'limit_time':utils.current_timestamp(),'version':0,'create_time':utils.current_timestamp()})
     run = CharField(max_length=1, null=True, help_text="start to run processing or cancel.(1: run it; 2: cancel)", default="0", index=True)
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
@@ -900,5 +902,9 @@ def migrate_db():
         pass
     try:
         migrate(migrator.add_column("document", "layout_location", CharField(max_length=255, null=True, help_text="where does mineru layout pdf store", index=True)))
+    except Exception:
+        pass
+    try:
+        migrate(migrator.add_column("document", "filter_fields",  JSONField(null=True, default={'limit_range':[],'limit_level':{},'limit_time':utils.current_timestamp()})))
     except Exception:
         pass

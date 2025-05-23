@@ -171,6 +171,7 @@ class Base(ABC):
                     time.sleep(delay)
                 else:
                     # For non-rate limit errors or the last attempt, return an error message
+                    logging.error(f"Error: {error_code}. Attempt {attempt + 1}/{self.max_retries})")
                     if attempt == self.max_retries - 1:
                         error_code = ERROR_MAX_RETRIES
                     return f"{ERROR_PREFIX}: {error_code} - {str(e)}", 0
@@ -208,6 +209,7 @@ class Base(ABC):
                     logging.warning(f"Error: {error_code}. Retrying in {delay:.2f} seconds... (Attempt {attempt + 1}/{self.max_retries})")
                     time.sleep(delay)
                 else:
+                    logging.error(f"Error: {error_code}. Attempt {attempt + 1}/{self.max_retries})")
                     # For non-rate limit errors or the last attempt, return an error message
                     if attempt == self.max_retries - 1:
                         error_code = ERROR_MAX_RETRIES

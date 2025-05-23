@@ -86,8 +86,9 @@ class PaperExtractor:
             keyvalues = json.loads(result)
             logging.info(f"dict {keyvalues}")
             for key_, value_ in keyvalues.items():
-                if key_ in keys_to_use_list:
-                    results[key_]=value_
+                key__ = key_.replace(" ", "")
+                if key__ in keys_to_use_list:
+                    results[key__]=value_
                     #results[key_+'@@@AI']=value_
             return results
         async with trio.open_nursery() as nursery:

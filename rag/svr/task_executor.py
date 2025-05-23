@@ -223,6 +223,7 @@ async def collect():
         return None, None
     task["task_type"] = msg.get("task_type", "")
     task["meta_fields"] = doc.meta_fields
+    task["filter_fields"] = doc.filter_fields
     return redis_msg, task
 
 
@@ -426,7 +427,7 @@ async def embedding(docs, mdl, parser_config=None, callback=None):
         else:
             cnts_ = np.concatenate((cnts_, vts), axis=0)
         tk_count += c
-        callback(prog=0.7 + 0.2 * (i + 1) / len(cnts), msg="")
+        callback(prog=0.5 + 0.1 * (i + 1) / len(cnts), msg="")
     cnts = cnts_
 
     title_w = float(parser_config.get("filename_embd_weight", 0.1))
@@ -588,7 +589,7 @@ async def do_handle_task(task):
             return
         # TODO: exception handler
         ## set_progress(task["did"], -1, "ERROR: ")
-        progress_callback(msg="Generate {} chunks".format(len(chunks)))
+        progress_callback(0.5,msg="Generate {} chunks".format(len(chunks)))
         start_ts = timer()
         try:
             token_count, vector_size = await embedding(chunks, embedding_model, task_parser_config, progress_callback)
@@ -598,18 +599,37 @@ async def do_handle_task(task):
             logging.exception(error_message)
             token_count = 0
             raise
-        progress_message = "Embedding chunks ({:.2f}s)".format(timer() - start_ts)
+        progress_message = "Embedding chunks ({:.2f}s),即将进行要素抽取和分类".format(timer() - start_ts)
         logging.info(progress_message)
-        progress_callback(msg=progress_message)
+        progress_callback(0.7,msg=progress_message)
 
 
     chunk_count = len(set([chunk["id"] for chunk in chunks]))
 
+    e, doc = DocumentService.get_by_id(task_doc_id)
+    if not e:
+        logging.error(f"Can't find this document {task_doc_id}!")
+        raise LookupError(f"Can't find this document {task_doc_id}!")
+
+    #获取过滤字段
+    filter_fields_= task.get('filter_fields',{})
+    if not filter_fields_:
+        logging.error(f"Doc filter field not exists for {task_doc_id}!")
+        raise LookupError(f"Doc filter field not exists!")
+        #filter_fields_ = {'limit_range':[doc.created_by]}
+    if doc.created_by not in filter_fields_.get('limit_range',[]):
+        #filter_fields_['limit_range']=filter_fields_['limit_range']+[doc.created_by]
+        logging.error(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
+        raise LookupError(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
+    limit_time = filter_fields_.get('limit_time')
+    limit_time = str(datetime.fromtimestamp(limit_time/1000)).replace("T", " ")[:19]
+    filter_fields_['limit_time'] = limit_time
 
     start_ts = timer()
 
     #先获取现有的元数据
     dict_result = task.get('meta_fields',{})
+    logging.debug(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -624,9 +644,10 @@ async def do_handle_task(task):
     logging.debug(f"do_handle_task current content {content}")
 
     dict_result_add = await run_extract(task, chat_model, content,progress_callback)
+    logging.debug(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
     for key,value in dict_result_add.items():
         if key in key_now:
-            logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+            logging.debug(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
         else:
             dict_result[key] = value
 
@@ -635,21 +656,33 @@ async def do_handle_task(task):
     classify_result = []
     if classification_result:
         for key, value in classification_result.items():
+            if (type(key)==str) and  not key.isdigit():
+                logging.info(f"分类信息有误 key{key} value {value}")
+                continue
+            if (type(key)!=int and type(key)!=str) or type(value)!=str:
+                logging.info(f"分类信息有误 key{key} value {value}")
+                continue
             classify_obj = {"类别编号":key,"分类类别":value}
             classify_result.append(classify_obj)
     dict_result['分类标签'] =  classify_result
-
+    logging.info(f"do_handle_task doc {task['doc_id']} meta fields {dict_result}, filter fields {filter_fields_}")
     for c_ in chunks:
-        c_['metadata']=dict_result
-
-    #将元数据更新到Chunk
-    for key,value in dict_result_add.items():
-        c_[key] = value
+        c_['meta_fields']=dict_result
+        c_['filter_fields'] = filter_fields_
+        for key,value in filter_fields_.items():
+            c_[key] = value
+        #c_['limit_range'] = limit_range
+        #c_['limit_level'] = limit_level
+        #c_['limit_time'] = limit_time
+        #将元数据更新到Chunk
+        for key,value in dict_result.items():
+            c_[key] = value
 
     #更新元数据到文档
-    DocumentService.update_by_id(task["doc_id"], {"meta_fields": dict_result})
+    DocumentService.update_meta_fields(task["doc_id"],  dict_result)
+    #DocumentService.update_by_id(task["doc_id"], {"meta_fields": dict_result})
 
-    progress_callback(prog=0.99,msg="完成大模型要素提取和分类打标 ({:.2f}s)".format(timer()-start_ts))
+    progress_callback(prog=0.8,msg="完成大模型要素提取和分类打标 ({:.2f}s)".format(timer()-start_ts))
     start_ts = timer()
     doc_store_result = ""
     es_bulk_size = 4
@@ -658,7 +691,7 @@ async def do_handle_task(task):
         if b % 128 == 0:
             progress_callback(prog=0.8 + 0.1 * (b + 1) / len(chunks), msg="")
         if doc_store_result:
-            error_message = f"Insert chunk error: {doc_store_result}, please check log file and Elasticsearch/Infinity status!"
+            error_message = f"Insert chunk error: {doc_store_result} chunk example {chunks[b:b+1]}, please check log file and Elasticsearch/Infinity status!"
             progress_callback(-1, msg=error_message)
             raise Exception(error_message)
         chunk_ids = [chunk["id"] for chunk in chunks[:b + es_bulk_size]]
