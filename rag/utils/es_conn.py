@@ -49,6 +49,8 @@ class ESConnection(DocStoreConnection):
                     basic_auth=(settings.ES["username"], settings.ES[
                         "password"]) if "username" in settings.ES and "password" in settings.ES else None,
                     verify_certs=False,
+                    ssl_show_warn=False,
+                    ca_certs=settings.ES.get('ca_path','/ragflow/ca.crt'),
                     timeout=600
                 )
                 if self.es:

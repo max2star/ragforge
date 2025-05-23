@@ -9,8 +9,12 @@ services:
         condition: service_healthy
       redis-ragflow:
         condition: service_healthy
+          #es01:
+          #  condition: service_healthy
+          #minio-ragflow:
+          #condition: service_healthy
     image: ${RAGFLOW_IMAGE}
-    shm_size: '32gb'
+    shm_size: '128gb'
     container_name: ragflow-server
     deploy:
       resources:
@@ -29,6 +33,7 @@ services:
       - 5679:5679
     volumes:
       - /var/lib/gpustack/ragflow/logs:/ragflow/logs
+      - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
       - ../api:/ragflow/api
       - ../minerU:/ragflow/minerU
@@ -50,6 +55,9 @@ services:
       - TZ=${TIMEZONE}
       - HF_ENDPOINT=${HF_ENDPOINT}
       - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=120
+      - LLM_MAX_RETRIES=1
+      - LLM_BASE_DELAY=2
         # - SSL_CERT_FILE="/etc/nginx/public.crt"
         #- CUDA_VISIBLE_DEVICES=1
         #- NCCL_SOCKET_IFNAME=bond0.128

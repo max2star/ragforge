@@ -14,9 +14,10 @@ minio:
   password: 'infini_rag_flow'
   host: 'localhost:9000'
 es:
-  hosts: 'http://localhost:1200'
+  hosts: 'https://localhost:1200'
   username: 'elastic'
-  password: 'infini_rag_flow'
+  password: 'EPPso10r8Ja'
+  ca_path: '/ragflow/ca.crt'
 infinity:
   uri: 'localhost:23817'
   db_name: 'default_db'
