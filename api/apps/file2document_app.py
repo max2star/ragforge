@@ -21,7 +21,7 @@ from flask import request
 from flask_login import login_required, current_user
 from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.utils.api_utils import server_error_response, get_data_error_result, validate_request
-from api.utils import get_uuid
+from api.utils import get_uuid,current_timestamp
 from api.db import FileType
 from api.db.services.document_service import DocumentService
 from api import settings
@@ -128,6 +128,13 @@ def convert():
                         "location": file.location,
                         "size": file.size
                     })
+
+                    doc_filter_field = {}
+                    doc_filter_field['limit_range'] = [current_user.id]
+                    doc_filter_field['limit_level'] = 1
+                    doc_filter_field['limit_time'] = current_timestamp()
+                    doc['filter_fields'] = doc_filter_field
+
                     file2document = File2DocumentService.insert({
                         "id": get_uuid(),
                         "file_id": id,

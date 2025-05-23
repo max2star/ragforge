@@ -55,9 +55,9 @@ services:
       - TZ=${TIMEZONE}
       - HF_ENDPOINT=${HF_ENDPOINT}
       - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=120
-      - LLM_MAX_RETRIES=1
-      - LLM_BASE_DELAY=2
+        #- LM_TIMEOUT_SECONDS=120
+        #- LLM_MAX_RETRIES=1
+        #- LLM_BASE_DELAY=2
         # - SSL_CERT_FILE="/etc/nginx/public.crt"
         #- CUDA_VISIBLE_DEVICES=1
         #- NCCL_SOCKET_IFNAME=bond0.128

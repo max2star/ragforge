@@ -206,11 +206,11 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         eng = lang.lower() == "english"  # pdf_parser.is_english
         logging.debug("It's English.....{}".format(eng))
 
-        callback(prog=0.95,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
+        callback(prog=0.36,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
         start = timer()
         if paper["tables"]:
             res = tokenize_table(paper["tables"], doc, eng)
-            callback(prog=0.96,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.37,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
         if paper["abstract"]:
@@ -223,12 +223,12 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             add_positions(d, poss)
             tokenize(d, txt, eng)
             res.append(d)
-            callback(prog=0.96,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
+            callback(prog=0.40,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
         sorted_sections = paper["sections"]
         res.extend(tokenize_chunks_for_mineru(sorted_sections, doc, eng, pdf_parser))
-        callback(prog=0.98,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
+        callback(prog=0.40,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
         return res
 
     doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"]),

@@ -45,6 +45,7 @@ from rag.utils.storage_factory import STORAGE_IMPL
 from api.db.services.canvas_service import UserCanvasService
 from agent.canvas import Canvas
 from functools import partial
+import logging
 
 
 @manager.route('/new_token', methods=['POST'])  # noqa: F821
@@ -458,6 +459,12 @@ def upload():
             doc["parser_id"] = ParserType.PRESENTATION.value
         if re.search(r"\.(eml)$", filename):
             doc["parser_id"] = ParserType.EMAIL.value
+        #TODO 这个API为啥设置create by为 kb.tenant_id
+        doc_filter_field = {}
+        doc_filter_field['limit_range'] = [kb.tenant_id]
+        doc_filter_field['limit_level'] = 1
+        doc_filter_field['limit_time'] = current_timestamp()
+        doc['filter_fields'] = doc_filter_field
 
         doc_result = DocumentService.insert(doc)
         FileService.add_file_from_kb(doc, kb_folder["id"], kb.tenant_id)
