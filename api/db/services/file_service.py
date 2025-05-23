@@ -29,6 +29,7 @@ from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from api.utils import get_uuid
+from api.utils import current_timestamp
 from api.utils.file_utils import filename_type, thumbnail_img
 from rag.utils.storage_factory import STORAGE_IMPL
 
@@ -482,6 +483,14 @@ class FileService(CommonService):
                     "size": len(blob),
                     "thumbnail": thumbnail_location
                 }
+
+                doc_filter_field = {}
+                doc_filter_field['limit_range'] = [user_id]
+                doc_filter_field['limit_level'] = 1
+                doc_filter_field['limit_time'] = current_timestamp()
+                doc['filter_fields'] = doc_filter_field
+
+                logging.debug("doc['filter_fields'] is {}".format(doc['filter_fields']))
                 DocumentService.insert(doc)
 
                 FileService.add_file_from_kb(doc, kb_folder["id"], kb.tenant_id)

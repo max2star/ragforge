@@ -43,7 +43,10 @@ def set_conversation():
     is_new = req.get("is_new")
     del req["is_new"]
     if not is_new:
+        #不允许更新
         del req["conversation_id"]
+        if 'user_id' in req:
+            del req["user_id"]
         try:
 
             if not ConversationService.accessible(conv_id, current_user.id):
@@ -75,7 +78,7 @@ def set_conversation():
         e, dia = DialogService.get_by_id(req["dialog_id"])
         if not e:
             return get_data_error_result(message="Dialog not found")
-        conv = {"id": conv_id, "dialog_id": req["dialog_id"], "name": req.get("name", "New conversation"), "message": [{"role": "assistant", "content": dia.prompt_config["prologue"]}]}
+        conv = {"id": conv_id, "dialog_id": req["dialog_id"], "name": req.get("name", "New conversation"),"user_id":current_user.id, "message": [{"role": "assistant", "content": dia.prompt_config["prologue"]}]}
         ConversationService.save(**conv)
         return get_json_result(data=conv)
     except Exception as e:
@@ -429,7 +432,7 @@ def mindmap():
 
 
 @manager.route("/related_questions", methods=["POST"])  # noqa: F821
-@login_required
+#@login_required
 @validate_request("question")
 def related_questions():
     req = request.json

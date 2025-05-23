@@ -324,6 +324,7 @@ def knowledge_graph(kb_id):
         )
     _, kb = KnowledgebaseService.get_by_id(kb_id)
     req = {
+        "limit_range":[current_user.id],
         "kb_id": [kb_id],
         "knowledge_graph_kwd": ["graph"]
     }

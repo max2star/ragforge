@@ -328,7 +328,7 @@ class DocumentService(CommonService):
 
     @classmethod
     @DB.connection_context()
-    def accessible(cls, doc_id, user_id):
+    def accessible(cls, doc_id, user_id=None):
         docs = cls.model.select(
             cls.model.id).join(
             Knowledgebase, on=(
@@ -338,6 +338,12 @@ class DocumentService(CommonService):
         docs = docs.dicts()
         if not docs:
             return False
+
+        e, d = cls.get_by_id(doc_id)
+        if not e:
+            return False
+        #if user_id not in d.filter_fields.get('limit_range',[]):
+        #    return False
         return True
 
     @classmethod
@@ -440,6 +446,35 @@ class DocumentService(CommonService):
         if not config.get("raptor") and d.parser_config.get("raptor"):
             del d.parser_config["raptor"]
         cls.update_by_id(id, {"parser_config": d.parser_config})
+
+    @classmethod
+    @DB.connection_context()
+    def update_filter_fields(cls, id, config,user_id):
+        if not config:
+            return
+
+        for k,v in config.items():
+            if k not in ['limit_range','limit_level','limit_time']:
+                return
+        e, d = cls.get_by_id(id)
+        if not e:
+            raise LookupError(f"Document({id}) not found.")
+
+        def dfs_update(old, new):
+            for k, v in new.items():
+                if k not in old:
+                    old[k] = v
+                    continue
+                if isinstance(v, dict):
+                    assert isinstance(old[k], dict)
+                    dfs_update(old[k], v)
+                else:
+                    old[k] = v
+        dfs_update(d.filter_fields, config)
+        if user_id and user_id not in d.filter_fields['limit_range']:
+            logging.info(f"update_filter_fields insert the user_id {user_id}")
+            d.filter_fields['limit_range'] = d.filter_fields['limit_range'] + [user_id]
+        cls.update_by_id(id, {"filter_fields": d.filter_fields})
 
     @classmethod
     @DB.connection_context()

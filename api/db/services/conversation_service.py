@@ -32,8 +32,9 @@ class ConversationService(CommonService):
     @classmethod
     @DB.connection_context()
     def accessible(cls, session_id, user_id):
+        #return True
         docs = cls.model.select(
-            cls.model.id).where(cls.model.id == session_id, cls.model.tenant_id== user_id).paginate(0, 1)
+            cls.model.id).where(cls.model.id == session_id, cls.model.user_id== user_id).paginate(0, 1)
         docs = docs.dicts()
         if not docs:
             return False

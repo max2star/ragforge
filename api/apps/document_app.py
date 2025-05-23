@@ -40,7 +40,7 @@ from api.utils.api_utils import (
     get_data_error_result,
     validate_request,
 )
-from api.utils import get_uuid
+from api.utils import get_uuid,current_timestamp
 from api import settings
 from api.utils.api_utils import get_json_result
 from rag.utils.storage_factory import STORAGE_IMPL
@@ -152,7 +152,7 @@ def mv_kb():
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message=f'No authorization for doc_id {doc_id}.',
+                message=f'No authorization for doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
     docs = DocumentService.get_by_ids(doc_ids)
@@ -233,6 +233,13 @@ def web_crawl():
             doc["parser_id"] = ParserType.PRESENTATION.value
         if re.search(r"\.(eml)$", filename):
             doc["parser_id"] = ParserType.EMAIL.value
+
+        doc_filter_field = {}
+        doc_filter_field['limit_range'] = [current_user.id]
+        doc_filter_field['limit_level'] = 1
+        doc_filter_field['limit_time'] = current_timestamp()
+        doc['filter_fields'] = doc_filter_field
+
         DocumentService.insert(doc)
         FileService.add_file_from_kb(doc, kb_folder["id"], kb.tenant_id)
     except Exception as e:
@@ -275,7 +282,7 @@ def create():
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
-        doc = DocumentService.insert({
+        doc= {
             "id": get_uuid(),
             "kb_id": kb.id,
             "parser_id": kb.parser_id,
@@ -285,7 +292,14 @@ def create():
             "name": req["name"],
             "location": "",
             "size": 0
-        })
+        }
+        doc_filter_field = {}
+        doc_filter_field['limit_range'] = [current_user.id]
+        doc_filter_field['limit_level'] = 1
+        doc_filter_field['limit_time'] = current_timestamp()
+        doc['filter_fields'] = doc
+
+        doc = DocumentService.insert(doc)
         return get_json_result(data=doc.to_json())
     except Exception as e:
         return server_error_response(e)
@@ -335,7 +349,7 @@ def docinfos():
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization,maybe doc {doc_id} not accessible for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
     docs = DocumentService.get_by_ids(doc_ids)
@@ -350,13 +364,13 @@ def thumbnails():
         return get_json_result(
             data=False, message='Lack of "Document ID"', code=settings.RetCode.ARGUMENT_ERROR)
     #TODO
-    for doc_id in doc_ids:
-        if not DocumentService.accessible(doc_id, current_user.id):
-            return get_json_result(
-                data=False,
-                message='No authorization.',
-                code=settings.RetCode.AUTHENTICATION_ERROR
-            )
+    #for doc_id in doc_ids:
+    #    if not DocumentService.accessible(doc_id, current_user.id):
+    #        return get_json_result(
+    #            data=False,
+    #            message='No authorization.',
+    #            code=settings.RetCode.AUTHENTICATION_ERROR
+    #        )
 
     try:
         docs = DocumentService.get_thumbnails(doc_ids)
@@ -384,7 +398,7 @@ def change_status():
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization doc_id {req["doc_id"]} for you {current_user.id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
@@ -423,7 +437,7 @@ def rm():
         if not DocumentService.accessible4deletion(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
@@ -470,7 +484,7 @@ def run():
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
     try:
@@ -513,7 +527,7 @@ def rename():
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization doc_id {req["doc_id"]} for you {current_user.id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
     try:
@@ -557,7 +571,7 @@ def get(doc_id):
         #if not DocumentService.accessible(doc_id, current_user.id):
         #    return get_json_result(
         #        data=False,
-        #        message='No authorization.',
+        #        message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
         #        code=settings.RetCode.AUTHENTICATION_ERROR
         #    )
 
@@ -589,7 +603,7 @@ def get_md(doc_id):
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
@@ -623,7 +637,7 @@ def get_layout(doc_id):
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
@@ -655,7 +669,7 @@ def change_parser():
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization doc_id {req["doc_id"]} for you {current_user.id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
     try:
@@ -801,7 +815,7 @@ def set_meta():
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization doc_id {req["doc_id"]} for you {current_user.id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
     try:
@@ -822,6 +836,52 @@ def set_meta():
                 req["doc_id"], {"meta_fields": meta}):
             return get_data_error_result(
                 message="Database error (meta updates)!")
+
+        return get_json_result(data=True)
+    except Exception as e:
+        return server_error_response(e)
+
+@manager.route('/set_filter_fields', methods=['POST'])  # noqa: F821
+@login_required
+@validate_request("doc_id", "filter_fields")
+def set_filter_fields():
+    req = request.json
+    #只有创建者可以设置过滤权限
+    if not DocumentService.accessible4deletion(req["doc_id"], current_user.id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization doc_id {req["doc_id"]} for you {current_user.id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+    try:
+        filter_fields = json.loads(req["filter_fields"])
+    except Exception as e:
+        return get_json_result(
+            data=False, message=f'Json syntax error: {e}', code=settings.RetCode.ARGUMENT_ERROR)
+    if not isinstance(filter_fields, dict):
+        return get_json_result(
+            data=False, message='Filter fields data should be in Json map format, like {"key": "value"}', code=settings.RetCode.ARGUMENT_ERROR)
+    range_ = filter_fields.get('filter_range',[])
+    level_= filter_fields.get('filter_level',None)
+    time_ = filter_fields.get('filter_time',None)
+    if current_user.id not in range_:
+        return get_json_result(
+            data=False, message=f'Filter range not set or current user not in range.', code=settings.RetCode.ARGUMENT_ERROR)
+    if not level_:
+        return get_json_result(
+            data=False, message=f'Filter level not set.', code=settings.RetCode.ARGUMENT_ERROR)
+    if not time_:
+        return get_json_result(
+            data=False, message=f'Filter time not set.', code=settings.RetCode.ARGUMENT_ERROR)
+    try:
+        e, doc = DocumentService.get_by_id(req["doc_id"])
+        if not e:
+            return get_data_error_result(message="Document not found!")
+
+        if not DocumentService.update_by_id(
+                req["doc_id"], {"filter_fields": filter_fields}):
+            return get_data_error_result(
+                message="Database error (filter_fields updates)!")
 
         return get_json_result(data=True)
     except Exception as e:

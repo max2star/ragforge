@@ -302,7 +302,7 @@ class MinerUPdf:
         #local_image_dir, local_md_dir = "/var/lib/gpustack/output/images", "/var/lib/gpustack/output/output"
 
         from timeit import default_timer as timer
-        callback(msg="MinerU处理开始。即将进行视觉大模型要素抽取")
+        callback(msg="处理开始。即将从对象存储读取并进行视觉大模型要素抽取")
         
         # 使用MinerU处理
         try:
@@ -336,6 +336,7 @@ class MinerUPdf:
             #pdf_stream = BytesIO()
             #pdf_docs[0].save(pdf_stream)
             #pdf_stream.seek(0)
+            callback(prog=0.01,msg="从对象存储读取{}页文件完成 ({:.2f}s)。即将进行大模型解析".format((page_num+1),timer()-start))
             key_list_to_extract = constant.keyvalues_mapping['default']
             extractor_config = parser_config.get('extractor')
             if extractor_config:
@@ -356,12 +357,12 @@ class MinerUPdf:
             except Exception as e:
                 logging.info("视觉解析错误,继续其他处理 {}".format(e))
             logging.info("视觉解析抽取{} 结果 {},合并结果 {}".format(keys_to_use_list,vision_results,merged_results))
-            callback(prog=0.15,msg="MinerU 视觉大模型分析处理完成 ({:.2f}s),处理了{}页。即将从对象存储获取文档".format(timer()-start,(page_num+1)))
+            callback(prog=0.1,msg="视觉大模型分析处理完成 ({:.2f}s),处理了{}页。即将从对象存储获取文档进行MinerU处理".format(timer()-start,(page_num+1)))
 
             start = timer()
             #从对象存储读取文件
             pdf_bytes = reader.read(pdf_file_name)
-            callback(prog=0.25,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)。即将使用MinerU进行解析".format(timer()-start))
+            callback(prog=0.11,msg="MinerU 从对象存储读取文件完成 ({:.2f}s)。即将使用MinerU进行解析".format(timer()-start))
             ## Create Dataset Instance
             start = timer()
             ds = PymuDocDataset(pdf_bytes)
@@ -375,7 +376,7 @@ class MinerUPdf:
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_txt_mode(image_writer)
-            callback(prog=0.6,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}。即将进行结果绘制".format(timer()-start,use_ocr))
+            callback(prog=0.25,msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}。即将进行结果绘制".format(timer()-start,use_ocr))
 
             start = timer()
             pdf_info = pipe_result._pipe_res['pdf_info']
@@ -395,7 +396,7 @@ class MinerUPdf:
             
             #获取MD文件
             md_content = pipe_result.get_markdown(image_writer)#image_dir)
-            callback(prog=0.65,msg="MinerU 绘制处理结果 ({:.2f}s)完成。即将进行结果存储".format(timer()-start))
+            callback(prog=0.28,msg="MinerU 绘制处理结果 ({:.2f}s)完成。即将进行结果存储".format(timer()-start))
             
             start = timer()
             #将MarkDown文件进行输出
@@ -411,7 +412,7 @@ class MinerUPdf:
             content_list = pipe_result.get_content_list("")
             middle_content = pipe_result.get_middle_json()
             middle_json_content = json.loads(middle_content)
-            callback(prog=0.75,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)。即将进行结果分析".format(timer()-start))
+            callback(prog=0.3,msg="MinerU 保存处理结果到对象存储完成 ({:.2f}s)。即将进行结果分析".format(timer()-start))
             #logging.info('[MinerU] 获取content_list长度 {},middle_content长度 {},middle_json_content长度 {}'.format(len(content_list),len(middle_content),len(middle_json_content)))
             start = timer()
             # 解析middle_json_content 并提取块信息，结果保存在block_info_list
@@ -579,7 +580,7 @@ class MinerUPdf:
                     chunk_object['image_url'] = img_path_relative
                     sections.append(chunk_object)
 
-            callback(prog=0.81,msg="MinerU 解析处理结果完成 ({:.2f}s)。".format(timer()-start))
+            callback(prog=0.35,msg="MinerU 解析处理结果完成 ({:.2f}s)。".format(timer()-start))
             md_content_to = md_content[:10000]
            
             time_end_process = time.time()
@@ -641,8 +642,8 @@ class MinerUPdf:
         authors = []
         tbls = []
         abstr = ""
-        callback(prog=0.82,msg="MinerU 解析信息提取完成({:.2f}s)".format(timer()-start))
-        callback(prog=0.85,msg="MinerU 处理完成")
+        callback(prog=0.35,msg="MinerU 解析信息提取完成({:.2f}s)".format(timer()-start))
+        callback(prog=0.35,msg="MinerU 处理完成")
         # 返回的sections需要包括 text+_line_tag、layoutno。其中_line_tag表达了text的坐标信息，它用特殊字符进行分隔，以方便后续处理匹配到这些坐标信息.
         return {
             "title": title,

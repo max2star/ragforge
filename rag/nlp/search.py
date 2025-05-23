@@ -57,7 +57,7 @@ class Dealer:
 
     def get_filters(self, req):
         condition = dict()
-        for key, field in {"kb_ids": "kb_id", "doc_ids": "doc_id"}.items():
+        for key, field in {"kb_ids": "kb_id", "doc_ids": "doc_id","limit_range":"limit_range"}.items():
             if key in req and req[key] is not None:
                 condition[field] = req[key]
         # TODO(yzc): `available_int` is nullable however infinity doesn't support nullable columns.
@@ -350,7 +350,7 @@ class Dealer:
     def retrieval(self, question, embd_mdl, tenant_ids, kb_ids, page, page_size, similarity_threshold=0.2,
                   vector_similarity_weight=0.3, top=1024, doc_ids=None, aggs=True,
                   rerank_mdl=None, highlight=False,
-                  rank_feature: dict | None = {PAGERANK_FLD: 10}):
+                  rank_feature: dict | None = {PAGERANK_FLD: 10},limit_range=None):
         ranks = {"total": 0, "chunks": [], "doc_aggs": {}}
         if not question:
             return ranks
@@ -361,7 +361,8 @@ class Dealer:
                "question": question, "vector": True, "topk": top,
                "similarity": similarity_threshold,
                "available_int": 1}
-
+        if limit_range:
+            req['limit_range'] = limit_range
 
         if isinstance(tenant_ids, str):
             tenant_ids = tenant_ids.split(",")

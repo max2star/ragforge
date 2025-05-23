@@ -158,6 +158,14 @@ def upload(dataset_id, tenant_id):
     e, kb = KnowledgebaseService.get_by_id(dataset_id)
     if not e:
         raise LookupError(f"Can't find the dataset with ID {dataset_id}!")
+
+    if not KnowledgebaseService.accessible(dataset_id, tenant_id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization for kb_id {dataset_id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
     err, files = FileService.upload_document(kb, file_objs, tenant_id)
     if err:
         return get_result(message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
@@ -234,6 +242,11 @@ def update_doc(tenant_id, dataset_id, document_id):
     doc = DocumentService.query(kb_id=dataset_id, id=document_id)
     if not doc:
         return get_error_data_result(message="The dataset doesn't own the document.")
+
+    #控制权限
+    if not DocumentService.accessible(document_id, tenant_id):
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+
     doc = doc[0]
     if "chunk_count" in req:
         if req["chunk_count"] != doc.chunk_num:
@@ -249,6 +262,11 @@ def update_doc(tenant_id, dataset_id, document_id):
         if not isinstance(req["meta_fields"], dict):
             return get_error_data_result(message="meta_fields must be a dictionary")
         DocumentService.update_meta_fields(document_id, req["meta_fields"])
+
+    if "filter_fields" in req:
+        if not isinstance(req["filter_fields"], dict):
+            return get_error_data_result(message="filter_fields must be a dictionary")
+        DocumentService.update_filter_fields(document_id, req["filter_fields"],tenant_id)
 
     if "name" in req and req["name"] != doc.name:
         if len(req["name"].encode("utf-8")) >= 128:
@@ -384,6 +402,10 @@ def download(tenant_id, dataset_id, document_id):
         return get_error_data_result(
             message=f"The dataset not own the document {document_id}."
         )
+
+    if not DocumentService.accessible(document_id, tenant_id):
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+
     # The process of downloading
     doc_id, doc_location = File2DocumentService.get_storage_address(
         doc_id=document_id
@@ -493,11 +515,18 @@ def list_docs(dataset_id, tenant_id):
         return get_error_data_result(message=f"You don't own the dataset {dataset_id}. ")
     id = request.args.get("id")
     name = request.args.get("name")
-
-    if id and not DocumentService.query(id=id, kb_id=dataset_id):
-        return get_error_data_result(message=f"You don't own the document {id}.")
-    if name and not DocumentService.query(name=name, kb_id=dataset_id):
-        return get_error_data_result(message=f"You don't own the document {name}.")
+    if id:
+        d_ = DocumentService.query(id=id, kb_id=dataset_id)
+        if not d_:
+            return get_error_data_result(message=f"Kb {kb_id} don't own the document {id}.")
+        if not DocumentService.accessible(d.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
+    if name:
+        d_ = DocumentService.query(name=name, kb_id=dataset_id)
+        if not d_:
+            return get_error_data_result(message=f"Kb {kb_id} don't own the document {name}.")
+        if not DocumentService.accessible(d.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
 
     page = int(request.args.get("page", 1))
     keywords = request.args.get("keywords", "")
@@ -602,6 +631,13 @@ def delete(tenant_id, dataset_id):
     errors = ""
     not_found = []
     success_count = 0
+    not_accessible_docs = []
+    for doc_id in doc_list:
+        if not DocumentService.accessible(doc_id, tenant_id):
+            not_accessible_docs.append(doc_id)
+    not_accessible_docs = list(set(not_accessible_docs))
+    if not_accessible_docs:
+        return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
     for doc_id in doc_list:
         try:
             e, doc = DocumentService.get_by_id(doc_id)
@@ -696,6 +732,14 @@ def parse(tenant_id, dataset_id):
     unique_doc_ids, duplicate_messages = check_duplicate_ids(doc_list, "document")
     doc_list = unique_doc_ids
 
+    not_accessible_docs = []
+    for doc_id in doc_list:
+        if not DocumentService.accessible(doc_id, tenant_id):
+            not_accessible_docs.append(doc_id)
+    not_accessible_docs = list(set(not_accessible_docs))
+    if not_accessible_docs:
+        return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
+
     not_found = []
     success_count = 0
     for id in doc_list:
@@ -778,6 +822,14 @@ def stop_parsing(tenant_id, dataset_id):
     doc_list = req.get("document_ids")
     unique_doc_ids, duplicate_messages = check_duplicate_ids(doc_list, "document")
     doc_list = unique_doc_ids
+
+    not_accessible_docs = []
+    for doc_id in doc_list:
+        if not DocumentService.accessible(doc_id, tenant_id):
+            not_accessible_docs.append(doc_id)
+    not_accessible_docs = list(set(not_accessible_docs))
+    if not_accessible_docs:
+        return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
 
     success_count = 0
     for id in doc_list:
@@ -883,6 +935,10 @@ def list_chunks(tenant_id, dataset_id, document_id):
     doc = doc[0]
     req = request.args
     doc_id = document_id
+
+    if not DocumentService.accessible(doc_id, tenant_id):
+        return get_error_data_result(message=f"You don't own the doc {doc_id}.")
+
     page = int(req.get("page", 1))
     size = int(req.get("page_size", 30))
     question = req.get("keywords", "")
@@ -893,6 +949,8 @@ def list_chunks(tenant_id, dataset_id, document_id):
         "question": question,
         "sort": True,
     }
+    query['limit_range'] = tenant_id
+
     key_mapping = {
         "chunk_num": "chunk_count",
         "kb_id": "dataset_id",
@@ -1042,8 +1100,12 @@ def add_chunk(tenant_id, dataset_id, document_id):
     doc = DocumentService.query(id=document_id, kb_id=dataset_id)
     if not doc:
         return get_error_data_result(
-            message=f"You don't own the document {document_id}."
+            message=f"Kb {kb_id} don't own the document {document_id}."
         )
+
+    if not DocumentService.accessible(document_id, tenant_id):
+        return get_result(message=f"Document not accessible : {document_id},please check.", code=settings.RetCode.DATA_ERROR)
+
     doc = doc[0]
     req = request.json
     if not str(req.get("content", "")).strip():
@@ -1161,6 +1223,10 @@ def rm_chunk(tenant_id, dataset_id, document_id):
     docs = DocumentService.get_by_ids([document_id])
     if not docs:
         raise LookupError(f"Can't find the document with ID {document_id}!")
+
+    if not DocumentService.accessible(document_id, tenant_id):
+        return get_result(message=f"Document not accessible : {document_id},please check.", code=settings.RetCode.DATA_ERROR)
+
     req = request.json
     condition = {"doc_id": document_id}
     if "chunk_ids" in req:
@@ -1239,12 +1305,15 @@ def update_chunk(tenant_id, dataset_id, document_id, chunk_id):
     if chunk is None:
         return get_error_data_result(f"Can't find this chunk {chunk_id}")
     if not KnowledgebaseService.accessible(kb_id=dataset_id, user_id=tenant_id):
-        return get_error_data_result(message=f"You don't own the dataset {dataset_id}.")
+        return get_error_data_result(message=f"Kb {dataset_id} don't own the dataset {dataset_id}.")
     doc = DocumentService.query(id=document_id, kb_id=dataset_id)
     if not doc:
         return get_error_data_result(
             message=f"You don't own the document {document_id}."
         )
+    if not DocumentService.accessible(document_id, tenant_id):
+        return get_result(message=f"Document not accessible : {document_id},please check.", code=settings.RetCode.DATA_ERROR)
+
     doc = doc[0]
     req = request.json
     if "content" in req:
@@ -1368,9 +1437,11 @@ def retrieval_test(tenant_id):
                     format: float
                     description: Similarity score.
     """
+    import logging
     req = request.json
     if not req.get("dataset_ids"):
         return get_error_data_result("`dataset_ids` is required.")
+    req['limit_range'] = tenant_id
     kb_ids = req["dataset_ids"]
     if not isinstance(kb_ids, list):
         return get_error_data_result("`dataset_ids` should be a list")
@@ -1393,12 +1464,19 @@ def retrieval_test(tenant_id):
     use_kg = req.get("use_kg", False)
     if not isinstance(doc_ids, list):
         return get_error_data_result("`documents` should be a list")
+    not_accessible_docs = []
     doc_ids_list = KnowledgebaseService.list_documents_by_ids(kb_ids)
     for doc_id in doc_ids:
         if doc_id not in doc_ids_list:
             return get_error_data_result(
                 f"The datasets don't own the document {doc_id}"
             )
+        if not DocumentService.accessible(doc_id, tenant_id):
+            not_accessible_docs.append(doc_id)
+    not_accessible_docs = list(set(not_accessible_docs))
+    if not_accessible_docs:
+        return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
+
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
     vector_similarity_weight = float(req.get("vector_similarity_weight", 0.3))
     top = int(req.get("top_k", 1024))
@@ -1433,7 +1511,8 @@ def retrieval_test(tenant_id):
             doc_ids,
             rerank_mdl=rerank_mdl,
             highlight=highlight,
-            rank_feature=label_question(question, kbs)
+            rank_feature=label_question(question, kbs),
+            limit_range=tenant_id
         )
         if use_kg:
             ck = settings.kg_retrievaler.retrieval(question,
