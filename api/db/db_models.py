@@ -640,7 +640,7 @@ class Document(DataBaseModel):
     process_begin_at = DateTimeField(null=True, index=True)
     process_duation = FloatField(default=0)
     meta_fields = JSONField(null=True, default={})
-    filter_fields = JSONField(null=True, default={'limit_range':[],'limit_level':1,'limit_time':utils.current_timestamp(),'version':0,'create_time':utils.current_timestamp()})
+    filter_fields = JSONField(null=True, default={'limit_range':[],'limit_level':1,'limit_time':utils.current_timestamp()})
     run = CharField(max_length=1, null=True, help_text="start to run processing or cancel.(1: run it; 2: cancel)", default="0", index=True)
     status = CharField(max_length=1, null=True, help_text="is it validate(0: wasted, 1: validate)", default="1", index=True)
 
