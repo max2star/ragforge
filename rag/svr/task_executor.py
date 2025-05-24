@@ -176,7 +176,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
 
         close_connection()
         if cancel:
-            raise TaskCanceledException(msg)
+            raise TaskCanceledException(msg+",task id {}".format(task_id))
         logging.info(f"set_progress({task_id}), progress: {prog}, progress_msg: {msg}")
     except DoesNotExist:
         logging.warning(f"set_progress({task_id}) got exception DoesNotExist")
@@ -617,10 +617,14 @@ async def do_handle_task(task):
         logging.error(f"Doc filter field not exists for {task_doc_id}!")
         raise LookupError(f"Doc filter field not exists!")
         #filter_fields_ = {'limit_range':[doc.created_by]}
+    limit_range = filter_fields_.get('limit_range',[])
+    if not limit_range:
+        filter_fields_['limit_range']=[doc.created_by]
     if doc.created_by not in filter_fields_.get('limit_range',[]):
         #filter_fields_['limit_range']=filter_fields_['limit_range']+[doc.created_by]
         logging.error(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
         raise LookupError(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
+    filter_fields_.pop('create_time',None)
     limit_time = filter_fields_.get('limit_time')
     limit_time = str(datetime.fromtimestamp(limit_time/1000)).replace("T", " ")[:19]
     filter_fields_['limit_time'] = limit_time
@@ -629,7 +633,9 @@ async def do_handle_task(task):
 
     #先获取现有的元数据
     dict_result = task.get('meta_fields',{})
-    logging.debug(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
+    DocumentService.update_meta_fields(task["doc_id"],  {})
+    dict_result.pop('meta_fields',None)
+    logging.info(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -639,17 +645,18 @@ async def do_handle_task(task):
     for c_ in chunks:
         content = content + "\n"+ c_['content_with_weight']
         c_count = c_count + len(c_['content_with_weight'])
-        if c_count >=10000:
+        if c_count >=5000:
             break
     logging.debug(f"do_handle_task current content {content}")
 
     dict_result_add = await run_extract(task, chat_model, content,progress_callback)
-    logging.debug(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
+    logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
     for key,value in dict_result_add.items():
         if key in key_now:
-            logging.debug(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+            logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
         else:
             dict_result[key] = value
+    logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
 
     classification_result = await run_classify(task, chat_model, content,progress_callback)
     #抽取失败用空覆盖之前
@@ -665,7 +672,7 @@ async def do_handle_task(task):
             classify_obj = {"类别编号":key,"分类类别":value}
             classify_result.append(classify_obj)
     dict_result['分类标签'] =  classify_result
-    logging.info(f"do_handle_task doc {task['doc_id']} meta fields {dict_result}, filter fields {filter_fields_}")
+    logging.info(f"do_handle_task doc {task['doc_id']} 合并分类标签后的 meta fields {dict_result}, filter fields {filter_fields_}")
     for c_ in chunks:
         c_['meta_fields']=dict_result
         c_['filter_fields'] = filter_fields_
@@ -768,8 +775,19 @@ async def report_status():
                 "failed": FAILED_TASKS,
                 "current": current,
             })
+            heartbeat_ = json.dumps({
+                "name": CONSUMER_NAME,
+                "now": now.astimezone().isoformat(timespec="milliseconds"),
+                "boot_at": BOOT_AT,
+                "pending": PENDING_TASKS,
+                "lag": LAG_TASKS,
+                "done": DONE_TASKS,
+                "failed": FAILED_TASKS,
+            })
+
             REDIS_CONN.zadd(CONSUMER_NAME, heartbeat, now.timestamp())
-            logging.info(f"{CONSUMER_NAME} reported heartbeat: {heartbeat}")
+            logging.debug(f"{CONSUMER_NAME} reported heartbeat: {heartbeat}")
+            logging.info(f"{CONSUMER_NAME} reported heartbeat: {heartbeat_}")
 
             expired = REDIS_CONN.zcount(CONSUMER_NAME, 0, now.timestamp() - 60 * 30)
             if expired > 0:
