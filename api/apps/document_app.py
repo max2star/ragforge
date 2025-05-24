@@ -593,12 +593,12 @@ def get(doc_id):
 
 
 @manager.route('/get_md/<doc_id>', methods=['GET'])  # noqa: F821
-# @login_required
+@login_required
 def get_md(doc_id):
     try:
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
-            return get_data_error_result(message="Document not found!")
+            return get_data_error_result(message=f"Document {doc_id} not found!")
 
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
@@ -606,28 +606,21 @@ def get_md(doc_id):
                 message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
-
         if doc.md_location:
+            logging.info(f"get md for {doc_id},location {doc.md_location}")
             res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
-            response = flask.make_response(re)
+            #res = res.decode('utf-8')
+            response = flask.make_response(res)
         else:
-            return get_data_error_result(message="Document MarkDown not found, maybe not parsed by MinerU!")
+            return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
 
-        ext = re.search(r"\.([^.]+)$", doc.name)
-        if ext:
-            if doc.type == FileType.VISUAL.value:
-                response.headers.set('Content-Type', 'image/%s' % ext.group(1))
-            else:
-                response.headers.set(
-                    'Content-Type',
-                    'application/%s' %
-                    ext.group(1))
+        response.headers.set('Content-Type', 'text/markdown; charset=utf-8')
         return response
     except Exception as e:
         return server_error_response(e)
 
 @manager.route('/get_layout/<doc_id>', methods=['GET'])  # noqa: F821
-# @login_required
+@login_required
 def get_layout(doc_id):
     try:
         e, doc = DocumentService.get_by_id(doc_id)
@@ -641,11 +634,12 @@ def get_layout(doc_id):
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
-        if doc.location:
+        if doc.layout_location:
+            logging.info(f"get md for {doc_id},location {doc.layout_location}")
             res = STORAGE_IMPL.get(doc.kb_id, doc.layout_location)
-            response = flask.make_response(re)
+            response = flask.make_response(res)
         else:
-            return get_data_error_result(message="Document Layout not found, maybe not parsed by MinerU!")
+            return get_data_error_result(message=f"Document {doc_id} Layout {doc.layout_location} not found, maybe not parsed by MinerU!")
 
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:

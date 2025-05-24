@@ -23,7 +23,7 @@ Requirements:
 {key_to_extract}
 """
     prompt = prompt_1 + prompt_2
-    logging.info("prompt is {}".format(prompt))
+    logging.debug("extraction prompt is {}".format(prompt))
 #prompt = f"""
 #角色: 你是大师级的文本分析专家，专业、严谨、精确。
 #任务描述: 你的任务是从输入文本内容中提取的keyvalue信息，不要编造，直接获取文本，注意完整性，不要仅返回部分内容。抽取的文本内容中的keyvalue信息，key使用中文，value以原始文本的语言输出，不要进行总结摘要等操作。不要获取key之外的信息，如果某些key没有value，value设置为空字符即可。
@@ -186,7 +186,7 @@ def paper_classification_prompt(content):
 {content}
 """
     prompt = prompt_1 + prompt_2
-    logging.info("prompt is {}".format(prompt))
+    logging.debug("classification prompt is {}".format(prompt))
 #prompt = f"""
 #角色: 你是大师级的文本分析专家，专业、严谨、精确。
 #任务描述: 你的任务是从输入文本内容中提取的keyvalue信息，不要编造，直接获取文本，注意完整性，不要仅返回部分内容。抽取的文本内容中的keyvalue信息，key使用中文，value以原始文本的语言输出，不要进行总结摘要等操作。不要获取key之外的信息，如果某些key没有value，value设置为空字符即可。
