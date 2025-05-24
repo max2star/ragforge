@@ -382,7 +382,7 @@ class MinerUPdf:
             pdf_info = pipe_result._pipe_res['pdf_info']
             pdf_bytes= pipe_result._dataset.data_bits()
             draw_layout_bbox_(pdf_info, pdf_bytes,writer,f"{name_without_suff}_layout.pdf")
-            DocumentService.update_layout_location_fields(doc_id,f"minerU/{name_without_suff}_layout.pdf")
+            DocumentService.update_layout_location_fields(doc_id,f"minerU/{doc_id}/{name_without_suff}_layout.pdf")
 
             #TODO
             ## get model inference result
@@ -406,7 +406,7 @@ class MinerUPdf:
             #将middle json文件进行输出
             pipe_result.dump_middle_json(writer, f'{name_without_suff}_middle.json')
 
-            DocumentService.update_md_location_fields(doc_id,f"minerU/{name_without_suff}.md")
+            DocumentService.update_md_location_fields(doc_id,f"minerU/{doc_id}/{name_without_suff}.md")
 
             
             content_list = pipe_result.get_content_list("")
