@@ -40,6 +40,7 @@ from api.utils.api_utils import (
     get_data_error_result,
     validate_request,
 )
+import uuid
 from api.utils import get_uuid,current_timestamp
 from api import settings
 from api.utils.api_utils import get_json_result
@@ -346,6 +347,14 @@ def docinfos():
     req = request.json
     doc_ids = req["doc_ids"]
     for doc_id in doc_ids:
+        try:
+            uuid.UUID(str(doc_id))
+        except Exception as e:
+            return get_json_result(
+                data=False,
+                message=f'Parameter {doc_id} not uuid.',
+                code=settings.RetCode.ARGUMENT_ERROR
+            )
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,

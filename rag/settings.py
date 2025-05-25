@@ -30,6 +30,7 @@ INFINITY = {}
 AZURE = {}
 S3 = {}
 MINIO = {}
+MINIO_BACKUP = {}
 OSS = {}
 
 # Initialize the selected configuration data based on environment variables to solve the problem of initialization errors due to lack of configuration
@@ -44,6 +45,7 @@ elif STORAGE_IMPL_TYPE == 'AWS_S3':
     S3 = get_base_config("s3", {})
 elif STORAGE_IMPL_TYPE == 'MINIO':
     MINIO = decrypt_database_config(name="minio")
+    MINIO_BACKUP = decrypt_database_config(name="minio_backup")
     S3 = get_base_config("s3", {})
 elif STORAGE_IMPL_TYPE == 'OSS':
     OSS = get_base_config("oss", {})
