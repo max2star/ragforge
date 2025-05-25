@@ -32,11 +32,11 @@ import subprocess
 @singleton
 class RAGFlowMinio:
     def __init__(self):
+        self.secure = True
         self.conn = None
         self.remote_conn = None
         self.remote_flag = False
         self.__open__()
-
     def __open__(self):
         try:
             if self.conn or self.remote_conn:
@@ -59,11 +59,45 @@ class RAGFlowMinio:
                                   secure=True
                                   )
                 self.remote_flag = True
+                self.config_alias(src_cluster_alias=None,dest_cluster_alias=None)
             else:
                 logging.info(f"not enable minio backup cluster")
         except Exception:
             logging.exception(
                 "Fail to connect {} or {}".format(settings.MINIO["host"],settings.MINIO_BACKUP["host"]))
+
+    def config_alias(self,src_cluster_alias,dest_cluster_alias):
+        if not self.remote_flag:
+            return
+        src_cluster_alias = "minio-cluster-1"
+        dest_cluster_alias = "minio-cluster-2"
+        if self.secure:
+            prefix_ = "https://"
+        else:
+            prefix_ = "http://"
+
+        cmd1 = [
+            'mc',
+            'alias',
+            'set',f'{src_cluster_alias}',f'{prefix_}{settings.MINIO["host"]}',f'{settings.MINIO["user"]}',f'{settings.MINIO["password"]}',
+            '--insecure'
+        ]
+        cmd2 = [
+            'mc',
+            'alias',
+            'set',f'{dest_cluster_alias}',f'{prefix_}{settings.MINIO_BACKUP["host"]}',f'{settings.MINIO_BACKUP["user"]}',f'{settings.MINIO_BACKUP["password"]}',
+            '--insecure'
+        ]
+
+        process = subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if process.returncode != 0:
+            raise Exception(process.stderr.decode())
+        logging.info(f"config_alias {cmd1} excuted,result {process.returncode}")
+
+        process = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if process.returncode != 0:
+            raise Exception(process.stderr.decode())
+        logging.info(f"config_alias {cmd2} excuted,result {process.returncode}")
 
     def config_backup_policy(self,src_cluster_alias,source_bucket, dest_cluster_alias,dest_bucket):
         if not self.remote_flag:
