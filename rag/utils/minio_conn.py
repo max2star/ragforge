@@ -23,32 +23,77 @@ from io import BytesIO
 from rag import settings
 from rag.utils import singleton
 from minio.commonconfig import CopySource
+from minio.commonconfig import ENABLED
+from minio.versioningconfig import VersioningConfig
+from minio.error import S3Error
+import subprocess
+
+
 @singleton
 class RAGFlowMinio:
     def __init__(self):
         self.conn = None
+        self.remote_conn = None
+        self.remote_flag = False
         self.__open__()
 
     def __open__(self):
         try:
-            if self.conn:
+            if self.conn or self.remote_conn:
                 self.__close__()
         except Exception:
             pass
 
         try:
+            logging.info("cluster {},backup clutser {}".format(settings.MINIO,settings.MINIO_BACKUP))
             self.conn = Minio(settings.MINIO["host"],
                               access_key=settings.MINIO["user"],
                               secret_key=settings.MINIO["password"],
                               secure=True
                               )
+            if settings.MINIO_BACKUP.get("host",None):
+                logging.info(f"enable minio backup cluster")
+                self.remote_conn =  Minio(settings.MINIO_BACKUP["host"],
+                                  access_key=settings.MINIO_BACKUP["user"],
+                                  secret_key=settings.MINIO_BACKUP["password"],
+                                  secure=True
+                                  )
+                self.remote_flag = True
+            else:
+                logging.info(f"not enable minio backup cluster")
         except Exception:
             logging.exception(
-                "Fail to connect %s " % settings.MINIO["host"])
+                "Fail to connect {} or {}".format(settings.MINIO["host"],settings.MINIO_BACKUP["host"]))
+
+    def config_backup_policy(self,src_cluster_alias,source_bucket, dest_cluster_alias,dest_bucket):
+        if not self.remote_flag:
+            return
+        src_cluster_alias = "minio-cluster-1"
+        dest_cluster_alias = "minio-cluster-2"
+        if not dest_bucket:
+            dest_bucket=source_bucket
+        cmd = [
+            'mc',
+            'replicate',
+            'add',
+            '--priority', '10',
+            '--remote-bucket', f"{dest_cluster_alias}/{dest_bucket}",
+            '--limit-upload','1000Mi',
+            #'--sync',
+            f"{src_cluster_alias}/{source_bucket}"
+        ]
+        logging.info(f"config_backup_policy {cmd}")
+        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if process.returncode != 0:
+            raise Exception(process.stderr.decode())
+        logging.info(f"config_backup_policy {cmd} excuted,result {process.returncode}")
 
     def __close__(self):
         del self.conn
         self.conn = None
+        if self.remote_conn:
+            del self.remote_conn
+            self.remote_conn=None
 
     def health(self):
         bucket, fnm, binary = "txtxtxtxt1", "txtxtxtxt1", b"_t@@@1"
@@ -65,6 +110,12 @@ class RAGFlowMinio:
             try:
                 if not self.conn.bucket_exists(bucket):
                     self.conn.make_bucket(bucket)
+                    config = VersioningConfig(ENABLED)
+                    self.conn.set_bucket_versioning(bucket, config)
+                    if self.remote_flag:
+                        self.remote_conn.make_bucket(bucket)
+                        self.remote_conn.set_bucket_versioning(bucket, config)
+                        self.config_backup_policy(src_cluster_alias=None,source_bucket=bucket,dest_cluster_alias=None,dest_bucket=bucket)
 
                 r = self.conn.put_object(bucket, fnm,
                                          BytesIO(binary),
