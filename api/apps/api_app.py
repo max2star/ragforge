@@ -98,10 +98,10 @@ def token_list():
 @login_required
 def rm():
     req = request.json
-    if not request['tenant_id']==current_user.id:
+    if not req['tenant_id']==current_user.id:
         return get_json_result(
             data=False, message='Only owner of tokens authorized for this operation.',
-            code=RetCode.OPERATING_ERROR)
+            code=settings.RetCode.OPERATING_ERROR)
     try:
         for token in req["tokens"]:
             APITokenService.filter_delete(
