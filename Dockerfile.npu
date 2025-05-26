@@ -96,7 +96,7 @@ RUN apt update && apt install -y curl build-essential \
        fi; \
     # Force curl to use HTTP/1.1
     #curl --proto '=https' -x http://81.70.135.187:8118 --tlsv1.2 --http1.1 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal \
-    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal \
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y --profile minimal \
     && . "$HOME/.cargo/env" \
     && echo 'export PATH="/root/.cargo/bin:${PATH}"' >> ~/.bashrc \
     && export PATH="/root/.cargo/bin:${PATH}" \
