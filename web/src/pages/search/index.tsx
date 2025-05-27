@@ -53,6 +53,8 @@ const SearchPage = () => {
     return checkedList.filter((x) => knowledgeList.some((y) => y.id === x));
   }, [checkedList, knowledgeList]);
 
+  console.log('chunks >>>', chunks);
+
   const {
     sendQuestion,
     handleClickRelatedQuestion,
