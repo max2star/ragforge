@@ -90,6 +90,7 @@ export const useFetchNextDocumentList = () => {
     },
   });
 
+  console.log('DATA >>>', data.docs);
   const onInputChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => {
       setPagination({ page: 1 });
