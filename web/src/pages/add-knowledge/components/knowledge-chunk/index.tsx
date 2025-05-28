@@ -226,9 +226,9 @@ const Chunk = () => {
   };
 
   const chunkMetaList = useMemo(() => {
-    const selectedChunks = data.filter((chunk) =>
-      selectedChunkId.includes(chunk.chunk_id),
-    );
+    // const selectedChunks = data.filter((chunk) =>
+    //   selectedChunkId.includes(chunk.chunk_id),
+    // );
 
     console.log('data >>>', data);
 
@@ -236,8 +236,8 @@ const Chunk = () => {
     const mateData = firstData.metadata;
     let parsedMeta: Record<string, any> = {};
     // selectedChunks.forEach((chunk) => {
-      const meta = safeJsonParse(mateData|| '{}');
-      parsedMeta = { ...parsedMeta, ...meta };
+    const meta = safeJsonParse(mateData || '{}');
+    parsedMeta = { ...parsedMeta, ...meta };
     // });
 
     return Object.entries(parsedMeta).map(([key, value]) => ({

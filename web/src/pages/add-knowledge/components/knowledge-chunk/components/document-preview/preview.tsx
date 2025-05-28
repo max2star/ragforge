@@ -44,6 +44,8 @@ const Preview = ({ highlights: state, setWidthAndHeight }: IProps) => {
     }
   }, [state]);
 
+  console.log('pdf url >>>>', url);
+
   return (
     <div className={styles.documentContainer}>
       <PdfLoader
