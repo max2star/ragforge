@@ -303,7 +303,7 @@ const Chunk = () => {
               />
             </div>
           </Flex>
-          <Flex
+          {/* <Flex
             className={isPdf ? styles.pagePdfWrapper : styles.pageWrapper}
             style={{
               width: isMinimized ? 100 : 600,
@@ -396,7 +396,7 @@ const Chunk = () => {
                 </tbody>
               </table>
             </Space>
-          </Flex>
+          </Flex> */}
           {isPdf && (
             <section className={styles.documentPreview}>
               <DocumentPreview
