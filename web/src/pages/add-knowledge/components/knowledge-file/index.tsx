@@ -32,8 +32,12 @@ import { IDocumentInfo } from '@/interfaces/database/document';
 import { formatDate } from '@/utils/date';
 import styles from './index.less';
 import { SetMetaModal } from './set-meta-modal';
+import AuthorizedImage from './authorized-image';
+import { getAuthorization } from '@/utils/authorization-util';
 
 const { Text } = Typography;
+
+const token = getAuthorization();
 
 const KnowledgeFile = () => {
   const { searchString, documents, pagination, handleInputChange } =
@@ -105,12 +109,14 @@ const KnowledgeFile = () => {
         <div className={styles.toChunks} onClick={() => toChunk(id)}>
           <Flex gap={10} align="center">
             {thumbnail ? (
-              <img className={styles.img} src={thumbnail} alt="" />
+              <AuthorizedImage
+                src={thumbnail}
+                token={token}
+                className={styles.img}
+                alt={name}
+              />
             ) : (
-              <SvgIcon
-                name={`file-icon/${getExtension(name)}`}
-                width={24}
-              ></SvgIcon>
+              <SvgIcon name={`file-icon/${getExtension(name)}`} width={24} />
             )}
             <Text ellipsis={{ tooltip: text }} className={styles.nameText}>
               {text}
