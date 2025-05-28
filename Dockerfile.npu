@@ -238,4 +238,4 @@ RUN chmod +x  /usr/bin/mc
 #RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 #ENTRYPOINT ["/bin/bash"]
-ENTRYPOINT ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint_npu.sh"]
