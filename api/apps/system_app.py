@@ -300,6 +300,7 @@ def rm(token):
 
 
 @manager.route('/config', methods=['GET'])  # noqa: F821
+#@login_required
 def get_config():
     """
     Get system configuration.
