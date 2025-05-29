@@ -179,7 +179,9 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
             raise TaskCanceledException(msg+",task id {}".format(task_id))
         logging.info(f"set_progress({task_id}), progress: {prog}, progress_msg: {msg}")
     except DoesNotExist:
-        logging.warning(f"set_progress({task_id}) got exception DoesNotExist")
+        import traceback
+        traceback.print_exc()
+        logging.warning(f"set_progress({task_id}) got exception DoesNotExist,stack is {traceback.format_exc()}")
     except Exception:
         logging.exception(f"set_progress({task_id}), progress: {prog}, progress_msg: {msg}, got exception")
 
@@ -620,6 +622,12 @@ async def do_handle_task(task):
     limit_range = filter_fields_.get('limit_range',[])
     if not limit_range:
         filter_fields_['limit_range']=[doc.created_by]
+    limit_level = filter_fields_.get('limit_level',[])
+    if not limit_level:
+        filter_fields_['limit_level']= 1
+    limit_time = filter_fields_.get('limit_time',[])
+    if not limit_time:
+        filter_fields_['limit_time']= 0
     if doc.created_by not in filter_fields_.get('limit_range',[]):
         #filter_fields_['limit_range']=filter_fields_['limit_range']+[doc.created_by]
         logging.error(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
@@ -652,8 +660,9 @@ async def do_handle_task(task):
     dict_result_add = await run_extract(task, chat_model, content,progress_callback)
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
     for key,value in dict_result_add.items():
-        if key in key_now:
+        if key in key_now and dict_result.get(key,None):
             logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+            dict_result[key] = value
         else:
             dict_result[key] = value
     logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")

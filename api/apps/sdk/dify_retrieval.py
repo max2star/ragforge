@@ -35,6 +35,10 @@ def retrieval(tenant_id):
     similarity_threshold = float(retrieval_setting.get("score_threshold", 0.0))
     top = int(retrieval_setting.get("top_k", 1024))
 
+    limit_range = tenant_id
+    limit_time = str(datetime.datetime.now()).replace("T", " ")[:19]
+    limit_level= req.get('limit_level',1)
+
     try:
 
         e, kb = KnowledgebaseService.get_by_id(kb_id)
@@ -57,7 +61,9 @@ def retrieval(tenant_id):
             vector_similarity_weight=0.3,
             top=top,
             rank_feature=label_question(question, [kb]),
-            limit_range = tenant_id
+            limit_range = limit_range,
+            limit_time = limit_time,
+            limit_level =limit_level
         )
 
         if use_kg:

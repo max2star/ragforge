@@ -350,7 +350,7 @@ class Dealer:
     def retrieval(self, question, embd_mdl, tenant_ids, kb_ids, page, page_size, similarity_threshold=0.2,
                   vector_similarity_weight=0.3, top=1024, doc_ids=None, aggs=True,
                   rerank_mdl=None, highlight=False,
-                  rank_feature: dict | None = {PAGERANK_FLD: 10},limit_range=None):
+                  rank_feature: dict | None = {PAGERANK_FLD: 10},limit_range=None,limit_level=None,limit_time=None):
         ranks = {"total": 0, "chunks": [], "doc_aggs": {}}
         if not question:
             return ranks
@@ -363,6 +363,10 @@ class Dealer:
                "available_int": 1}
         if limit_range:
             req['limit_range'] = limit_range
+        if limit_level:
+            req['limit_level'] = limit_range
+        if limit_time:
+            req['limit_time'] = limit_time
 
         if isinstance(tenant_ids, str):
             tenant_ids = tenant_ids.split(",")
