@@ -83,6 +83,7 @@ def list_chunk():
                 "available_int": int(sres.field[id].get("available_int", 1)),
                 "positions": sres.field[id].get("position_int", []),
                 "metadata":sres.field[id].get("meta_fields", []),
+                "filter_fields":sres.field[id].get("filter_fields", []),
             }
             assert isinstance(d["positions"], list)
             assert len(d["positions"]) == 0 or (isinstance(d["positions"][0], list) and len(d["positions"][0]) == 5)
@@ -112,7 +113,7 @@ def get():
             chunk = settings.docStoreConn.get(chunk_id, search.index_name(tenant.tenant_id), kb_ids)
             if chunk:
                 field_ = chunk.get('filter_fields')
-                limit_range = field.get('limit_range')
+                limit_range = field_.get('limit_range')
                 if current_user.id not in limit_range:
                     return server_error_response(Exception("User {} not accessible chunk {}".format(current_user.id,chunk_id)))
                 break
@@ -120,6 +121,7 @@ def get():
             return server_error_response(Exception("Chunk not found"))
 
         k = []
+        #不返回内部使用值
         for n in chunk.keys():
             if re.search(r"(_vec$|_sm_|_tks|_ltks)", n):
                 k.append(n)
@@ -328,7 +330,9 @@ def retrieval_test():
     use_kg = req.get("use_kg", False)
     top = int(req.get("top_k", 1024))
     tenant_ids = []
-
+    limit_range = current_user.id
+    limit_level = int(req.get("limit_level", 1))
+    limit_time = str(req.get("limit_time",str(datetime.datetime.now()).replace("T", " ")[:19]))
     try:
         tenants = UserTenantService.query(user_id=current_user.id)
         for kb_id in kb_ids:
@@ -361,7 +365,7 @@ def retrieval_test():
         ranks = settings.retrievaler.retrieval(question, embd_mdl, tenant_ids, kb_ids, page, size,
                                similarity_threshold, vector_similarity_weight, top,
                                doc_ids, rerank_mdl=rerank_mdl, highlight=req.get("highlight"),
-                               rank_feature=labels,limit_range = current_user.id)
+                               rank_feature=labels,limit_range = limit_range,limit_level=limit_level,limit_time=limit_time)
 
         #TODO range limit
         if use_kg:
@@ -405,6 +409,8 @@ def knowledge_graph():
         "knowledge_graph_kwd": ["graph", "mind_map"]
     }
     req['limit_range'] = current_user.id
+    req['limit_level'] = int(req.get("limit_level", 1))
+    req['limit_time'] = str(req.get("limit_time",str(datetime.datetime.now()).replace("T", " ")[:19]))
     #搜索与tenant id 对应的特定index下的kb_ids和doc_id,knowledge_graph_kwd下的内容
     sres = settings.retrievaler.search(req, search.index_name(tenant_id), kb_ids)
     obj = {"graph": {}, "mind_map": {}}

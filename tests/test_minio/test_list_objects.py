@@ -22,9 +22,9 @@ buckets = primary_client.list_buckets()
 # Get data of an object.
 response = None
 try:
-    response = primary_client.list_objects("maxiao")
+    response = primary_client.list_objects("51b9b08c361711f0a8f03e04d146f0ba",recursive=True)
     for obj in response:
-        print(obj.owner_id())
+        print(obj.object_name)
     # Read data from response.
 finally:
     if response:
