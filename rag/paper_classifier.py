@@ -41,7 +41,12 @@ class PaperClassifier:
         response = await trio.to_thread.run_sync(
             lambda: self._llm_model.chat(system, history, gen_conf)
         )
-        response = re.sub(r"<think>.*</think>", "", response, flags=re.DOTALL)
+        logging.info(f"response begin ==>\n{response}")
+        if "</think>" in response:
+            response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
+        if "```json" in response:
+            response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
+        logging.info(f"response clean ==>\n{response}")
         if response.find("**ERROR**") >= 0:
             raise Exception(response)
         #set_llm_cache(self._llm_model.llm_name, system, response, history, gen_conf)
