@@ -68,7 +68,7 @@ def init_superuser():
         tenant_llm.append(
             {"tenant_id": user_info["id"], "llm_factory": settings.LLM_FACTORY, "llm_name": llm.llm_name,
              "model_type": llm.model_type,
-             "api_key": settings.API_KEY, "api_base": settings.LLM_BASE_URL})
+             "api_key": settings.API_KEY, "api_base": settings.LLM_DEFAULT_MODELS_CONFIG.get(llm.model_type,settings.LLM_BASE_URL)})#settings.LLM_BASE_URL})
 
     if not UserService.save(**user_info):
         logging.error("can't init admin.")
