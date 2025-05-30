@@ -930,6 +930,71 @@ def set_meta():
     except Exception as e:
         return server_error_response(e)
 
+
+@manager.route('/task_status/<doc_id>', methods=['GET'])  # noqa: F821
+@login_required
+def get_task_status(doc_id):
+    """获取文档解析任务状态"""
+    try:
+        # 检查文档状态
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            return get_data_error_result(message="文档不存在")
+
+        # 检查任务记录
+        from api.db.services.task_service import TaskService
+        tasks = TaskService.query(doc_id=doc_id, order_by="create_time DESC", limit=10)
+
+        # 检查 Redis 队列状态 - 修复方法
+        queue_info = {"queue_name": "unknown", "queue_length": -1}
+        try:
+            from rag.utils.redis_conn import REDIS_CONN
+            from rag.settings import get_svr_queue_name
+
+            queue_name = get_svr_queue_name(0)  # 默认优先级
+            queue_info["queue_name"] = queue_name
+
+            # 尝试获取队列长度
+            try:
+                if hasattr(REDIS_CONN, 'queue_length'):
+                    queue_length = REDIS_CONN.queue_length(queue_name)
+                    queue_info["queue_length"] = queue_length
+                elif hasattr(REDIS_CONN, 'llen'):
+                    queue_length = REDIS_CONN.llen(queue_name)
+                    queue_info["queue_length"] = queue_length
+                elif hasattr(REDIS_CONN, 'redis') and hasattr(REDIS_CONN.redis, 'llen'):
+                    queue_length = REDIS_CONN.redis.llen(queue_name)
+                    queue_info["queue_length"] = queue_length
+                else:
+                    logging.warning("无法获取队列长度，Redis 方法不可用")
+            except Exception as queue_error:
+                logging.warning(f"获取队列长度失败: {queue_error}")
+
+        except Exception as redis_error:
+            logging.warning(f"Redis 队列检查失败: {redis_error}")
+
+        status_info = {
+            "document": {
+                "id": doc.id,
+                "name": doc.name,
+                "progress": doc.progress,
+                "progress_msg": doc.progress_msg,
+                "run_status": doc.run,
+                "process_begin_at": doc.process_begin_at,
+                "chunk_num": doc.chunk_num,
+                "token_num": doc.token_num
+            },
+            "tasks": [task.to_dict() for task in tasks],
+            "queue_info": queue_info
+        }
+
+        return get_json_result(data=status_info)
+    except Exception as e:
+        logging.error(f"获取任务状态失败: {e}")
+        return server_error_response(e)
+
+
+
 @manager.route('/set_filter_fields', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("doc_id", "filter_fields")
