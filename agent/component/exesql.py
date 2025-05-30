@@ -43,7 +43,7 @@ class ExeSQLParam(GenerateParam):
 
     def check(self):
         super().check()
-        self.check_valid_value(self.db_type, "Choose DB type", ['mysql', 'postgresql', 'mariadb', 'mssql'])
+        self.check_valid_value(self.db_type, "Choose DB type", ['mysql', 'postgresql', 'mariadb', 'mssql', 'dm'])
         self.check_empty(self.database, "Database name")
         self.check_empty(self.username, "database username")
         self.check_empty(self.host, "IP Address")
@@ -94,6 +94,17 @@ class ExeSQL(Generate, ABC):
                     r'PWD=' + self._param.password
             )
             db = pyodbc.connect(conn_str)
+        elif self._param.db_type == 'dm':
+            conn_str = (
+                    r'DRIVER={DM ODBC DRIVER};'
+                    r'SERVER=' + self._param.host + ';'
+                    r'PORT=' + str(self._param.port) + ';'
+                    r'UID=' + self._param.username + ';'
+                    r'PWD=' + self._param.password
+            )
+            db = pyodbc.connect(conn_str)
+            cursor = db.cursor()
+            cursor.execute(f"SET SCHEMA {self._param.database}")
         try:
             cursor = db.cursor()
         except Exception as e:

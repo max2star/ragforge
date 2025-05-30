@@ -17,6 +17,7 @@ import os
 import random
 import xxhash
 from datetime import datetime
+import logging
 
 from api.db.db_utils import bulk_insert_into_db
 from deepdoc.parser import PdfParser
@@ -378,7 +379,15 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
                                          chunking_config["kb_id"])
     DocumentService.update_by_id(doc["id"], {"chunk_num": ck_num})
 
-    bulk_insert_into_db(Task, parse_task_array, True)
+    # 使用统一的批量插入函数，它会自动处理达梦数据库的兼容性
+    try:
+        bulk_insert_into_db(Task, parse_task_array, True)
+        logging.info(f"成功创建 {len(parse_task_array)} 个任务")
+    except Exception as e:
+        logging.error(f"创建任务失败: {e}")
+        raise e
+
+    # bulk_insert_into_db(Task, parse_task_array, True)
     DocumentService.begin2parse(doc["id"])
 
     unfinished_task_array = [task for task in parse_task_array if task["progress"] < 1.0]

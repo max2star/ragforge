@@ -113,12 +113,13 @@ def set_api_key():
             llm_config[n] = req[n]
 
     for llm in LLMService.query(fid=factory):
-        llm_config["max_tokens"]=llm.max_tokens
-        if not TenantLLMService.filter_update(
-                [TenantLLM.tenant_id == current_user.id,
-                 TenantLLM.llm_factory == factory,
-                 TenantLLM.llm_name == llm.llm_name],
-                llm_config):
+        llm_config["max_tokens"] = llm.max_tokens
+        result = TenantLLMService.filter_update(
+            [TenantLLM.tenant_id == current_user.id,
+             TenantLLM.llm_factory == factory,
+             TenantLLM.llm_name == llm.llm_name],
+            llm_config)
+        if not result or result <= 0:
             TenantLLMService.save(
                 tenant_id=current_user.id,
                 llm_factory=factory,

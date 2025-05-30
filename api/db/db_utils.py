@@ -15,6 +15,7 @@
 #
 import operator
 from functools import reduce
+import logging
 
 from playhouse.pool import PooledMySQLDatabase
 
@@ -49,6 +50,61 @@ def bulk_insert_into_db(model, data_source, replace_on_conflict=False):
                 else:
                     query = query.on_conflict(conflict_target="id", preserve=preserve)
             query.execute()
+
+
+def _is_dm_database():
+    """检查是否是达梦数据库"""
+    try:
+        # 方法1: 检查数据库类型属性
+        if hasattr(DB, '_database_type') and DB._database_type == 'dm':
+            return True
+
+        # 方法2: 检查数据库类名
+        db_class_name = DB.__class__.__name__
+        if 'Dm' in db_class_name or 'DM' in db_class_name:
+            return True
+
+        # 方法3: 检查连接字符串或驱动
+        if hasattr(DB, 'connect_params'):
+            connect_params = str(DB.connect_params)
+            if 'DM ODBC' in connect_params or 'dm' in connect_params.lower():
+                return True
+
+        return False
+    except Exception as e:
+        logging.debug(f"检查数据库类型时出错: {e}")
+        return False
+
+def _bulk_insert_dm_with_ignore(model, data):
+    """达梦数据库的批量插入，忽略冲突"""
+    success_count = 0
+    error_count = 0
+
+    # 逐条插入，忽略重复键错误
+    for item in data:
+        try:
+            model.create(**item)
+            success_count += 1
+        except Exception as e:
+            error_str = str(e).lower()
+            # 检查是否是重复键错误
+            if any(keyword in error_str for keyword in [
+                'duplicate', 'unique', 'primary key', 'constraint',
+                '唯一约束', '主键约束', '重复键'
+            ]):
+                error_count += 1
+                logging.debug(f"忽略重复记录: {e}")
+            else:
+                # 其他错误需要抛出
+                logging.error(f"批量插入失败: {e}")
+                raise e
+
+    if error_count > 0:
+        logging.info(f"批量插入完成: 成功 {success_count} 条, 忽略重复 {error_count} 条")
+    else:
+        logging.debug(f"批量插入完成: 成功 {success_count} 条")
+
+    return success_count
 
 
 def get_dynamic_db_model(base, job_id):
