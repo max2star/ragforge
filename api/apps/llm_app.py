@@ -248,6 +248,10 @@ def add_llm():
         except Exception as e:
             msg += f"\nFail to access model({mdl_nm})." + str(
                 e)
+            import traceback
+            traceback.print_exc()
+            logging.info("Exception {} ,excetion info is {}".format(e,traceback.format_exc()))
+
     elif llm["model_type"] == LLMType.IMAGE2TEXT.value:
         assert factory in CvModel, f"Image to text model from {factory} is not supported yet."
         mdl = CvModel[factory](
