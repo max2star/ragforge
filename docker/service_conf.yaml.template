@@ -46,6 +46,13 @@ user_default_llm:
     rerank_model: 'jina-reranker-v2-base-multilingual'
     asr_model: ''
     image2text_model: 'qwen2-vl'
+  default_models_config:
+    chat_model: 'http://101.52.216.178:890/v1'
+    embedding_model: 'http://101.52.216.178:890/v1'
+    rerank_model: 'http://101.52.216.178:890/v1'
+    asr_model: 'http://101.52.216.178:890/v1'
+    image2text_model: 'http://101.52.216.178:890/v1'
+
 minio_backup:
   user: '${MINIO_USER_:-rag_flow}'
   password: '${MINIO_PASSWORD_BACKUP:-infini_rag_flow}'
