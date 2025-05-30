@@ -487,6 +487,7 @@ class FileService(CommonService):
                     "thumbnail": thumbnail_location
                 }
 
+                logging.info("upload_document doc id {}, config the parse_id {},parser_config {}".format(doc_id,doc['parser_id'],doc['parser_config']))
                 doc_filter_field = {}
                 doc_filter_field['limit_range'] = [user_id]
                 doc_filter_field['limit_level'] = 1
