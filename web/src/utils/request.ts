@@ -81,9 +81,8 @@ request.interceptors.request.use((url: string, options: any) => {
   const data = convertTheKeysOfTheObjectToSnake(options.data);
   const params = convertTheKeysOfTheObjectToSnake(options.params);
 
-
   console.log('request url >>>', options.url);
-  console.log('request options >>>', options);
+  console.log('request options >>> 123123', options.skipToken);
 
   return {
     url,

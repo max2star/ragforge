@@ -950,6 +950,8 @@ def list_chunks(tenant_id, dataset_id, document_id):
         "sort": True,
     }
     query['limit_range'] = tenant_id
+    query['limit_time'] = str(datetime.datetime.now()).replace("T", " ")[:19]
+    query['limit_level']= req.get('limit_level',1)
 
     key_mapping = {
         "chunk_num": "chunk_count",
@@ -1442,6 +1444,8 @@ def retrieval_test(tenant_id):
     if not req.get("dataset_ids"):
         return get_error_data_result("`dataset_ids` is required.")
     req['limit_range'] = tenant_id
+    req['limit_time'] = str(datetime.datetime.now()).replace("T", " ")[:19]
+    req['limit_level']= req.get('limit_level',1)
     kb_ids = req["dataset_ids"]
     if not isinstance(kb_ids, list):
         return get_error_data_result("`dataset_ids` should be a list")
@@ -1480,6 +1484,10 @@ def retrieval_test(tenant_id):
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
     vector_similarity_weight = float(req.get("vector_similarity_weight", 0.3))
     top = int(req.get("top_k", 1024))
+    limit_range= req.get('limit_range',tenant_id)
+    limit_time = str(datetime.datetime.now()).replace("T", " ")[:19]
+    limit_level= req.get('limit_level',1)
+
     if req.get("highlight") == "False" or req.get("highlight") == "false":
         highlight = False
     else:
@@ -1512,7 +1520,9 @@ def retrieval_test(tenant_id):
             rerank_mdl=rerank_mdl,
             highlight=highlight,
             rank_feature=label_question(question, kbs),
-            limit_range=tenant_id
+            limit_range=limit_range,
+            limit_time=limit_time,
+            limit_level=limit_level,
         )
         if use_kg:
             ck = settings.kg_retrievaler.retrieval(question,

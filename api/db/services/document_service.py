@@ -431,6 +431,10 @@ class DocumentService(CommonService):
         if not e:
             raise LookupError(f"Document({id}) not found.")
 
+        #更新：如果没有字段直接添加；如果有字段，字段不是dic则替换，是dic则需要更新
+        #这样实际效果是dic的每个key/value 都被替换或者增加了，
+        #但是不会把之前已有的，新的里边没有的情况下给丢弃
+        #注意如果不是dic，则会被直接添加或者替换了，比如[] 列表
         def dfs_update(old, new):
             for k, v in new.items():
                 if k not in old:

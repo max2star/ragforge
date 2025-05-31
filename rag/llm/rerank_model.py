@@ -355,6 +355,7 @@ class OpenAI_APIRerank(Base):
             "model": self.model_name,
             "query": query,
             "documents": texts,
+            "texts": texts,
             "top_n": len(texts),
         }
         token_count = 0
@@ -362,10 +363,14 @@ class OpenAI_APIRerank(Base):
             token_count += num_tokens_from_string(t)
         res = requests.post(self.base_url, headers=self.headers, json=data).json()
         rank = np.zeros(len(texts), dtype=float)
-        if 'results' not in res:
-            raise ValueError("response not contains results\n" + str(res))
-        for d in res["results"]:
-            rank[d["index"]] = d["relevance_score"]
+        if type(res)==list:
+            for d in res:
+                rank[d["index"]] = d["score"]
+        else:
+            if 'results' not in res:
+                raise ValueError("response not contains results\n" + str(res))
+            for d in res["results"]:
+                rank[d["index"]] = d["relevance_score"]
 
         # Normalize the rank values to the range 0 to 1
         min_rank = np.min(rank)
