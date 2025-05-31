@@ -60,7 +60,7 @@ def create(tenant_id):
     invite_user_email = req["email"]
     invite_users = UserService.query(email=invite_user_email)
     if not invite_users:
-        return get_data_error_result(message="User not found.")
+        return get_data_error_result(message=f"User for email {invite_user_email} not found.")
 
     user_id_to_invite = invite_users[0].id
     user_tenants = UserTenantService.query(user_id=user_id_to_invite, tenant_id=tenant_id)
@@ -91,11 +91,18 @@ def create(tenant_id):
 def rm(tenant_id, user_id):
     #如果操作的空间不是自己，则必须用户是自己
     #如果操作的空间是自己，则用户可以不是自己
-    #TODO 自己可以把自己从自己空间里删除吗？
     if current_user.id != tenant_id and current_user.id != user_id:
         return get_json_result(
             data=False,
             message='No authorization.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    #TODO 自己可以把自己从自己空间里删除吗？
+    if current_user.id == tenant_id and current_user.id == user_id:
+        return get_json_result(
+            data=False,
+            message=f'No authorization,the user {current_user.id} is delting itself from the tenant.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
