@@ -34,6 +34,7 @@ services:
       - 443:443
       - 5678:5678
       - 5679:5679
+      - 9382:9382
     volumes:
       - /var/lib/gpustack/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
@@ -58,6 +59,8 @@ services:
       - ../tests:/ragflow/tests
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
+      - # 挂载达梦数据库驱动目录
+      - ../drivers/dm:/drivers/dm
     devices:
       - /dev/davinci1:/dev/davinci1
     env_file: .env
@@ -67,6 +70,8 @@ services:
       - MACOS=${MACOS}
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
+      # 设置默认数据库类型为达梦
+      - DB_TYPE=dm
         #- LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$$LD_LIBRARY_PATH
         #- LLM_BASE_DELAY=2
         # - SSL_CERT_FILE="/etc/nginx/public.crt"
