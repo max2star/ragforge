@@ -34,7 +34,7 @@ from api import settings
 from rag.nlp import search
 from api.constants import DATASET_NAME_LIMIT
 from rag.settings import PAGERANK_FLD
-
+import datetime
 
 @manager.route('/create', methods=['post'])  # noqa: F821
 @login_required
@@ -74,16 +74,16 @@ def create():
 @manager.route('/update', methods=['post'])  # noqa: F821
 @login_required
 @validate_request("kb_id", "name", "description", "parser_id")
-@not_allowed_parameters("id", "tenant_id", "created_by", "create_time", "update_time", "create_date", "update_date", "created_by")
+@not_allowed_parameters("id", "tenant_id", "created_by", "create_time", "update_time", "create_date", "update_date")
 def update():
     req = request.json
     req["name"] = req["name"].strip()
-    if not KnowledgebaseService.accessible4deletion(req["kb_id"], current_user.id):
-        return get_json_result(
-            data=False,
-            message='No authorization.',
-            code=settings.RetCode.AUTHENTICATION_ERROR
-        )
+    #if not KnowledgebaseService.accessible4deletion(req["kb_id"], current_user.id):
+    #    return get_json_result(
+    #        data=False,
+    #        message=f'No authorization, you {current_user.id} not the kb {req["kb_id"]} owner.',
+    #        code=settings.RetCode.AUTHENTICATION_ERROR
+    #    )
     try:
         if not KnowledgebaseService.query(
                 created_by=current_user.id, id=req["kb_id"]):
@@ -108,7 +108,7 @@ def update():
             extractor = parser_config.get('extractor',None)
             classifier= parser_config.get('classifier',None)
             import logging
-            logging.info('MaXiao Current {}'.format(kb.parser_config))
+            logging.info('Current parser_config {}'.format(kb.parser_config))
             if not extractor:
                 pre_configed_0 = kb.parser_config.get('extractor',None)
                 if pre_configed_0:
@@ -122,7 +122,7 @@ def update():
                 and len(
             KnowledgebaseService.query(name=req["name"], tenant_id=current_user.id, status=StatusEnum.VALID.value)) > 1:
             return get_data_error_result(
-                message="Duplicated knowledgebase name.")
+                message=f"Duplicated knowledgebase name {req['name']}.")
 
         del req["kb_id"]
         if not KnowledgebaseService.update_by_id(kb.id, req):
@@ -140,7 +140,7 @@ def update():
         e, kb = KnowledgebaseService.get_by_id(kb.id)
         if not e:
             return get_data_error_result(
-                message="Database error (Knowledgebase rename)!")
+                message="Database error (Knowledgebase update)!")
         kb = kb.to_dict()
         kb.update(req)
 
@@ -161,7 +161,7 @@ def detail():
                 break
         else:
             return get_json_result(
-                data=False, message='Only owner of knowledgebase authorized for this operation.',
+                data=False, message='Only the user own or join the tenant of the knowledgebase authorized for this operation.',
                 code=settings.RetCode.OPERATING_ERROR)
         kb = KnowledgebaseService.get_detail(kb_id)
         if not kb:
@@ -192,7 +192,18 @@ def list_kbs():
                 tenants, current_user.id, page_number,
                 items_per_page, orderby, desc, keywords, parser_id)
         else:
-            tenants = owner_ids
+            tenants_stored = TenantService.get_joined_tenants_by_user_id(current_user.id)
+            tenants_stored = [m["tenant_id"] for m in tenants]
+            not_in = []
+            for o in owner_ids:
+                if o not in tenants_stored:
+                    not_in.append(o)
+            if not_in:
+                return get_json_result(
+                            data=False,
+                            message=f'The kbs {not_in} in owner_ids not accessible for user {current_user.id}.',
+                            code=settings.RetCode.AUTHENTICATION_ERROR
+                )
             kbs, total = KnowledgebaseService.get_by_tenant_ids(
                 tenants, current_user.id, 0,
                 0, orderby, desc, keywords, parser_id)
@@ -212,7 +223,7 @@ def rm():
     if not KnowledgebaseService.accessible4deletion(req["kb_id"], current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization for kb {req["kb_id"]}',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
     try:
@@ -226,7 +237,7 @@ def rm():
         for doc in DocumentService.query(kb_id=req["kb_id"]):
             if not DocumentService.remove_document(doc, kbs[0].tenant_id):
                 return get_data_error_result(
-                    message="Database error (Document removal)!")
+                    message=f"Database error (Document removal) for doc {doc.id} kb {req['kb_id']}!")
             f2d = File2DocumentService.get_by_document_id(doc.id)
             if f2d:
                 FileService.filter_delete([File.source_type == FileSource.KNOWLEDGEBASE, File.id == f2d[0].file_id])
@@ -235,7 +246,7 @@ def rm():
             [File.source_type == FileSource.KNOWLEDGEBASE, File.type == "folder", File.name == kbs[0].name])
         if not KnowledgebaseService.delete_by_id(req["kb_id"]):
             return get_data_error_result(
-                message="Database error (Knowledgebase removal)!")
+                message=f"Database error (Knowledgebase removal) for kb {req['kb_id']}!")
         for kb in kbs:
             settings.docStoreConn.delete({"kb_id": kb.id}, search.index_name(kb.tenant_id), kb.id)
             settings.docStoreConn.deleteIdx(search.index_name(kb.tenant_id), kb.id)
@@ -250,7 +261,7 @@ def list_tags(kb_id):
     if not KnowledgebaseService.accessible(kb_id, current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization, user {current_user.id} kb {kb_id}',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
@@ -266,7 +277,7 @@ def list_tags_from_kbs():
         if not KnowledgebaseService.accessible(kb_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization for kb {kb_id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
@@ -324,7 +335,9 @@ def knowledge_graph(kb_id):
         )
     _, kb = KnowledgebaseService.get_by_id(kb_id)
     req = {
-        "limit_range":[current_user.id],
+        "limit_range":current_user.id,
+        "limit_time":str(datetime.datetime.now()).replace("T", " ")[:19],
+        "limit_level":1,
         "kb_id": [kb_id],
         "knowledge_graph_kwd": ["graph"]
     }

@@ -301,9 +301,12 @@ class FileService(CommonService):
                                           & (cls.model.parent_id == root_id)):
             return
         folder = cls.new_a_file_from_kb(tenant_id, KNOWLEDGEBASE_FOLDER_NAME, root_id)
-
+        #对于所有这个租户的Knowleadgebase，都从KNOWLEDGEBASE_FOLDER_NAME下创建一个文件目录
+        #如果有这个目录了，不会再创建
         for kb in Knowledgebase.select(*[Knowledgebase.id, Knowledgebase.name]).where(Knowledgebase.tenant_id==tenant_id):
             kb_folder = cls.new_a_file_from_kb(tenant_id, kb.name, folder["id"])
+            #对于所有这个KB的文档,都增加到文件服务中
+            #已经增加了不会再增加
             for doc in DocumentService.query(kb_id=kb.id):
                 FileService.add_file_from_kb(doc.to_dict(), kb_folder["id"], tenant_id)
 
@@ -484,6 +487,7 @@ class FileService(CommonService):
                     "thumbnail": thumbnail_location
                 }
 
+                logging.info("upload_document doc id {}, config the parse_id {},parser_config {}".format(doc_id,doc['parser_id'],doc['parser_config']))
                 doc_filter_field = {}
                 doc_filter_field['limit_range'] = [user_id]
                 doc_filter_field['limit_level'] = 1

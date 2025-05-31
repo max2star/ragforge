@@ -56,6 +56,7 @@ import logging
 @validate_request("kb_id")
 def upload():
     kb_id = request.form.get("kb_id")
+    limit_range = request.form.get("limit_range",[])
     if not kb_id:
         return get_json_result(
             data=False, message='Lack of "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
@@ -122,14 +123,14 @@ def mv_kb():
     if not KnowledgebaseService.accessible(src_kb_id, current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization, user {current_user.id} kb {src_kb_id}',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
     if not KnowledgebaseService.accessible(dst_kb_id, current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization, user {current_user.id} kb {dst_kb_id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
@@ -148,7 +149,7 @@ def mv_kb():
             logging.info('doc {} name {} dumplicate in dst kb_id {} with doc {}'.format(doc_id,src_d.name,dst_kb_id,dst_d.id))
             dst_kb_exist_location.append(dst_d.name)
     if dst_kb_exist_location:
-        raise LookupError("Has same-name documents {} in destination kb!".format(dst_kb_exist_location))
+        raise LookupError("Has same-location documents {} in destination kb!".format(dst_kb_exist_location))
     for doc_id in doc_ids:
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
@@ -161,7 +162,7 @@ def mv_kb():
         if d.kb_id==dst_kb_id:
             logging.info('doc {} kb_id same with dst kb_id {}'.format(d.id,dst_kb_id))
             continue
-        #如果是相同的tenant id，直接更新文档的kb_id Mysql数据库里更新+ES更新
+        #如果是相同的tenant id，直接更新文档的kb_id Mysql数据库里更新+ES更新+Minio更新
         #否则会做添加和删除操作
         DocumentService.move_document(d,dst_kb_id,src_kb.tenant_id,dst_kb.tenant_id)
     docs = DocumentService.get_by_ids(doc_ids)
@@ -187,13 +188,13 @@ def web_crawl():
     if not KnowledgebaseService.accessible(kb_id, current_user.id):
         return get_json_result(
             data=False,
-            message='No authorization.',
+            message=f'No authorization, user {current_user.id} kb {kb_id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
 
     blob = html2pdf(url)
     if not blob:
-        return server_error_response(ValueError("Download failure."))
+        return server_error_response(ValueError(f"Download failure {url}."))
 
     root_folder = FileService.get_root_folder(current_user.id)
     pf_id = root_folder["id"]
@@ -279,7 +280,7 @@ def create():
         if not KnowledgebaseService.accessible(kb_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization, kb {kb_id} user {current_user.id}',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
 
@@ -333,6 +334,7 @@ def list_docs():
             kb_id, page_number, items_per_page, orderby, desc, keywords)
 
         for doc_item in docs:
+            #thumbnail 是一个 ID
             if doc_item['thumbnail'] and not doc_item['thumbnail'].startswith(IMG_BASE64_PREFIX):
                 doc_item['thumbnail'] = f"/v1/document/image/{kb_id}-{doc_item['thumbnail']}"
 
@@ -414,7 +416,7 @@ def change_status():
     try:
         e, doc = DocumentService.get_by_id(req["doc_id"])
         if not e:
-            return get_data_error_result(message="Document not found!")
+            return get_data_error_result(message=f'Document {req["doc_id"]} not found!')
         e, kb = KnowledgebaseService.get_by_id(doc.kb_id)
         if not e:
             return get_data_error_result(
@@ -458,10 +460,10 @@ def rm():
         try:
             e, doc = DocumentService.get_by_id(doc_id)
             if not e:
-                return get_data_error_result(message="Document not found!")
+                return get_data_error_result(message=f"Document {doc_id} not found!")
             tenant_id = DocumentService.get_tenant_id(doc_id)
             if not tenant_id:
-                return get_data_error_result(message="Tenant not found!")
+                return get_data_error_result(message=f"Tenant for doc {doc_id} not found!")
 
             b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
 
@@ -600,6 +602,35 @@ def get(doc_id):
     except Exception as e:
         return server_error_response(e)
 
+import markdown
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import HtmlFormatter
+
+def markdown_to_html(md_text):
+    # 创建 Markdown 转换器（启用常用扩展）
+    html = markdown.markdown(
+        md_text,
+        extensions=[
+            'extra',        # 包含表格、缩写等扩展
+            'codehilite',   # 代码高亮（需 pygments）
+            'toc',          # 目录生成
+            'nl2br',        # 换行转 <br>
+            'sane_lists'    # 智能列表
+        ],
+        extension_configs={
+            'codehilite': {
+                'css_class': 'highlight',  # 高亮代码的 CSS 类
+                'linenums': True           # 显示行号
+            },
+            'toc': {
+                'toc_depth': '2-4',        # 目录层级
+                'anchorlink': True         # 添加锚点链接
+            }
+        },
+        output_format='html5'
+    )
+    return html
 
 @manager.route('/get_md/<doc_id>', methods=['GET'])  # noqa: F821
 @login_required
@@ -618,12 +649,57 @@ def get_md(doc_id):
         if doc.md_location:
             logging.info(f"get md for {doc_id},location {doc.md_location}")
             res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
-            #res = res.decode('utf-8')
             response = flask.make_response(res)
         else:
             return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
 
         response.headers.set('Content-Type', 'text/markdown; charset=utf-8')
+        return response
+    except Exception as e:
+        return server_error_response(e)
+
+@manager.route('/get_md_html/<doc_id>', methods=['GET'])  # noqa: F821
+@login_required
+def get_md_html(doc_id):
+    try:
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            return get_data_error_result(message=f"Document {doc_id} not found!")
+
+        if not DocumentService.accessible(doc_id, current_user.id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+        if doc.md_location:
+            logging.info(f"get md for {doc_id},location {doc.md_location}")
+            res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
+            html = markdown_to_html(res)
+            # 生成代码高亮的 CSS 样式（可选）
+            css_style = HtmlFormatter(style='monokai').get_style_defs('.highlight')
+            # 返回包含样式的完整 HTML
+            html_out = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>{css_style}</style>
+                <style>
+                    body {{ font-family: sans-serif; line-height: 1.6; }}
+                    table {{ border-collapse: collapse; }}
+                    th, td {{ border: 1px solid #ddd; padding: 8px; }}
+                    pre {{ background: #f5f5f5; padding: 15px; }}
+                </style>
+            </head>
+            <body>{html}</body>
+            </html>
+            """
+            response = flask.make_response(html_out)
+        else:
+            return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
+
+        response.headers.set('Content-Type', 'text/html; charset=utf-8')
         return response
     except Exception as e:
         return server_error_response(e)
@@ -644,12 +720,13 @@ def get_layout(doc_id):
             )
 
         if doc.layout_location:
-            logging.info(f"get md for {doc_id},location {doc.layout_location}")
+            logging.info(f"get layout for {doc_id},location {doc.layout_location}")
             res = STORAGE_IMPL.get(doc.kb_id, doc.layout_location)
             response = flask.make_response(res)
         else:
             return get_data_error_result(message=f"Document {doc_id} Layout {doc.layout_location} not found, maybe not parsed by MinerU!")
 
+        #TODO 都是pdf？
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:
             if doc.type == FileType.VISUAL.value:
@@ -689,13 +766,13 @@ def change_parser():
         if ((doc.type == FileType.VISUAL and req["parser_id"] != "picture")
                 or (re.search(
                     r"\.(ppt|pptx|pages)$", doc.name) and req["parser_id"] != "presentation")):
-            return get_data_error_result(message="Not supported yet!")
+            return get_data_error_result(message="Not supported yet,ppt/pptx/pages can only use presentation, and visual can only use picture.")
 
         e = DocumentService.update_by_id(doc.id,
                                          {"parser_id": req["parser_id"], "progress": 0, "progress_msg": "",
                                           "run": TaskStatus.UNSTART.value})
         if not e:
-            return get_data_error_result(message="Document not found!")
+            return get_data_error_result(message=f"Document {doc.id} not found!")
         if "parser_config" in req:
             DocumentService.update_parser_config(doc.id, req["parser_config"])
         if doc.token_num > 0:
@@ -720,8 +797,17 @@ def get_image(image_id):
     try:
         arr = image_id.split("-")
         if len(arr) != 2:
-            return get_data_error_result(message="Image not found.")
+            return get_data_error_result(message=f"Image {image_id} not found.")
         bkt, nm = image_id.split("-")
+
+        #TODO
+        #if not KnowledgebaseService.accessible(bkt, current_user.id):
+        #    return get_json_result(
+        #        data=False,
+        #        message=f'No authorization for kb {kb_id} when get image id {image_id}.',
+        #        code=settings.RetCode.AUTHENTICATION_ERROR
+        #    )
+
         response = flask.make_response(STORAGE_IMPL.get(bkt, nm))
         response.headers.set('Content-Type', 'image/JPEG')
         return response
@@ -864,18 +950,43 @@ def set_filter_fields():
     if not isinstance(filter_fields, dict):
         return get_json_result(
             data=False, message='Filter fields data should be in Json map format, like {"key": "value"}', code=settings.RetCode.ARGUMENT_ERROR)
-    range_ = filter_fields.get('filter_range',[])
-    level_= filter_fields.get('filter_level',None)
-    time_ = filter_fields.get('filter_time',None)
+
+    for i in filter_fields.values():
+        if i not in ['limit_range','limit_level','limit_time']:
+            return get_json_result(
+             data=False,
+             message=f'Parameter {i} not valid, only support ["limit_range","limit_level","limit_time"].',
+             code=settings.RetCode.ARGUMENT_ERROR
+            )
+
+    range_ = filter_fields.get('limit_range',[])
+    level_= filter_fields.get('limit_level',1)
+    time_ = filter_fields.get('limit_time',0)
+
+    for user_id_ in range_:
+     try:
+         uuid.UUID(str(user_id_))
+     except Exception as e:
+         return get_json_result(
+             data=False,
+             message=f'Parameter limit_range has value {user_id_} not uuid.',
+             code=settings.RetCode.ARGUMENT_ERROR
+         )
+    if not isinstance(level_,int):
+        return get_json_result(
+                     data=False,
+                     message=f'Parameter limit_level value {level_} not int.',
+                     code=settings.RetCode.ARGUMENT_ERROR
+                 )
+    if not isinstance(time_,int):
+        return get_json_result(
+                     data=False,
+                     message=f'Parameter limit_time value {time_} not int.',
+                     code=settings.RetCode.ARGUMENT_ERROR
+                 )
     if current_user.id not in range_:
         return get_json_result(
             data=False, message=f'Filter range not set or current user not in range.', code=settings.RetCode.ARGUMENT_ERROR)
-    if not level_:
-        return get_json_result(
-            data=False, message=f'Filter level not set.', code=settings.RetCode.ARGUMENT_ERROR)
-    if not time_:
-        return get_json_result(
-            data=False, message=f'Filter time not set.', code=settings.RetCode.ARGUMENT_ERROR)
     try:
         e, doc = DocumentService.get_by_id(req["doc_id"])
         if not e:

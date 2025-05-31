@@ -162,6 +162,17 @@ class ESConnection(DocStoreConnection):
                     bqry.filter.append(
                         Q("bool", must_not=Q("range", available_int={"lt": 1})))
                 continue
+            if k == "limit_level":
+                #级别数字越大，约baomi;
+                #所以查询的时候限制数字，要大于文档记录;
+                #文档里的级别，要比查询的级别小于等于
+                bqry.filter.append(Q("range", available_int={"lte": v}))
+                continue
+            if k == "limit_time":
+                #当前查询的时间，要大于文档记录的时间;
+                #或者说，文档记录的限制时间，要小于查询的时间(lt,less than)
+                bqry.filter.append(Q("range", available_int={"lt": v}))
+                continue
             if not v:
                 continue
             if isinstance(v, list):
