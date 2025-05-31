@@ -37,7 +37,7 @@ services:
     volumes:
       - /var/lib/gpustack/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
-        #- ../rag:/ragflow/rag
+      - ../rag:/ragflow/rag
       - ../api:/ragflow/api
       - ../minerU:/ragflow/minerU
         #- /root/.cache:/root/.cache
@@ -59,7 +59,7 @@ services:
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     devices:
-      - /dev/davinci0:/dev/davinci0
+      - /dev/davinci1:/dev/davinci1
     env_file: .env
     environment:
       - TZ=${TIMEZONE}
