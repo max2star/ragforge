@@ -59,7 +59,7 @@ services:
       - ../tests:/ragflow/tests
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
-      - # 挂载达梦数据库驱动目录
+      # 挂载达梦数据库驱动目录
       - ../drivers/dm:/drivers/dm
     devices:
       - /dev/davinci1:/dev/davinci1
