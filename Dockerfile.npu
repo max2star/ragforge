@@ -191,14 +191,16 @@ RUN cp magic-pdf.template.json /root/magic-pdf.json
 RUN arch="$(uname -m)"; \
     if [ "$arch" = "arm64" ] || [ "$arch" = "aarch64" ]; then \
         # ARM64 (macOS/Apple Silicon or Linux aarch64)
-        wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl && \
-        pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl && \
+        wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
+        pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
         wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc; \
     else \
         # x86_64 or others
-        pip3 install torch==2.3.1 -i https://mirrors.aliyun.com/pypi/simple && \
+        #pip3 install torch==2.3.1 -i https://mirrors.aliyun.com/pypi/simple; \
         wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc; \
-    fi || { echo "Installation failed"; }\
+    fi || \
+    { echo "Installation failed $(uname -m)"; exit 1; }
+
 #RUN wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
 #RUN pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
 RUN pip3 install fitz -i https://mirrors.aliyun.com/pypi/simple
@@ -242,7 +244,7 @@ RUN groupadd dinstall && \
 
 # 在这里需要将达梦数据库驱动放入容器
 # 注意：需要提前下载达梦数据库驱动包
-RUN mkdir /opt/dm8
+RUN mkdir -p /opt/dm8
 COPY drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
 RUN tar -zxvf /tmp/unixODBC-2.3.12.tar.gz -C /opt/dm8
 
@@ -251,6 +253,8 @@ RUN mkdir -p /opt/dm8/dm8_odbc_driver_linux_64 && \
     touch /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so && \
     chmod +x /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so
 
+ADD docker/etc /etc
+ADD docker/dm8 /opt/dm8
 COPY drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/
 COPY drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/
 COPY drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/
@@ -260,8 +264,6 @@ RUN chmod +x /opt/dm8/dm8_odbc_driver_linux_64/*.so
 RUN echo "[ODBC Data Sources]\nDM ODBC DRIVER = DM ODBC DRIVER\n\n[DM ODBC DRIVER]\nDriver = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so\nSetup = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so" > /etc/odbcinst.ini && \
     echo "[ODBC Data Sources]\nDM = DM ODBC DRIVER\n\n[DM]\nDriver = DM ODBC DRIVER\nServer = 118.193.126.254\nPort = 5236" > /etc/odbc.ini
 
-COPY docker/etc /etc
-COPY docker/dm8 /opt/dm8
 
 # 设置环境变量
 ENV ODBCINI=/etc/odbc.ini
