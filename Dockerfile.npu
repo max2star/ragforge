@@ -188,8 +188,20 @@ RUN export http_proxy=
 RUN export https_proxy=
 RUN wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/magic-pdf.template.json
 RUN cp magic-pdf.template.json /root/magic-pdf.json
-RUN wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
-RUN pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+RUN arch="$(uname -m)"; \
+    if [ "$arch" = "arm64" ] || [ "$arch" = "aarch64" ]; then \
+        # ARM64 (macOS/Apple Silicon or Linux aarch64)
+        wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl && \
+        pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl && \
+        wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc; \
+    else \
+        # x86_64 or others
+        pip3 install torch==2.3.1 -i https://mirrors.aliyun.com/pypi/simple && \
+        wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc; \
+    fi || { echo "Installation failed"; }\
+#RUN wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+#RUN pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+RUN pip3 install fitz -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install magic-pdf[full]==1.3.10 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install modelscope -i https://mirrors.aliyun.com/pypi/simple
@@ -204,7 +216,7 @@ RUN sed -i 's|cpu|npu|g' /root/magic-pdf.json
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 # 选择架构amd64 or arm64
 #RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc
-RUN wget https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc
+#RUN wget https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc
 #COPY mc /usr/bin/.
 RUN chmod +x  /usr/bin/mc
 #RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
@@ -215,7 +227,7 @@ ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib
 
 # 达梦数据库 环境
 # 安装达梦数据库ODBC驱动依赖
-WORKDIR /ragflow/docker
+WORKDIR /ragflow
 
 RUN apt-get update && \
     apt-get install -y unixodbc unixodbc-dev && \
@@ -231,7 +243,7 @@ RUN groupadd dinstall && \
 # 在这里需要将达梦数据库驱动放入容器
 # 注意：需要提前下载达梦数据库驱动包
 RUN mkdir /opt/dm8
-COPY ./drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
+COPY drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
 RUN tar -zxvf /tmp/unixODBC-2.3.12.tar.gz -C /opt/dm8
 
 # 创建驱动目录并添加空的驱动文件
@@ -239,17 +251,17 @@ RUN mkdir -p /opt/dm8/dm8_odbc_driver_linux_64 && \
     touch /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so && \
     chmod +x /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so
 
-COPY ./drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/
-COPY ./drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/
-COPY ./drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/
+COPY drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/
+COPY drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/
+COPY drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/
 RUN chmod +x /opt/dm8/dm8_odbc_driver_linux_64/*.so
 
 # 配置达梦数据库ODBC驱动 - 确保与代码中使用的驱动名称一致
 RUN echo "[ODBC Data Sources]\nDM ODBC DRIVER = DM ODBC DRIVER\n\n[DM ODBC DRIVER]\nDriver = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so\nSetup = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so" > /etc/odbcinst.ini && \
     echo "[ODBC Data Sources]\nDM = DM ODBC DRIVER\n\n[DM]\nDriver = DM ODBC DRIVER\nServer = 118.193.126.254\nPort = 5236" > /etc/odbc.ini
 
-ADD ../docker/etc /etc
-ADD ../docker/dm8 /opt/dm8
+COPY docker/etc /etc
+COPY docker/dm8 /opt/dm8
 
 # 设置环境变量
 ENV ODBCINI=/etc/odbc.ini
@@ -272,7 +284,7 @@ RUN mkdir -p /ragflow/opensearchpy && \
     echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
     echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
 
-WORKDIR /ragflow
+
 
 
 # production stage
@@ -303,11 +315,13 @@ COPY mcp mcp
 COPY docker/service_conf.yaml.template ./conf/service_conf.yaml.template
 COPY docker/entrypoint.sh ./
 RUN chmod +x ./entrypoint*.sh
+COPY docker/entrypoint_npu.sh ./
+RUN chmod +x ./entrypoint_npu.sh
 
 # Copy compiled web pages
 COPY --from=builder /ragflow/web/dist /ragflow/web/dist
 
 COPY --from=builder /ragflow/VERSION /ragflow/VERSION
 
-
+#ENTRYPOINT ["./entrypoint.sh"]
 ENTRYPOINT ["./entrypoint_npu.sh"]

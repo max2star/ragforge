@@ -942,7 +942,7 @@ class DatabaseMigrator(Enum):
     DM = PostgresqlMigrator
 
 
-@singleton
+#@singleton
 class BaseDataBase:
     _instance = None
     _lock = threading.RLock()
@@ -1253,6 +1253,10 @@ class DatabaseLock(Enum):
     MYSQL = MysqlDatabaseLock
     POSTGRES = PostgresDatabaseLock
     DM = DmDatabaseLock  # 添加达梦数据库锁
+
+
+DB = BaseDataBase().database_connection
+DB.lock = DatabaseLock[settings.DATABASE_TYPE.upper()].value
 
 
 def close_connection():
