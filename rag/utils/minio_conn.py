@@ -165,7 +165,7 @@ class RAGFlowMinio:
                 logging.exception(f"Fail to put {bucket}/{fnm}: {str(e)}")
                 self.__open__()
                 time.sleep(1)
-
+            return None
         return None
 
     def list_objs(self,bucket,prefix,recursive):

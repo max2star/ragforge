@@ -158,7 +158,7 @@ def signal_handler(sig, frame):
     logging.error(f"当前堆栈:")
     traceback.print_stack(frame)
     time.sleep(1)
-    sys.exit(1)
+    sys.exit(0)
 
 # 注册信号处理器
 signal.signal(signal.SIGSEGV, signal_handler)  # 段错误
