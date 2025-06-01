@@ -25,32 +25,36 @@ from api.db.db_models import DB, DataBaseModel
 
 
 @DB.connection_context()
-def bulk_insert_into_db(model, data_source, replace_on_conflict=False):
-    DB.create_tables([model])
+def bulk_insert_into_db(model, data, ignore_conflicts=False):
+    """批量插入数据到数据库，支持达梦数据库"""
+    if not data:
+        return 0
 
-    for i, data in enumerate(data_source):
-        current_time = current_timestamp() + i
-        current_date = timestamp_to_date(current_time)
-        if 'create_time' not in data:
-            data['create_time'] = current_time
-        data['create_date'] = timestamp_to_date(data['create_time'])
-        data['update_time'] = current_time
-        data['update_date'] = current_date
+    # 检查是否是达梦数据库
+    is_dm_database = _is_dm_database()
 
-    preserve = tuple(data_source[0].keys() - {'create_time', 'create_date'})
-
-    batch_size = 1000
-
-    for i in range(0, len(data_source), batch_size):
-        with DB.atomic():
-            query = model.insert_many(data_source[i:i + batch_size])
-            if replace_on_conflict:
-                if isinstance(DB, PooledMySQLDatabase):
-                    query = query.on_conflict(preserve=preserve)
-                else:
-                    query = query.on_conflict(conflict_target="id", preserve=preserve)
-            query.execute()
-
+    if ignore_conflicts and is_dm_database:
+        # 达梦数据库的特殊处理
+        return _bulk_insert_dm_with_ignore(model, data)
+    elif ignore_conflicts:
+        # 其他数据库使用原有逻辑
+        try:
+            query = model.insert_many(data).on_conflict_ignore()
+            return query.execute()
+        except Exception as e:
+            logging.error(f"批量插入失败，回退到逐条插入: {e}")
+            return _bulk_insert_dm_with_ignore(model, data)
+    else:
+        # 普通插入
+        try:
+            query = model.insert_many(data)
+            return query.execute()
+        except Exception as e:
+            if is_dm_database:
+                logging.warning(f"批量插入失败，使用逐条插入: {e}")
+                return _bulk_insert_dm_with_ignore(model, data)
+            else:
+                raise e
 
 def _is_dm_database():
     """检查是否是达梦数据库"""
