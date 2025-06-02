@@ -180,66 +180,6 @@ RUN version_info=$(git describe --tags --match=v* --first-parent --always); \
     echo $version_info > /ragflow/VERSION
 
 
-# 达梦数据库 环境
-# 安装达梦数据库ODBC驱动依赖
-WORKDIR /ragflow
-
-RUN apt-get update && \
-    apt-get install -y unixodbc unixodbc-dev && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# 添加组和用户
-RUN groupadd dinstall && \
-    useradd -g dinstall -m dmdba && \
-    echo "dmdba:123456" | chpasswd
-
-
-# 在这里需要将达梦数据库驱动放入容器
-# 注意：需要提前下载达梦数据库驱动包
-RUN mkdir -p /opt/dm8
-COPY drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
-RUN tar -zxvf /tmp/unixODBC-2.3.12.tar.gz -C /opt/dm8
-
-# 创建驱动目录并添加空的驱动文件
-RUN mkdir -p /opt/dm8/dm8_odbc_driver_linux_64 && \
-    touch /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so && \
-    chmod +x /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so
-
-ADD docker/etc /etc
-ADD docker/dm8 /opt/dm8
-COPY drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/
-COPY drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/
-COPY drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/
-RUN chmod +x /opt/dm8/dm8_odbc_driver_linux_64/*.so
-
-# 配置达梦数据库ODBC驱动 - 确保与代码中使用的驱动名称一致
-RUN echo "[ODBC Data Sources]\nDM ODBC DRIVER = DM ODBC DRIVER\n\n[DM ODBC DRIVER]\nDriver = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so\nSetup = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so" > /etc/odbcinst.ini && \
-    echo "[ODBC Data Sources]\nDM = DM ODBC DRIVER\n\n[DM]\nDriver = DM ODBC DRIVER\nServer = 118.193.126.254\nPort = 5236" > /etc/odbc.ini
-
-
-# 设置环境变量
-ENV ODBCINI=/etc/odbc.ini
-ENV ODBCSYSINI=/etc
-# 设置默认数据库类型为达梦
-ENV DB_TYPE=dm
-
-# 安装 Python 依赖
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
-    pip install --no-cache-dir pyodbc opensearch-py==2.8.0 -v && \
-    pip list | grep opensearch
-
-# 创建自定义的 opensearchpy 模块
-RUN mkdir -p /usr/local/lib/python3.10/dist-packages/opensearchpy && \
-    echo "# Import from opensearch_py package\ntry:\n    import sys\n    import os\n    # Try to find the opensearch_py package\n    paths = [p for p in sys.path if os.path.exists(os.path.join(p, 'opensearch_py'))]\n    if paths:\n        sys.path.insert(0, os.path.join(paths[0], 'opensearch_py'))\n    from opensearch_py import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\nexcept ImportError:\n    # If still cannot import, try another approach\n    from opensearch_py.opensearchpy import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\n\n# Export the names to make them available when importing this module\n__all__ = ['OpenSearch', 'NotFoundError', 'UpdateByQuery', 'Q', 'Search', 'Index', 'ConnectionTimeout']" > /usr/local/lib/python3.10/dist-packages/opensearchpy/__init__.py && \
-    touch /usr/local/lib/python3.10/dist-packages/opensearchpy/__pycache__
-
-# 创建软链接目录，确保能找到opensearchpy
-RUN mkdir -p /ragflow/opensearchpy && \
-    echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
-    echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
-
-
 # production stage
 FROM base AS production
 USER root
@@ -298,6 +238,71 @@ RUN sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' downl
 RUN sed -i '1i import sys' download_models.py
 RUN python3 download_models.py
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
+
+
+
+# 达梦数据库 环境
+# 安装达梦数据库ODBC驱动依赖
+WORKDIR /ragflow
+
+RUN apt-get update && \
+    apt-get install -y unixodbc unixodbc-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 添加组和用户
+#RUN groupadd dinstall && \
+#    useradd -g dinstall -m dmdba && \
+#    echo "dmdba:123456" | chpasswd
+
+#RUN groupadd root && \
+RUN useradd -g root -m dmdba && \
+    echo "dmdba:123456" | chpasswd
+
+# 在这里需要将达梦数据库驱动放入容器
+# 注意：需要提前下载达梦数据库驱动包
+RUN mkdir -p /opt/dm8
+COPY drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
+RUN tar -zxvf /tmp/unixODBC-2.3.12.tar.gz -C /opt/dm8
+
+# 创建驱动目录并添加空的驱动文件
+RUN mkdir -p /opt/dm8/dm8_odbc_driver_linux_64 && \
+    touch /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so && \
+    chmod +x /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so
+
+ADD docker/etc /etc
+ADD docker/dm8 /opt/dm8
+COPY drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/
+COPY drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/
+COPY drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/
+RUN chmod +x /opt/dm8/dm8_odbc_driver_linux_64/*.so
+
+# 配置达梦数据库ODBC驱动 - 确保与代码中使用的驱动名称一致
+RUN echo -e "[ODBC Data Sources]\nDM ODBC DRIVER = DM ODBC DRIVER\n[DM ODBC DRIVER]\nDriver = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so\nSetup = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so" > /etc/odbcinst.ini && \
+    echo -e "[ODBC Data Sources]\nDM = DM ODBC DRIVER\n[DM]\nDriver = DM ODBC DRIVER\nServer = 118.193.126.254\nPort = 5236" > /etc/odbc.ini
+
+
+# 设置环境变量
+ENV ODBCINI=/etc/odbc.ini
+ENV ODBCSYSINI=/etc
+# 设置默认数据库类型为达梦
+ENV DB_TYPE=dm
+
+# 安装 Python 依赖
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip install --no-cache-dir pyodbc opensearch-py==2.8.0 -v && \
+    pip list | grep opensearch
+
+# 创建自定义的 opensearchpy 模块
+RUN mkdir -p /usr/local/lib/python3.10/dist-packages/opensearchpy && \
+    echo "# Import from opensearch_py package\ntry:\n    import sys\n    import os\n    # Try to find the opensearch_py package\n    paths = [p for p in sys.path if os.path.exists(os.path.join(p, 'opensearch_py'))]\n    if paths:\n        sys.path.insert(0, os.path.join(paths[0], 'opensearch_py'))\n    from opensearch_py import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\nexcept ImportError:\n    # If still cannot import, try another approach\n    from opensearch_py.opensearchpy import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\n\n# Export the names to make them available when importing this module\n__all__ = ['OpenSearch', 'NotFoundError', 'UpdateByQuery', 'Q', 'Search', 'Index', 'ConnectionTimeout']" > /usr/local/lib/python3.10/dist-packages/opensearchpy/__init__.py && \
+    touch /usr/local/lib/python3.10/dist-packages/opensearchpy/__pycache__
+
+# 创建软链接目录，确保能找到opensearchpy
+RUN mkdir -p /ragflow/opensearchpy && \
+    echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
+    echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
+
 
 
 ENTRYPOINT ["./entrypoint.sh"]
