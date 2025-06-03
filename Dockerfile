@@ -199,6 +199,7 @@ COPY deepdoc deepdoc
 COPY rag rag
 COPY agent agent
 COPY minerU minerU
+COPy tests tests
 COPY graphrag graphrag
 COPY agentic_reasoning agentic_reasoning
 COPY pyproject.toml uv.lock ./
