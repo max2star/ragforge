@@ -263,14 +263,14 @@ RUN arch="$(uname -m)" \
         python3 download_models.py; \
    else \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
-           mkdir -p /root/.cache/modelscope/hub/models/; \
+           mkdir -p /root/.cache/modelscope/hub/; \
            cp  /ragflow/deps/arm/magic-pdf.json /root/.; \
-           cp -r /ragflow/deps/arm/models /root/.cache/modelscope/hub/models/.; \
+           cp -r /ragflow/deps/arm/models /root/.cache/modelscope/hub/.; \
         else \
            echo "Using pre-downloaded mc for amd"; \
-           mkdir -p /root/.cache/modelscope/hub/models/; \
+           mkdir -p /root/.cache/modelscope/hub/; \
            cp  /ragflow/deps/amd/magic-pdf.json /root/.; \
-           cp -r /ragflow/deps/amd/models /root/.cache/modelscope/hub/models/.; \
+           cp -r /ragflow/deps/amd/models /root/.cache/modelscope/hub/.; \
         fi; \
    fi
 
