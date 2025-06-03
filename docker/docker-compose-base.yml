@@ -63,7 +63,7 @@ services:
     hostname: es02
     volumes:
       - ./certs:/usr/share/elasticsearch/config/certs
-      - esdata04:/usr/share/elasticsearch/data
+      - esdata02:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT_2}:9200
     env_file: .env
@@ -247,8 +247,6 @@ volumes:
   esdata01:
     driver: local
   esdata02:
-    driver: local
-  esdata04:
     driver: local
   infinity_data:
     driver: local

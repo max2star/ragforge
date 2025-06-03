@@ -32,17 +32,17 @@ user_default_llm:
   base_url: 'http://101.52.216.178:890/v1'
   #base_url: 'http://101.52.216.178:890'
   default_models:
-    chat_model: 'deepseek-r1-70B-Q8'
-    embedding_model: 'bge-m3'
-    rerank_model: 'jina-reranker-v2-base-multilingual'
+    chat_model: 'qwen_large' #'deepseek-r1-70B-Q8'
+    embedding_model: 'embed'
+    rerank_model: 'rerank'
     asr_model: ''
     image2text_model: 'qwen2-vl'
   default_models_config:
-    chat_model: 'http://101.52.216.178:890/v1'
-    embedding_model: 'http://101.52.216.178:890/v1'
-    rerank_model: 'http://101.52.216.178:890/v1'
-    asr_model: 'http://101.52.216.178:890/v1'
-    image2text_model: 'http://101.52.216.178:890/v1'
+    chat_model: 'http://118.193.126.254:1025/v1'
+    embedding_model: 'http://118.193.126.254:8080/'
+    rerank_model: 'http://118.193.126.254:1111/rerank'
+    asr_model: 'http://118.193.126.254:1111/v1'
+    image2text_model: 'http://118.193.126.254:1111/v1'
 
 minio_backup:
   user: '${MINIO_USER_:-rag_flow}'
