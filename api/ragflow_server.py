@@ -234,8 +234,10 @@ if __name__ == '__main__':
         debugpy.listen(("0.0.0.0", RAGFLOW_DEBUGPY_LISTEN))
 
     # init db
-    init_web_db()
-    init_web_data()
+    # 只需要执行一次，成功后注释
+    # init_web_db()
+    # init_web_data()
+
     # init runtime config
     import argparse
 
