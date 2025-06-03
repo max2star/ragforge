@@ -125,7 +125,16 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     eval "echo \"$line\"" >> "${CONF_FILE}"
 done < "${TEMPLATE_FILE}"
 
+arch="$(uname -m)"
+if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then
+    echo "Platform is ARM."
+    source /usr/local/Ascend/ascend-toolkit/set_env.sh
+else
+    echo "Platform is AMD."
+fi
+
 export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/":$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 PY=python3
 
 # -----------------------------------------------------------------------------
@@ -157,6 +166,7 @@ function start_mcp_server() {
 # Start components based on flags
 # -----------------------------------------------------------------------------
 echo "Starting config minio..."
+#在python代码里通过命令进行了实现，这里不需要执行了
 #mc alias set minio-cluster-1 https://${MINIO_HOST}:${MINIO_PORT} ${MINIO_USER} ${MINIO_PASSWORD} --insecure
 #mc alias set minio-cluster-2 https://${MINIO_HOST_BACKUP}:${MINIO_PORT_BACKUP} ${MINIO_USER_BACKUP} ${MINIO_PASSWORD_BACKUP} --insecure
 
