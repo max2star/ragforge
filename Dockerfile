@@ -225,8 +225,9 @@ RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install magic-pdf[full]==1.3.10 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install modelscope -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install frontend -i https://mirrors.aliyun.com/pypi/simple
+#RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
-ARG NEED_DOWNLOAD=1
+ARG NEED_DOWNLOAD=0
 
 RUN arch="$(uname -m)" \
  && if [ "$NEED_DOWNLOAD" = "1" ]; then \
@@ -241,14 +242,36 @@ RUN arch="$(uname -m)" \
         chmod +x /usr/bin/mc; \
     else \
         echo "Using pre-downloaded mc"; \
-        cp /deps/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+        if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+           echo "Using pre-downloaded mc for arm"; \
+           cp /ragflow/deps/arm/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+        else \
+           echo "Using pre-downloaded mc for amd"; \
+           cp /ragflow/deps/amd/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+        fi; \
     fi
 RUN chmod +x  /usr/bin/mc
-RUN wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py
-RUN sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py
-RUN sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py
-RUN sed -i '1i import sys' download_models.py
-RUN python3 download_models.py
+
+
+RUN arch="$(uname -m)" \
+ && if [ "$NEED_DOWNLOAD" = "1" ]; then \
+        wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py; \
+        sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py; \
+        sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py; \
+        sed -i '1i import sys' download_models.py; \
+        python3 download_models.py; \
+   else \
+        if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+           mkdir -p /root/.cache/modelscope/hub/models/; \
+           cp  /ragflow/deps/arm/magic-pdf.json /root/.; \
+           cp -r /ragflow/deps/arm/models /root/.cache/modelscope/hub/models/.; \
+        else \
+           echo "Using pre-downloaded mc for amd"; \
+           mkdir -p /root/.cache/modelscope/hub/models/; \
+           cp  /ragflow/deps/amd/magic-pdf.json /root/.; \
+           cp -r /ragflow/deps/amd/models /root/.cache/modelscope/hub/models/.; \
+        fi; \
+   fi
 
 RUN arch="$(uname -m)" \
  && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
@@ -256,11 +279,10 @@ RUN arch="$(uname -m)" \
         if [ "$NEED_DOWNLOAD" = "1" ]; then \
             wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
         else \
-            cp /deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
+            cp /ragflow/deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
         fi; \
         pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
     else \
         sed -i 's|cpu|cuda|g' /root/magic-pdf.json; \
     fi
-#RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 ENTRYPOINT ["./entrypoint.sh"]
