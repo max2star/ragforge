@@ -198,6 +198,7 @@ COPY conf conf
 COPY deepdoc deepdoc
 COPY rag rag
 COPY agent agent
+COPY minerU minerU
 COPY graphrag graphrag
 COPY agentic_reasoning agentic_reasoning
 COPY pyproject.toml uv.lock ./
@@ -205,6 +206,9 @@ COPY mcp mcp
 
 COPY docker/service_conf.yaml.template ./conf/service_conf.yaml.template
 COPY docker/entrypoint.sh ./
+
+COPY deps deps
+
 RUN chmod +x ./entrypoint*.sh
 
 # Copy compiled web pages
@@ -216,9 +220,47 @@ RUN export http_proxy=
 RUN export https_proxy=
 
 RUN pip3 install numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple
-RUN pip3 install magic-pdf[full]==1.3.0 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install torch==2.6.0 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install magic-pdf[full]==1.3.10 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install modelscope -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install frontend -i https://mirrors.aliyun.com/pypi/simple
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
-RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc
+ARG NEED_DOWNLOAD=1
+
+RUN arch="$(uname -m)" \
+ && if [ "$NEED_DOWNLOAD" = "1" ]; then \
+        echo "Downloading mc..."; \
+        if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+            echo "Downloading mc arm version..."; \
+            wget -q https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc || exit 1; \
+        else \
+            echo "Downloading mc amd version..."; \
+            wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc || exit 1; \
+        fi; \
+        chmod +x /usr/bin/mc; \
+    else \
+        echo "Using pre-downloaded mc"; \
+        cp /deps/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+    fi
 RUN chmod +x  /usr/bin/mc
+RUN wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py
+RUN sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py
+RUN sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py
+RUN sed -i '1i import sys' download_models.py
+RUN python3 download_models.py
+
+RUN arch="$(uname -m)" \
+ && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+        sed -i 's|cpu|npu|g' /root/magic-pdf.json; \
+        if [ "$NEED_DOWNLOAD" = "1" ]; then \
+            wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
+        else \
+            cp /deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
+        fi; \
+        pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
+    else \
+        sed -i 's|cpu|cuda|g' /root/magic-pdf.json; \
+    fi
 #RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 ENTRYPOINT ["./entrypoint.sh"]
