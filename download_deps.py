@@ -23,8 +23,7 @@ ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=os
 # 设置环境变量 export HF_ENDPOINT=https://hf-mirror.com
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
-def get_urls(use_china_mirrors=False):
-    use_china_mirrors=True
+def get_urls(use_china_mirrors=True):
     if use_china_mirrors:
         return [
             "http://mirrors.tuna.tsinghua.edu.cn/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2_amd64.deb",
