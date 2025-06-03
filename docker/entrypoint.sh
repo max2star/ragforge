@@ -125,7 +125,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     eval "echo \"$line\"" >> "${CONF_FILE}"
 done < "${TEMPLATE_FILE}"
 
-export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/"
+export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/":$LD_LIBRARY_PATH
 PY=python3
 
 # -----------------------------------------------------------------------------
