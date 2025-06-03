@@ -224,10 +224,13 @@ RUN export https_proxy=
 RUN wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/magic-pdf.template.json
 RUN cp magic-pdf.template.json /root/magic-pdf.json
 #RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc
+#RUN wget https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc
 COPY ./mc /usr/bin/.
 RUN chmod +x  /usr/bin/mc
 RUN pip3 install torch==2.6.0
 RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
+#RUN wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+#RUN pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
 RUN pip3 install numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install magic-pdf[full]==1.3.10 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install modelscope -i https://mirrors.aliyun.com/pypi/simple
@@ -237,7 +240,9 @@ RUN sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' downl
 #RUN sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py
 RUN sed -i '1i import sys' download_models.py
 RUN python3 download_models.py
+#RUN sed -i 's|cpu|npu|g' /root/magic-pdf.json
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
+#ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 
 
 
