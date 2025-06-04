@@ -1,5 +1,7 @@
 # base stage
-FROM ubuntu:22.04 AS base
+#FROM ubuntu:22.04 AS base
+FROM swr.cn-central-221.ovaijisuan.com/mindformers/mindformers1.2_mindspore2.3:20240722 AS base
+
 USER root
 SHELL ["/bin/bash", "-c"]
 
@@ -219,6 +221,7 @@ COPY --from=builder /ragflow/VERSION /ragflow/VERSION
 
 RUN export http_proxy=
 RUN export https_proxy=
+ARG NEED_DOWNLOAD=1
 
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip3 config set global.trusted-host mirrors.aliyun.com; \
@@ -233,10 +236,11 @@ RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
 #RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
 #RUN apt install libreoffice libreoffice-common libreoffice-core  libreoffice-java-common default-jre-headless libreoffice-writer  fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
-ARG NEED_DOWNLOAD=0
 
 RUN arch="$(uname -m)" \
  && if [ "$NEED_DOWNLOAD" = "1" ]; then \
+        export https_proxy=http://81.70.135.187:8118;\
+        export http_proxy=http://81.70.135.187:8118;\
         echo "Downloading mc..."; \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
             echo "Downloading mc arm version..."; \
@@ -261,8 +265,9 @@ RUN chmod +x  /usr/bin/mc
 
 RUN arch="$(uname -m)" \
  && if [ "$NEED_DOWNLOAD" = "1" ]; then \
-        export https_proxy=http://81.70.135.187:8118;\
-        export http_proxy=http://81.70.135.187:8118;\
+        export HF_ENDPOINT=https://hf-mirror.com;\
+        #export https_proxy=http://81.70.135.187:8118;\
+        #export http_proxy=http://81.70.135.187:8118;\
 
         wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py; \
         sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py; \
