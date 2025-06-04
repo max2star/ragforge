@@ -25,10 +25,12 @@ from deepdoc.vision import OCR
 from rag.nlp import tokenize
 from rag.utils import clean_markdown_block
 
-ocr = OCR()
+#TODO
+#ocr = OCR()
 
 
 def chunk(filename, binary, tenant_id, lang, callback=None, **kwargs):
+    ocr = OCR()
     img = Image.open(io.BytesIO(binary)).convert('RGB')
     doc = {
         "docnm_kwd": filename,
