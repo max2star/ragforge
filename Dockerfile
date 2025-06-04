@@ -240,10 +240,10 @@ RUN arch="$(uname -m)" \
         echo "Downloading mc..."; \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
             echo "Downloading mc arm version..."; \
-            wget -q https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc || exit 1; \
+            wget https://dl.min.io/client/mc/release/linux-arm64/mc -O /usr/bin/mc || exit 1; \
         else \
             echo "Downloading mc amd version..."; \
-            wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc || exit 1; \
+            wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/bin/mc || exit 1; \
         fi; \
         chmod +x /usr/bin/mc; \
     else \
@@ -261,6 +261,9 @@ RUN chmod +x  /usr/bin/mc
 
 RUN arch="$(uname -m)" \
  && if [ "$NEED_DOWNLOAD" = "1" ]; then \
+        export https_proxy=http://81.70.135.187:8118;\
+        export http_proxy=http://81.70.135.187:8118;\
+
         wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py; \
         sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py; \
         sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py; \
@@ -279,6 +282,9 @@ RUN arch="$(uname -m)" \
         fi; \
    fi
 
+RUN export https_proxy=
+RUN export http_proxy=
+
 RUN arch="$(uname -m)" \
  && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
         sed -i 's|cpu|npu|g' /root/magic-pdf.json; \
@@ -287,8 +293,10 @@ RUN arch="$(uname -m)" \
         else \
             cp /ragflow/deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
         fi; \
+        #pip3 install torch_npu==2.6.0rc1  -i https://mirrors.aliyun.com/pypi/simple;\
         pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
     else \
         sed -i 's|cpu|cuda|g' /root/magic-pdf.json; \
     fi
+ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 ENTRYPOINT ["./entrypoint.sh"]
