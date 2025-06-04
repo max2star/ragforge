@@ -22,7 +22,7 @@ services:
           devices:
             - driver: nvidia
               #count: all
-              device_ids: ['0','1']
+              device_ids: ['0','1','2','3']
               capabilities: [gpu]
     ports:
       - ${SVR_HTTP_PORT}:9380
@@ -57,6 +57,7 @@ services:
       - MACOS=${MACOS}
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
+      - CUDA_VISIBLE_DEVICES=0,1,2,3
         #- LLM_BASE_DELAY=2
         # - SSL_CERT_FILE="/etc/nginx/public.crt"
         #- CUDA_VISIBLE_DEVICES=1

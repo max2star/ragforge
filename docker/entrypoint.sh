@@ -133,7 +133,8 @@ else
     echo "Platform is AMD."
 fi
 
-export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/":$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/":$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu/":"/opt/dm8/dm8_odbc_driver_linux_64":"/opt/dm8/bin/dependencies":$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 PY=python3
 
