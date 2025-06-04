@@ -44,7 +44,7 @@ from rag.nlp import rag_tokenizer
 # from rag.settings import PARALLEL_DEVICES
 from rag.utils import num_tokens_from_string
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,3"
 
 import fitz
 from magic_pdf.data.data_reader_writer import S3DataReader, S3DataWriter
