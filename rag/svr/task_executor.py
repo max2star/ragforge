@@ -617,8 +617,7 @@ async def do_handle_task(task):
     filter_fields_= task.get('filter_fields',{})
     if not filter_fields_:
         logging.error(f"Doc filter field not exists for {task_doc_id}!")
-        raise LookupError(f"Doc filter field not exists!")
-        #filter_fields_ = {'limit_range':[doc.created_by]}
+    #filter_fields_ = {'limit_range':[doc.created_by]}
     limit_range = filter_fields_.get('limit_range',[])
     if not limit_range:
         filter_fields_['limit_range']=[doc.created_by]
