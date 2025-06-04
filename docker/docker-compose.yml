@@ -32,7 +32,7 @@ services:
       - 5678:5678
       - 5679:5679
     volumes:
-      - /var/lib/gpustack/ragflow/logs:/ragflow/logs
+      - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
         #- ../rag:/ragflow/rag
         #- ../api:/ragflow/api
