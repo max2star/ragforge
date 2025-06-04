@@ -221,8 +221,11 @@ RUN export http_proxy=
 RUN export https_proxy=
 
 RUN pip3 install numpy==1.26.4 -i https://mirrors.aliyun.com/pypi/simple
-RUN pip3 install torch==2.6.0 -i https://mirrors.aliyun.com/pypi/simple
-RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install torch==2.3.0 -i https://mirrors.aliyun.com/pypi/simple
+RUN pip3 install torchvision==0.18.0 -i https://mirrors.aliyun.com/pypi/simple
+#NPU上2.6.0不可用
+#RUN pip3 install torch==2.6.0 -i https://mirrors.aliyun.com/pypi/simple
+#RUN pip3 install torchvision==0.21.0 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install magic-pdf[full]==1.3.10 -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install modelscope -i https://mirrors.aliyun.com/pypi/simple
 RUN pip3 install frontend -i https://mirrors.aliyun.com/pypi/simple
