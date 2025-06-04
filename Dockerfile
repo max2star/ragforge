@@ -1,7 +1,5 @@
 # base stage
-#FROM ubuntu:22.04 AS base
-FROM swr.cn-central-221.ovaijisuan.com/mindformers/mindformers1.2_mindspore2.3:20240722 AS base
-
+FROM ubuntu:22.04 AS base
 USER root
 SHELL ["/bin/bash", "-c"]
 
@@ -226,8 +224,13 @@ ARG NEED_DOWNLOAD=1
 RUN pip3 config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
     pip3 config set global.trusted-host mirrors.aliyun.com; \
     pip3 install numpy==1.26.4;\
-    pip3 install torch==2.3.0; \
-    pip3 install torchvision==0.18.0; \
+    if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+        pip3 install torch==2.3.0; \
+        pip3 install torchvision==0.18.0; \
+    else \
+        pip3 install torch==2.6.0; \
+        pip3 install torchvision==0.21.0; \
+    fi; \
     pip3 install magic-pdf[full]==1.3.10; \
     pip3 install modelscope; \
     pip3 install frontend
@@ -239,6 +242,7 @@ RUN apt install fonts-wqy-zenhei fonts-wqy-microhei  libreoffice-l10n-zh-cn -y
 
 RUN arch="$(uname -m)" \
  && if [ "$NEED_DOWNLOAD" = "1" ]; then \
+        export HF_ENDPOINT=https://hf-mirror.com;\
         export https_proxy=http://81.70.135.187:8118;\
         export http_proxy=http://81.70.135.187:8118;\
         echo "Downloading mc..."; \
@@ -268,7 +272,6 @@ RUN arch="$(uname -m)" \
         export HF_ENDPOINT=https://hf-mirror.com;\
         #export https_proxy=http://81.70.135.187:8118;\
         #export http_proxy=http://81.70.135.187:8118;\
-
         wget https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/scripts/download_models.py -O download_models.py; \
         sed -i '1i sys.path.append("/usr/local/lib/python3.10/dist-packages")' download_models.py; \
         sed -i '1i sys.path.append("/usr/local/python3.10/lib/python3.10/site-packages")' download_models.py; \
@@ -286,7 +289,6 @@ RUN arch="$(uname -m)" \
            cp -r /ragflow/deps/amd/models /root/.cache/modelscope/hub/.; \
         fi; \
    fi
-
 RUN export https_proxy=
 RUN export http_proxy=
 
@@ -303,5 +305,92 @@ RUN arch="$(uname -m)" \
     else \
         sed -i 's|cpu|cuda|g' /root/magic-pdf.json; \
     fi
-ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
+
+
+# 达梦数据库 环境
+# 安装达梦数据库ODBC驱动依赖
+WORKDIR /ragflow
+
+RUN apt-get update && \
+    apt-get install -y unixodbc unixodbc-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# 添加组和用户
+#RUN groupadd dinstall && \
+#    useradd -g dinstall -m dmdba && \
+#    echo "dmdba:123456" | chpasswd
+
+#RUN groupadd root && \
+RUN useradd -g root -m dmdba && \
+    echo "dmdba:123456" | chpasswd
+
+# 在这里需要将达梦数据库驱动放入容器
+# 注意：需要提前下载达梦数据库驱动包
+RUN mkdir -p /opt/dm8
+COPY drivers/dm/unixODBC-2.3.12.tar.gz /tmp/
+RUN tar -zxvf /tmp/unixODBC-2.3.12.tar.gz -C /opt/dm8
+
+# 创建驱动目录并添加空的驱动文件
+RUN mkdir -p /opt/dm8/dm8_odbc_driver_linux_64 && \
+    touch /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so && \
+    chmod +x /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so
+
+RUN mkdir -p /tmp/arm/drivers_arm
+RUN mkdir -p /tmp/amd/dm8
+
+ADD docker/dm8 /tmp/amd/dm8
+COPY drivers/linux-odbc/libdodbc.so /tmp/amd/
+COPY drivers/linux-odbc/libdmdpi.so /tmp/amd/
+COPY drivers/linux-odbc/libdmfldr.so /tmp/amd/
+ADD drivers/drivers_arm /tmp/arm/drivers_arm
+COPY drivers/drivers_arm/bin/libdodbc.so /tmp/arm/
+COPY drivers/drivers_arm/bin/libdmdpi.so /tmp/arm/
+COPY drivers/drivers_arm/bin/libdmfldr.so /tmp/arm/
+
+RUN arch="$(uname -m)" \
+ && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+        scp /tmp/arm/* /opt/dm8/dm8_odbc_driver_linux_64/.;\
+        scp -r /tmp/arm/drivers_arm/* /opt/dm8/.;\
+        #ADD drivers/drivers_arm /opt/dm8; \
+        #COPY drivers/drivers_arm/bin/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/; \
+        #COPY drivers/drivers_arm/bin/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/; \
+        #COPY drivers/drivers_arm/bin/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/; \
+    else \
+        scp /tmp/amd/* /opt/dm8/dm8_odbc_driver_linux_64/.;\
+        scp -r /tmp/amd/dm8/* /opt/dm8/.;\
+        #ADD docker/dm8 /opt/dm8; \
+        #COPY drivers/linux-odbc/libdodbc.so /opt/dm8/dm8_odbc_driver_linux_64/ ;\
+        #COPY drivers/linux-odbc/libdmdpi.so /opt/dm8/dm8_odbc_driver_linux_64/ ;\
+        #COPY drivers/linux-odbc/libdmfldr.so /opt/dm8/dm8_odbc_driver_linux_64/; \
+    fi
+RUN chmod +x /opt/dm8/dm8_odbc_driver_linux_64/*.so
+
+# 配置达梦数据库ODBC驱动 - 确保与代码中使用的驱动名称一致
+RUN echo -e "[ODBC Data Sources]\nDM ODBC DRIVER = DM ODBC DRIVER\n[DM ODBC DRIVER]\nDriver = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so\nSetup = /opt/dm8/dm8_odbc_driver_linux_64/libdodbc.so" > /etc/odbcinst.ini && \
+    echo -e "[ODBC Data Sources]\nDM = DM ODBC DRIVER\n[DM]\nDriver = DM ODBC DRIVER\nServer = 118.193.126.254\nPort = 5236" > /etc/odbc.ini
+
+
+# 设置环境变量
+ENV ODBCINI=/etc/odbc.ini
+ENV ODBCSYSINI=/etc
+# 设置默认数据库类型为达梦
+ENV DB_TYPE=dm
+
+# 安装 Python 依赖
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple && \
+    pip install --no-cache-dir pyodbc opensearch-py==2.8.0 -v && \
+    pip list | grep opensearch
+
+# 创建自定义的 opensearchpy 模块
+RUN mkdir -p /usr/local/lib/python3.10/dist-packages/opensearchpy && \
+    echo "# Import from opensearch_py package\ntry:\n    import sys\n    import os\n    # Try to find the opensearch_py package\n    paths = [p for p in sys.path if os.path.exists(os.path.join(p, 'opensearch_py'))]\n    if paths:\n        sys.path.insert(0, os.path.join(paths[0], 'opensearch_py'))\n    from opensearch_py import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\nexcept ImportError:\n    # If still cannot import, try another approach\n    from opensearch_py.opensearchpy import OpenSearch, NotFoundError, UpdateByQuery, Q, Search, Index, ConnectionTimeout\n\n# Export the names to make them available when importing this module\n__all__ = ['OpenSearch', 'NotFoundError', 'UpdateByQuery', 'Q', 'Search', 'Index', 'ConnectionTimeout']" > /usr/local/lib/python3.10/dist-packages/opensearchpy/__init__.py && \
+    touch /usr/local/lib/python3.10/dist-packages/opensearchpy/__pycache__
+
+# 创建软链接目录，确保能找到opensearchpy
+RUN mkdir -p /ragflow/opensearchpy && \
+    echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
+    echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
+
+#ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 ENTRYPOINT ["./entrypoint.sh"]
