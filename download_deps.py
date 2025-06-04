@@ -18,8 +18,8 @@ import argparse
 import ssl
 
 # 使用系统 CA 证书路径
-os.environ['SSL_CERT_FILE'] = '/etc/pki/tls/certs/ca-bundle.crt'
-ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=os.environ['SSL_CERT_FILE'])
+#os.environ['SSL_CERT_FILE'] = '/etc/pki/tls/certs/ca-bundle.crt'
+#ssl._create_default_https_context = lambda: ssl.create_default_context(cafile=os.environ['SSL_CERT_FILE'])
 # 设置环境变量 export HF_ENDPOINT=https://hf-mirror.com
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
 
