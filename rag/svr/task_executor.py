@@ -21,13 +21,18 @@ import sys
 import threading
 import time
 
+import fitz
+from PIL import Image
+
 from api.utils.log_utils import initRootLogger, get_project_base_directory
 from graphrag.general.index import run_graphrag
 from graphrag.utils import get_llm_cache, set_llm_cache, get_tags_from_cache, set_tags_to_cache
+from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory
 from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
 import os
+import bisect
 
 from datetime import datetime
 import json
@@ -106,6 +111,20 @@ task_limiter = trio.CapacityLimiter(MAX_CONCURRENT_TASKS)
 chunk_limiter = trio.CapacityLimiter(MAX_CONCURRENT_CHUNK_BUILDERS)
 WORKER_HEARTBEAT_TIMEOUT = int(os.environ.get('WORKER_HEARTBEAT_TIMEOUT', '120'))
 stop_event = threading.Event()
+
+
+def find_interval(arr, n):
+    # 使用 bisect_left 定位 n 的插入位置 (寻找子论文属于哪个分块)
+    pos = bisect.bisect_left(arr, n)
+
+    if pos == 0:
+        return None, arr[0]  # n 小于第一个元素
+    elif pos == len(arr):
+        return arr[-1], None  # n 大于最后一个元素
+    elif arr[pos] == n:
+        return arr[pos], arr[pos]  # n 等于数组中的元素
+    else:
+        return arr[pos - 1], arr[pos]  # n 在 arr[pos-1] 和 arr[pos] 之间
 
 
 def signal_handler(sig, frame):
@@ -644,19 +663,108 @@ async def do_handle_task(task):
     dict_result.pop('meta_fields',None)
     logging.info(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
+
+    file_type = task.get("type", "pdf")
+    # 用户设置 parser_config ['论文集', '论文', '书籍、期刊', '其他']:
+    pdf_article_type = task_parser_config.get('pdf_article_type', '论文')
+
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
     #运行
     c_count = 0
     content = ""
-    for c_ in chunks:
-        content = content + "\n"+ c_['content_with_weight']
-        c_count = c_count + len(c_['content_with_weight'])
-        if c_count >=5000:
-            break
-    logging.debug(f"do_handle_task current content {content}")
 
-    dict_result_add = await run_extract(task, chat_model, content,progress_callback)
+    sub_paper = {}
+    # 是否使用视觉模型
+    use_vision_parser = True if file_type in ["pdf", ] else False
+    if use_vision_parser:
+        # 获取字节流
+        bucket, name = File2DocumentService.get_storage_address(doc_id=task_doc_id)
+        logging.info("pdf_bytes for bucket {} doc name {},doc_id {},tenant_id {}".format(
+            bucket, name, task_doc_id, task_tenant_id
+        ))
+        pdf_bytes = get_pdf_file_bytes(bucket, name, task_doc_id)
+        if not pdf_bytes:
+            logging.error(f"Can't find this document {task_doc_id}!")
+            raise LookupError(f"Can't find this document {task_doc_id}!")
+
+        pdf_doc = fitz.open('pdf', pdf_bytes)
+        img_results = []
+        for page_num in range(len(pdf_doc)):
+            page = pdf_doc.load_page(page_num)
+            # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
+            mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
+            pix = page.get_pixmap(matrix=mat)
+
+            # 转换为PIL Image对象
+            img_bytes = pix.tobytes()
+            img = Image.open(BytesIO(img_bytes))
+            img_results.append(img)
+
+        # fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
+        fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
+        if pdf_article_type in ["论文集", "书籍"]:
+            """
+            通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
+            """
+            # 提取目录
+            result = extract_directory(
+                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
+                images=img_results,
+                callback=progress_callback,
+            )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
+            page_numbers = result["page_numbers_before_directory"]
+
+            # 提取元数据
+            fields_map = extract_metadata(
+                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
+                images=[img_results[i] for i in page_numbers],
+                fields=fields,  #  可指定需要提取的元数据字段的列表(有默认值)
+                callback=progress_callback,
+            )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
+
+            if pdf_article_type == "论文集":
+                # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+                main_content_begin = result['main_content_begin']
+                sub_paper["main_content_begin"] = main_content_begin
+                sub_paper["fields_map"] = {}
+                for i in range(len(result['dic_result']) - 1):
+                    res = result['dic_result'][i]
+                    title_ = res['章节']
+                    page_ = res['页码']
+                    pdf_page_ = main_content_begin - 1 + page_
+                    picture_ = img_results[pdf_page_]
+                    fields_map_ = extract_metadata(
+                        task_tenant_id, images=[picture_], fields=fields, callback=progress_callback,
+                    )
+                    sub_paper["fields_map"][pdf_page_] = {
+                        "title_": title_, "page_": page_,
+                        "fields_map_": fields_map_,
+                    }
+        else:
+            """
+            单篇论文、期刊
+            通过将pdf转换为图像，使用视觉模型进行元数据要素提取打标签（摘要、标题、关键词等）
+            """
+            # 提取元数据
+            fields_map = extract_metadata(
+                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
+                images=img_results[:10],
+                fields=fields,  # 可指定需要提取的元数据字段的列表(有默认值)
+                callback=progress_callback,
+            )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
+
+        dict_result_add = fields_map
+    else:
+        for c_ in chunks:
+            content = content + "\n" + c_['content_with_weight']
+            c_count = c_count + len(c_['content_with_weight'])
+            if c_count >= 5000:
+                break
+        logging.debug(f"do_handle_task current content {content}")
+
+        dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
     for key,value in dict_result_add.items():
         if key in key_now and dict_result.get(key,None):
@@ -666,7 +774,17 @@ async def do_handle_task(task):
             dict_result[key] = value
     logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
 
-    classification_result = await run_classify(task, chat_model, content,progress_callback)
+    # 分类标签
+    if use_vision_parser:
+        """
+        重新赋值content：使用视觉模型解析的标题、摘要、关键词等元数据，从中重新提取文本进行标签分类
+        """
+        content = json.dumps(dict_result)
+        classification_result = await run_classify(task, chat_model, content[:5000], progress_callback)
+    else:
+        """原文本模型"""
+        classification_result = await run_classify(task, chat_model, content, progress_callback)
+
     #抽取失败用空覆盖之前
     classify_result = []
     if classification_result:
@@ -681,17 +799,35 @@ async def do_handle_task(task):
             classify_result.append(classify_obj)
     dict_result['分类标签'] =  classify_result
     logging.info(f"do_handle_task doc {task['doc_id']} 合并分类标签后的 meta fields {dict_result}, filter fields {filter_fields_}")
+
     for c_ in chunks:
-        c_['meta_fields']=dict_result
+        logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
+        page_c_ = list(set(c_['page_num_int']))
+        if pdf_article_type == "论文集":
+            # 保存子论文元数据
+            dict_result['sub_paper'] = sub_paper
+            # 对应分块
+            if page_c_[0] >= sub_paper["main_content_begin"]:
+                pdf_p_begin, pdf_p_end = find_interval(sub_paper["fields_map"].keys(), page_c_[0])
+                sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
+                c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
+                for key, value in sub_paper_dict_result["fields_map_"].items():
+                    c_[key] = value
+            else:
+                c_['meta_fields'] = dict_result
+                for key, value in dict_result.items():
+                    c_[key] = value
+        else:
+            #将元数据更新到Chunk
+            c_['meta_fields'] = dict_result
+            for key,value in dict_result.items():
+                c_[key] = value
         c_['filter_fields'] = filter_fields_
         for key,value in filter_fields_.items():
             c_[key] = value
         #c_['limit_range'] = limit_range
         #c_['limit_level'] = limit_level
         #c_['limit_time'] = limit_time
-        #将元数据更新到Chunk
-        for key,value in dict_result.items():
-            c_[key] = value
 
     #更新元数据到文档
     DocumentService.update_meta_fields(task["doc_id"],  dict_result)
