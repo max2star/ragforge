@@ -165,7 +165,7 @@ def load_user(web_request):
                         access_token=access_token, status=StatusEnum.VALID.value
                     )
                     if user:
-                        logging.info(f"User authenticated: {user[0].id}")
+                        logging.debug(f"User authenticated: {user[0].id}")
                         return user[0]
                     else:
                         logging.warning(f"User not found for access_token: {access_token[:10]}...")

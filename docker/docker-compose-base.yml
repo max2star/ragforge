@@ -243,6 +243,38 @@ services:
       timeout: 10s
       retries: 3
     restart: on-failure
+
+  # Vault 服务
+  vault:
+    image: vault:1.15
+    container_name: vault
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
+      VAULT_ADDR: "http://vault:8200"
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault_data:/vault/data
+    cap_add:
+      - IPC_LOCK
+    command: server -dev
+
+  #KES 服务
+  kes:
+    image: minio/kes:latest
+    container_name: kes
+    #depends_on:
+    #  - vault
+    environment:
+      KES_SERVER_TLS_KEY_FILE: /certs/kes-server.key
+      KES_SERVER_TLS_CERT_FILE: /certs/kes-server.crt
+    volumes:
+      - ./certs:/certs # 挂载 TLS 证书目录
+      - ./kes-config.yaml:/etc/kes-config.yaml:ro
+    command: server --config=/etc/kes-config.yaml
+    ports:
+      - "7373:7373"  # KES API 端口
+
 volumes:
   esdata01:
     driver: local
@@ -257,6 +289,8 @@ volumes:
   minio_data_backup:
     driver: local
   redis_data:
+    driver: local
+  vault_data:
     driver: local
 
 networks:
