@@ -9,6 +9,15 @@ mysql:
   port: 3306
   max_connections: 100
   stale_timeout: 30
+# 添加达梦数据库配置
+dm:
+  name: '${DM_DBNAME:-rag_flow}'
+  user: '${DM_USER:-SYSDBA}'
+  password: '${DM_PASSWORD:-Sysdba@123}'
+  host: '${DM_HOST:-118.193.126.254}'
+  port: ${DM_PORT:-5236}
+  max_connections: 100
+  stale_timeout: 300
 minio:
   user: '${MINIO_USER:-rag_flow}'
   password: '${MINIO_PASSWORD:-infini_rag_flow}'

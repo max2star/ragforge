@@ -19,6 +19,7 @@ import re
 from functools import reduce
 from io import BytesIO
 from timeit import default_timer as timer
+import time
 
 from docx import Document
 from docx.image.exceptions import InvalidImageStreamError, UnexpectedEndOfFileError, UnrecognizedImageError
@@ -451,16 +452,92 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
 
     elif re.search(r"\.doc$", filename, re.IGNORECASE):
         callback(0.1, "Start to parse.")
-        binary = BytesIO(binary)
-        doc_parsed = parser.from_buffer(binary)
-        if doc_parsed.get('content', None) is not None:
-            sections = doc_parsed['content'].split('\n')
-            sections = [(_, "") for _ in sections if _]
-            callback(0.8, "Finish parsing.")
-        else:
-            callback(0.8, f"tika.parser got empty content from {filename}.")
-            logging.warning(f"tika.parser got empty content from {filename}.")
+        if binary is None:
+            callback(0.8, f"No binary data provided for file {filename}")
+            logging.error(f"No binary data provided for file {filename}")
             return []
+
+        binary = BytesIO(binary)
+        max_retries = 3
+        retry_count = 0
+
+        # 检查Tika服务器状态
+        def check_tika_server():
+            try:
+                import requests
+                response = requests.get("http://localhost:9998/tika", timeout=5)
+                logging.info(f"Tika server check response: {response.status_code}")
+                return response.status_code == 200
+            except Exception as e:
+                logging.error(f"Tika server check failed: {str(e)}")
+                return False
+
+        # 尝试启动Tika服务器
+        def start_tika_server():
+            import subprocess
+            import os
+            try:
+                tika_jar = os.getenv("TIKA_SERVER_JAR", "file:///ragflow/tika-server-standard-3.0.0.jar").replace(
+                    "file://", "")
+                java_opts = os.getenv("JAVA_OPTS", "-Xmx1g -Xms512m")
+                startup_timeout = int(os.getenv("TIKA_STARTUP_TIMEOUT", "300"))
+
+                logging.info(f"Starting Tika server with JAR: {tika_jar}")
+                logging.info(f"Java options: {java_opts}")
+
+                # 先检查是否有其他Tika进程
+                try:
+                    subprocess.run("pkill -f tika", shell=True)
+                    import time
+                    time.sleep(2)  # 等待进程完全终止
+                except Exception as e:
+                    logging.warning(f"Failed to kill existing Tika processes: {str(e)}")
+
+                # 使用nohup启动Tika服务器
+                cmd = f"nohup java {java_opts} -jar {tika_jar} --port=9998 --host=0.0.0.0 > /tmp/tika.log 2>&1 &"
+                subprocess.run(cmd, shell=True)
+
+                # 等待进程启动
+                start_time = time.time()
+                while time.time() - start_time < startup_timeout:
+                    if check_tika_server():
+                        logging.info("Tika server started successfully")
+                        return True
+                    time.sleep(5)
+                    logging.info("Waiting for Tika server to start...")
+
+                logging.error(f"Tika server startup timed out after {startup_timeout} seconds")
+                return False
+            except Exception as e:
+                logging.error(f"Failed to start Tika server: {str(e)}")
+                return False
+
+        while retry_count < max_retries:
+            try:
+                # 检查Tika服务器是否运行
+                if not check_tika_server():
+                    callback(0.2, "Tika server not running, attempting to start...")
+                    if not start_tika_server():
+                        raise Exception("Unable to start Tika server")
+
+                callback(0.3, "Tika server is running, attempting to parse document...")
+                doc_parsed = parser.from_buffer(binary)
+                if doc_parsed.get('content', None) is not None:
+                    sections = doc_parsed['content'].split('\n')
+                    sections = [(_, "") for _ in sections if _]
+                    callback(0.8, "Finish parsing.")
+                    break
+                else:
+                    callback(0.8, f"tika.parser got empty content from {filename}.")
+                    logging.warning(f"tika.parser got empty content from {filename}.")
+                    return []
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logging.error(f"Failed to parse {filename} after {max_retries} attempts: {str(e)}")
+                    raise RuntimeError(f"Unable to parse document after {max_retries} attempts: {str(e)}")
+                logging.warning(f"Retry {retry_count}/{max_retries} for parsing {filename}: {str(e)}")
+                time.sleep(5)  # Wait before retrying
 
     else:
         raise NotImplementedError(
