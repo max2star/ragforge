@@ -393,5 +393,8 @@ RUN mkdir -p /ragflow/opensearchpy && \
     echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
     echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
 
+#增加npu上的deepdoc替换
+
+
 #ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
 ENTRYPOINT ["./entrypoint.sh"]
