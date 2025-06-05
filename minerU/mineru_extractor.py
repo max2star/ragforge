@@ -38,6 +38,7 @@ def get_pdf_file_bytes(bucketname, filename, doc_id, pdf_flag=True):
 
 def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
     """视觉模型执行方法-自定义prompt提示词"""
+    logging.info("正在进行视觉模型调用...")
     try:
         vision_model = LLMBundle(tenant_id, LLMType.IMAGE2TEXT)
     except Exception:
@@ -76,8 +77,10 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
         f"提取图中的：{keys_to_use_list}；对于摘要，不要进行修改；"
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出纯文本。"
     )
+    callback(msg="正在进行视觉模型调用提取要素...")
     vision_results = vision_parser(tenant_id, images, prompt=prompt)
     for vr_key, vr_value in vision_results.items():
+        logging.info(f"vr_key ===> {vr_key}\nvr_value ===>{vr_value}")
         if vr_value:
             r_d = json.loads(vr_value)
             for key in keys_to_use_list:
@@ -93,7 +96,6 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
                     current_value = r_d.get(key, None)
                     if current_value:
                         fields_map[key] = current_value
-        logging.info(f"{vr_key}==>\t{vr_value}")
 
     return fields_map
 
@@ -110,6 +112,7 @@ def extract_directory(tenant_id, images, callback=None):
         f"请你以JSON格式输出纯文本，以目录为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成，"
         f"不要输出```json```等Markdown格式代码段"
     )
+    callback(msg="正在进行视觉模型调用提取目录...")
     vision_results = vision_parser(tenant_id, images, prompt=prompt)
     result = [v for k,v in vision_results]
     logging.info(f"pdf共{len(images)}页 解析结果： {result}")
