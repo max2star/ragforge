@@ -43,9 +43,12 @@ def vision_llm_chunk(binary, vision_model, prompt=None):
     return ""
 
 class VisionFigureParser:
-    def __init__(self, vision_model, figures_data,key_list_to_extract):
+    def __init__(self, vision_model=None, figures_data=None, key_list_to_extract=None, prompt=None):
         self.vision_model = vision_model
         self.figures_data = figures_data
+        self.prompt = prompt
+        if key_list_to_extract is None:
+            key_list_to_extract = []
         self.key_list_to_extract = key_list_to_extract
 
     def __call__(self, **kwargs):
@@ -55,7 +58,9 @@ class VisionFigureParser:
             txt = vision_llm_chunk(
                 binary=img_binary,
                 vision_model=self.vision_model,
-                prompt=vision_llm_paper_extraction_prompt(self.key_list_to_extract)
+                prompt=self.prompt if self.prompt else vision_llm_paper_extraction_prompt(
+                    self.key_list_to_extract
+                )
             )
             if txt:
                 texts[idx] = txt
