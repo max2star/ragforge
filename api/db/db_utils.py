@@ -15,6 +15,7 @@
 #
 import operator
 from functools import reduce
+import logging
 
 from playhouse.pool import PooledMySQLDatabase
 
@@ -24,31 +25,90 @@ from api.db.db_models import DB, DataBaseModel
 
 
 @DB.connection_context()
-def bulk_insert_into_db(model, data_source, replace_on_conflict=False):
-    DB.create_tables([model])
+def bulk_insert_into_db(model, data, ignore_conflicts=False):
+    """批量插入数据到数据库，支持达梦数据库"""
+    if not data:
+        return 0
 
-    for i, data in enumerate(data_source):
-        current_time = current_timestamp() + i
-        current_date = timestamp_to_date(current_time)
-        if 'create_time' not in data:
-            data['create_time'] = current_time
-        data['create_date'] = timestamp_to_date(data['create_time'])
-        data['update_time'] = current_time
-        data['update_date'] = current_date
+    # 检查是否是达梦数据库
+    is_dm_database = _is_dm_database()
 
-    preserve = tuple(data_source[0].keys() - {'create_time', 'create_date'})
+    if ignore_conflicts and is_dm_database:
+        # 达梦数据库的特殊处理
+        return _bulk_insert_dm_with_ignore(model, data)
+    elif ignore_conflicts:
+        # 其他数据库使用原有逻辑
+        try:
+            query = model.insert_many(data).on_conflict_ignore()
+            return query.execute()
+        except Exception as e:
+            logging.error(f"批量插入失败，回退到逐条插入: {e}")
+            return _bulk_insert_dm_with_ignore(model, data)
+    else:
+        # 普通插入
+        try:
+            query = model.insert_many(data)
+            return query.execute()
+        except Exception as e:
+            if is_dm_database:
+                logging.warning(f"批量插入失败，使用逐条插入: {e}")
+                return _bulk_insert_dm_with_ignore(model, data)
+            else:
+                raise e
 
-    batch_size = 1000
+def _is_dm_database():
+    """检查是否是达梦数据库"""
+    try:
+        # 方法1: 检查数据库类型属性
+        if hasattr(DB, '_database_type') and DB._database_type == 'dm':
+            return True
 
-    for i in range(0, len(data_source), batch_size):
-        with DB.atomic():
-            query = model.insert_many(data_source[i:i + batch_size])
-            if replace_on_conflict:
-                if isinstance(DB, PooledMySQLDatabase):
-                    query = query.on_conflict(preserve=preserve)
-                else:
-                    query = query.on_conflict(conflict_target="id", preserve=preserve)
-            query.execute()
+        # 方法2: 检查数据库类名
+        db_class_name = DB.__class__.__name__
+        if 'Dm' in db_class_name or 'DM' in db_class_name:
+            return True
+
+        # 方法3: 检查连接字符串或驱动
+        if hasattr(DB, 'connect_params'):
+            connect_params = str(DB.connect_params)
+            if 'DM ODBC' in connect_params or 'dm' in connect_params.lower():
+                return True
+
+        return False
+    except Exception as e:
+        logging.debug(f"检查数据库类型时出错: {e}")
+        return False
+
+def _bulk_insert_dm_with_ignore(model, data):
+    """达梦数据库的批量插入，忽略冲突"""
+    success_count = 0
+    error_count = 0
+
+    # 逐条插入，忽略重复键错误
+    for item in data:
+        try:
+            model.create(**item)
+            success_count += 1
+        except Exception as e:
+            error_str = str(e).lower()
+            # 检查是否是重复键错误
+            if any(keyword in error_str for keyword in [
+                'duplicate', 'unique', 'primary key', 'constraint',
+                '唯一约束', '主键约束', '重复键'
+            ]):
+                error_count += 1
+                logging.debug(f"忽略重复记录: {e}")
+            else:
+                # 其他错误需要抛出
+                logging.error(f"批量插入失败: {e}")
+                raise e
+
+    if error_count > 0:
+        logging.info(f"批量插入完成: 成功 {success_count} 条, 忽略重复 {error_count} 条")
+    else:
+        logging.debug(f"批量插入完成: 成功 {success_count} 条")
+
+    return success_count
 
 
 def get_dynamic_db_model(base, job_id):

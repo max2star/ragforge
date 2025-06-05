@@ -2896,9 +2896,9 @@ export const QWeatherTimePeriodOptions = [
   '30d',
 ];
 
-export const ExeSQLOptions = ['mysql', 'postgresql', 'mariadb', 'mssql'].map(
+export const ExeSQLOptions = ['mysql', 'postgresql', 'mariadb', 'mssql', 'dm'].map(
   (x) => ({
-    label: upperFirst(x),
+    label: x === 'dm' ? '达梦数据库' : upperFirst(x),
     value: x,
   }),
 );

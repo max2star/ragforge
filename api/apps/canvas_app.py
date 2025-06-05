@@ -17,6 +17,8 @@ import json
 import traceback
 from flask import request, Response
 from flask_login import login_required, current_user
+
+from api import settings
 from api.db.services.canvas_service import CanvasTemplateService, UserCanvasService
 from api.db.services.user_service import TenantService
 from api.db.services.user_canvas_version import UserCanvasVersionService
@@ -291,9 +293,23 @@ def test_db_connect():
             cursor = db.cursor()
             cursor.execute("SELECT 1")
             cursor.close()
+        elif req["db_type"] == 'dm':
+            import pyodbc
+            connection_string = (
+                f"DRIVER={{DM ODBC DRIVER}};"
+                f"SERVER={req['host']};"
+                f"PORT={req['port']};"
+                f"UID={req['username']};"
+                f"PWD={req['password']};"
+            )
+            db = pyodbc.connect(connection_string)
+            cursor = db.cursor()
+            cursor.execute(f"SET SCHEMA {req['database']}")
+            cursor.execute("SELECT 1 FROM DUAL")
+            cursor.close()
         else:
             return server_error_response("Unsupported database type.")
-        if req["db_type"] != 'mssql':
+        if req["db_type"] not in ['mssql', 'dm']:
             db.connect()
         db.close()
         
