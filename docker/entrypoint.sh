@@ -167,7 +167,6 @@ function start_mcp_server() {
 # Start components based on flags
 # -----------------------------------------------------------------------------
 echo "Starting config minio..."
-#在python代码里通过命令进行了实现，这里不需要执行了
 #mc alias set minio-cluster-1 https://${MINIO_HOST}:${MINIO_PORT} ${MINIO_USER} ${MINIO_PASSWORD} --insecure
 #mc alias set minio-cluster-2 https://${MINIO_HOST_BACKUP}:${MINIO_PORT_BACKUP} ${MINIO_USER_BACKUP} ${MINIO_PASSWORD_BACKUP} --insecure
 

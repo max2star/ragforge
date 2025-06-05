@@ -60,13 +60,13 @@ for name in ['tttttt','2.pdf','1.pdf','3.pdf','4.pdf','5.pdf','162.pdf','604.pdf
     import io
     def get_uuid():
         return uuid.uuid1().hex
-    
+
     #  base 64 编码格式
     def encode_image(image_path):
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
-    
-    
+
+
     tmp_dir = ("./tmp")
     if not os.path.exists(tmp_dir):
         os.mkdir(tmp_dir)
@@ -170,7 +170,7 @@ for name in ['tttttt','2.pdf','1.pdf','3.pdf','4.pdf','5.pdf','162.pdf','604.pdf
         # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
         mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
         pix = page.get_pixmap(matrix=mat)
-    
+
         # 转换为PIL Image对象
         img_bytes = pix.tobytes()
         img = Image.open(BytesIO(img_bytes))
