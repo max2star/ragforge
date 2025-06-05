@@ -1,5 +1,6 @@
 # base stage
-FROM ubuntu:22.04 AS base
+#FROM ubuntu:22.04 AS base
+FROM swr.cn-central-221.ovaijisuan.com/mindformers/mindformers1.2_mindspore2.3:20240722 AS base
 USER root
 SHELL ["/bin/bash", "-c"]
 
