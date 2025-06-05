@@ -244,9 +244,9 @@ services:
       retries: 3
     restart: on-failure
 
-  # Vault 服务
+  # HashiCorp Vault 服务
   vault:
-    image: vault:1.15
+    image: vault:1.15.5
     container_name: vault
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
@@ -261,7 +261,7 @@ services:
 
   #KES 服务
   kes:
-    image: minio/kes:latest
+    image: minio/kes:v0.22.0
     container_name: kes
     #depends_on:
     #  - vault
