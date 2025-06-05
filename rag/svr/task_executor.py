@@ -21,6 +21,7 @@ import sys
 import threading
 import time
 
+sys.path.append('/usr/local/lib/python3.10/dist-packages/')
 import fitz
 from PIL import Image
 
