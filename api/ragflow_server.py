@@ -235,8 +235,9 @@ if __name__ == '__main__':
 
     # init db
     # 只需要执行一次，成功后注释
-    # init_web_db()
-    # init_web_data()
+    #TODO 这个有配置文件更新等需要写入数据库，不能只执行一次;需要修改
+    init_web_db()
+    init_web_data()
 
     # init runtime config
     import argparse
