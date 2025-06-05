@@ -155,11 +155,18 @@ class RAGFlowMinio:
                                          BytesIO(binary),
                                          len(binary)
                                          )
-                return r
-            except Exception:
-                logging.exception(f"Fail to put {bucket}/{fnm}:")
+                # 验证文件是否成功上传
+                if self.obj_exist(bucket, fnm):
+                    return r
+                else:
+                    logging.error(f"File {fnm} upload verification failed in bucket {bucket}")
+                    continue
+            except Exception as e:
+                logging.exception(f"Fail to put {bucket}/{fnm}: {str(e)}")
                 self.__open__()
                 time.sleep(1)
+            return None
+        return None
 
     def list_objs(self,bucket,prefix,recursive):
         if not prefix.endswith("/"): prefix += "/"
@@ -172,18 +179,35 @@ class RAGFlowMinio:
             logging.exception(f"Fail to remove {bucket}/{fnm}:")
 
     def get(self, bucket, filename):
-        for _ in range(1):
+        max_retries = 3
+        for retry in range(max_retries):
             try:
-                r = self.conn.get_object(bucket, filename)
-                return r.read()
+                if not self.conn.bucket_exists(bucket):
+                    logging.error(f"Bucket {bucket} does not exist")
+                    return None
+                try:
+                    r = self.conn.get_object(bucket, filename)
+                    return r.read()
+                except S3Error as e:
+                    if e.code == "NoSuchKey":
+                        logging.error(f"File {filename} does not exist in bucket {bucket}")
+                    else:
+                        logging.error(f"S3Error when getting {bucket}/{filename}: {str(e)}")
+                    if retry < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    return None
             except Exception as e:
-                logging.exception(f"Fail to get {bucket}/{filename}")
+                logging.exception(f"Fail to get {bucket}/{filename}: {str(e)}")
                 import traceback
                 traceback.print_exc()
                 logging.error("Exception {} ,info is {}".format(e,traceback.format_exc()))
                 self.__open__()
-                time.sleep(1)
-        return
+                if retry < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                return None
+        return None
 
     def obj_exist(self, bucket, filename):
         try:
