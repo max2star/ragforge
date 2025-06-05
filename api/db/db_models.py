@@ -581,7 +581,7 @@ class PooledDmDatabase(Database):
                 test_conn.close()  # 立即关闭测试连接
 
                 self._initialized = True
-                logging.info("达梦数据库连接池初始化成功")
+                logging.debug("达梦数据库连接池初始化成功")
                 return True
             except Exception as e:
                 logging.error(f"达梦数据库连接失败: {e}")

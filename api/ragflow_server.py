@@ -107,7 +107,7 @@ def log_database_status():
             status = 'Closed' if DB.is_closed() else 'Connected'
         else:
             status = 'Unknown'
-        logging.info(f"Database connection status: {status}")
+        logging.debug(f"Database connection status: {status}")
     except Exception as e:
         logging.warning(f"Failed to check database status: {e}")
 
