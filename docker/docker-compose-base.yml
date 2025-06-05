@@ -246,7 +246,7 @@ services:
 
   # HashiCorp Vault 服务
   vault:
-    image: vault:1.15.5
+    image: hashicorp/vault:1.15.5
     container_name: vault
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
