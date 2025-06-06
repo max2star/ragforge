@@ -342,31 +342,32 @@ class MinerUPdf:
             # pdf_stream = BytesIO()
             # pdf_docs[0].save(pdf_stream)
             # pdf_stream.seek(0)
-            callback(prog=0.01, msg="从对象存储读取{}页文件完成 ({:.2f}s)。即将进行大模型解析".format((page_num + 1),
-                                                                                                     timer() - start))
-            key_list_to_extract = constant.keyvalues_mapping['default']
-            extractor_config = parser_config.get('extractor')
-            if extractor_config:
-                key_list_to_extract = extractor_config.get("keyvalues", key_list_to_extract)
-            keys_to_use_list = []
-            for i in key_list_to_extract:
-                keys_to_use_list.append(i['name'])
-            vision_results = self.vision_parser(tenant_id, img_results, keys_to_use_list)
-            merged_results = {}
-            logging.info("视觉解析抽取{} 结果 {}".format(keys_to_use_list, vision_results))
-            try:
-                if vision_results:
-                    for k_v_ in vision_results.values():
-                        k_v_j = json.loads(k_v_)
-                        for k_, v_ in k_v_j.items():
-                            if (not merged_results.get(k_, None)) and v_:
-                                merged_results[k_] = v_
-            except Exception as e:
-                logging.info("视觉解析错误,继续其他处理 {}".format(e))
-            logging.info("视觉解析抽取{} 结果 {},合并结果 {}".format(keys_to_use_list, vision_results, merged_results))
-            callback(prog=0.1,
-                     msg="视觉大模型分析处理完成 ({:.2f}s),处理了{}页。即将从对象存储获取文档进行MinerU处理".format(
-                         timer() - start, (page_num + 1)))
+
+            # callback(prog=0.01, msg="从对象存储读取{}页文件完成 ({:.2f}s)。即将进行大模型解析".format((page_num + 1),
+            #                                                                                          timer() - start))
+            # key_list_to_extract = constant.keyvalues_mapping['default']
+            # extractor_config = parser_config.get('extractor')
+            # if extractor_config:
+            #     key_list_to_extract = extractor_config.get("keyvalues", key_list_to_extract)
+            # keys_to_use_list = []
+            # for i in key_list_to_extract:
+            #     keys_to_use_list.append(i['name'])
+            # vision_results = self.vision_parser(tenant_id, img_results, keys_to_use_list)
+            # merged_results = {}
+            # logging.info("视觉解析抽取{} 结果 {}".format(keys_to_use_list, vision_results))
+            # try:
+            #     if vision_results:
+            #         for k_v_ in vision_results.values():
+            #             k_v_j = json.loads(k_v_)
+            #             for k_, v_ in k_v_j.items():
+            #                 if (not merged_results.get(k_, None)) and v_:
+            #                     merged_results[k_] = v_
+            # except Exception as e:
+            #     logging.info("视觉解析错误,继续其他处理 {}".format(e))
+            # logging.info("视觉解析抽取{} 结果 {},合并结果 {}".format(keys_to_use_list, vision_results, merged_results))
+            # callback(prog=0.1,
+            #          msg="视觉大模型分析处理完成 ({:.2f}s),处理了{}页。即将从对象存储获取文档进行MinerU处理".format(
+            #              timer() - start, (page_num + 1)))
 
             start = timer()
             # 从对象存储读取文件
