@@ -78,8 +78,12 @@ class PaperClassifier:
                     {"temperature": 0.3,'response_format':{'type': 'json_object'}},
                 )
             logging.info(f"PaperClassifier Result : {result}")
-            results = json.loads(result)
-            logging.info(f"dict {results}")
+            try:
+                results = json.loads(result)
+                logging.info(f"dict {results}")
+            except Exception as e:
+                logging.error(f"PaperClassifier Failed for {e}")
+                results = {}
         async with trio.open_nursery() as nursery:
                async with chat_limiter:
                     nursery.start_soon(classifier, content)
