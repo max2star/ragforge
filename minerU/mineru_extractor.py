@@ -65,11 +65,9 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
         fields = []
 
     # 获取默认元数据字段
-    keys_to_use_list = [*fields]
-    if not fields:
-        key_list_to_extract = constant.keyvalues_mapping['default']
-        for i in key_list_to_extract:
-            keys_to_use_list.append(i['name'])
+    keys_to_use_list = [i['name'] for i in constant.keyvalues_mapping['default']]
+    keys_to_use_list = [*keys_to_use_list, *fields]
+    keys_to_use_list = list(set(keys_to_use_list))
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
@@ -78,6 +76,7 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出纯文本。"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
+    logging.info(f"======prompt======{prompt}")
     vision_results = vision_parser(tenant_id, images, prompt=prompt)
     for vr_key, vr_value in vision_results.items():
         logging.info(f"vr_key ===> {vr_key} vr_value ===>\n{vr_value}")
@@ -99,7 +98,7 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
                             fields_map[key] = value_now + '\n' + current_value
                 else:
                     current_value = r_d.get(key, None)
-                    if current_value:
+                    if current_value is not None:
                         fields_map[key] = current_value
 
     return fields_map
