@@ -184,6 +184,11 @@ services:
       - MINIO_ROOT_USER=${MINIO_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
       - TZ=${TIMEZONE}
+      - MINIO_KMS_KES_ENDPOINT=https://kes:7373
+      - MINIO_KMS_KES_CERT_FILE=/etc/.minio/certs/public.crt
+      - MINIO_KMS_KES_KEY_FILE=/etc/.minio/certs/private.key
+      - MINIO_KMS_KES_CAPATH=/etc/.minio/certs/public.crt
+      - MINIO_KMS_KES_KEY_NAME=my-key-1 #minio-default-key
     volumes:
       - minio_data:/data
       - ./nginx/public.crt:/etc/.minio/certs/public.crt
@@ -211,6 +216,12 @@ services:
       - MINIO_ROOT_USER=${MINIO_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD_BACKUP}
       - TZ=${TIMEZONE}
+      - MINIO_KMS_KES_ENDPOINT=https://kes:7373
+      - MINIO_KMS_KES_CERT_FILE=/etc/.minio/certs/public.crt
+      - MINIO_KMS_KES_KEY_FILE=/etc/.minio/certs/private.key
+      - MINIO_KMS_KES_CAPATH=/etc/.minio/certs/public.crt
+      - MINIO_KMS_KES_KEY_NAME=my-key-1 #minio-default-key
+
     volumes:
       - minio_data_backup:/data
       - ./nginx/public.crt:/etc/.minio/certs/public.crt
@@ -247,33 +258,50 @@ services:
   # HashiCorp Vault 服务
   vault:
     image: hashicorp/vault:1.15.5
-    container_name: vault
+    container_name: ragflow-vault
     environment:
-      VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
-      VAULT_ADDR: "http://vault:8200"
+      #VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
+      #VAULT_TOKEN: 'hvs.O6QNQB33ksXtMxtlRKlRZL0R'
+      VAULT_API_ADDR: "https://vault:8200"
+      VAULT_ADDR: "https://vault:8201"
+      VAULT_CACERT: "/vault/config/public.crt"
     ports:
       - "8200:8200"
     volumes:
+      - ./vault.json:/vault/config/vault.json:rw
+      - ./nginx/public.crt:/vault/config/public.crt
+      - ./nginx/private.key:/vault/config/private.key
+      - ./file:/vault/file:rw
+      - ./logs:/vault/logs
       - vault_data:/vault/data
     cap_add:
       - IPC_LOCK
-    command: server -dev
+    command: server
+    restart: on-failure
+    networks:
+      ragflow:
+        ipv4_address: 172.20.0.231
 
   #KES 服务
   kes:
     image: minio/kes:v0.22.0
-    container_name: kes
-    #depends_on:
-    #  - vault
+    container_name: ragflow-kes
+    depends_on:
+      - vault
     environment:
-      KES_SERVER_TLS_KEY_FILE: /certs/kes-server.key
-      KES_SERVER_TLS_CERT_FILE: /certs/kes-server.crt
+      KES_SERVER_TLS_KEY_FILE: /certs/private.key
+      KES_SERVER_TLS_CERT_FILE: /certs/public.crt
+      SSL_CERT_FILE: /certs/public.crt
     volumes:
-      - ./certs:/certs # 挂载 TLS 证书目录
+      - ./nginx/public.crt:/certs/public.crt # 挂载 TLS 证书目录
+      - ./nginx/private.key:/certs/private.key
       - ./kes-config.yaml:/etc/kes-config.yaml:ro
-    command: server --config=/etc/kes-config.yaml
+    command: server --config=/etc/kes-config.yaml --auth=off
     ports:
       - "7373:7373"  # KES API 端口
+    networks:
+      ragflow:
+        ipv4_address: 172.20.0.230
 
 volumes:
   esdata01:
