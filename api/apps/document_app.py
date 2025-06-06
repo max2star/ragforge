@@ -651,7 +651,13 @@ def get_md(doc_id):
             res = STORAGE_IMPL.get(doc.kb_id, doc.md_location)
             response = flask.make_response(res)
         else:
-            return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
+            logging.error(f"get md for {doc_id},location {doc.md_location} not found")
+            #return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
+            return get_json_result(
+                        data=False,
+                        message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!",
+                        code=settings.RetCode.NOT_FOUND
+                    )
 
         response.headers.set('Content-Type', 'text/markdown; charset=utf-8')
         return response
@@ -697,7 +703,13 @@ def get_md_html(doc_id):
             """
             response = flask.make_response(html_out)
         else:
-            return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
+            logging.error(f"get md for {doc_id},location {doc.md_location} not found")
+            return get_json_result(
+                        data=False,
+                        message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!",
+                        code=settings.RetCode.NOT_FOUND
+                    )
+            #return get_data_error_result(message=f"Document {doc_id} MarkDown {doc.md_location} not found, maybe not parsed by MinerU!")
 
         response.headers.set('Content-Type', 'text/html; charset=utf-8')
         return response
@@ -724,7 +736,13 @@ def get_layout(doc_id):
             res = STORAGE_IMPL.get(doc.kb_id, doc.layout_location)
             response = flask.make_response(res)
         else:
-            return get_data_error_result(message=f"Document {doc_id} Layout {doc.layout_location} not found, maybe not parsed by MinerU!")
+            logging.error(f"get layout for {doc_id},layout {doc.layout_location} not found")
+            return get_json_result(
+                        data=False,
+                        message=f"Document {doc_id} Layout {doc.layout_location} not found, maybe not parsed by MinerU!",
+                        code=settings.RetCode.NOT_FOUND
+                    )
+            #return get_data_error_result(message=f"Document {doc_id} Layout {doc.layout_location} not found, maybe not parsed by MinerU!")
 
         #TODO 都是pdf？
         ext = re.search(r"\.([^.]+)$", doc.name)
