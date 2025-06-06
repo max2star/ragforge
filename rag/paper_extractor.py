@@ -88,8 +88,12 @@ class PaperExtractor:
                     {"temperature": 0.3,'response_format':{'type': 'json_object'}},
                 )
             logging.info(f"PaperExtractor Result : {result}")
-            keyvalues = json.loads(result)
-            logging.info(f"dict {keyvalues}")
+            try:
+                keyvalues = json.loads(result)
+                logging.info(f"dict {keyvalues}")
+            except Exception as e:
+                logging.error(f"PaperExtractor Failed for {e}")
+                keyvalues = {}
             for key_, value_ in keyvalues.items():
                 key__ = key_.replace(" ", "")
                 if key__ in keys_to_use_list:
