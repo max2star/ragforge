@@ -27,6 +27,7 @@ from minio.commonconfig import ENABLED
 from minio.versioningconfig import VersioningConfig
 from minio.error import S3Error
 import subprocess
+from minio.sseconfig import Rule, SSEConfig
 
 
 @singleton
@@ -146,10 +147,19 @@ class RAGFlowMinio:
                     self.conn.make_bucket(bucket)
                     config = VersioningConfig(ENABLED)
                     self.conn.set_bucket_versioning(bucket, config)
+                    encryption_rule = Rule(
+                        sse_algorithm="aws:kms",  # 指定使用 KMS 加密
+                        kms_master_key_id='my-key-1'# 指定 KMS 密钥 ID
+                    )
+                    sse_config = SSEConfig(rule=encryption_rule)
+                    self.conn.set_bucket_encryption(
+                        bucket, sse_config)
+
                     if self.remote_flag:
                         self.remote_conn.make_bucket(bucket)
                         self.remote_conn.set_bucket_versioning(bucket, config)
                         self.config_backup_policy(src_cluster_alias=None,source_bucket=bucket,dest_cluster_alias=None,dest_bucket=bucket)
+                        self.remote_conn.set_bucket_encryption(bucket, sse_config)
 
                 r = self.conn.put_object(bucket, fnm,
                                          BytesIO(binary),
