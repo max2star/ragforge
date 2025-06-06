@@ -98,7 +98,7 @@ def get_bbox_from_block(block):
         if isinstance(bbox, list) and len(bbox) == 4 and all(isinstance(n, (int, float)) for n in bbox):
             return bbox
         else:
-            print(f"[Parser-WARNING] 块的 bbox 格式无效: {bbox}，将使用默认值。")
+            print(f"[Parser-WARNING] 块{block} 的 bbox 格式无效: {bbox}，将使用默认值。")
     # 如果 block 不是字典或没有 bbox 键，或 bbox 格式无效，返回默认值
     return [0, 0, 0, 0]
 
