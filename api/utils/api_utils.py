@@ -42,6 +42,8 @@ from api import settings
 from api.constants import REQUEST_MAX_WAIT_SEC, REQUEST_WAIT_SEC
 from api.db.db_models import APIToken
 from api.utils import CustomJSONEncoder, get_uuid, json_dumps
+from api.db import constant
+
 
 requests.models.complexjson.dumps = functools.partial(json.dumps, cls=CustomJSONEncoder)
 
@@ -347,7 +349,7 @@ def get_parser_config(chunk_method, parser_config):
     if parser_config:
         return parser_config
     if not chunk_method:
-        chunk_method = "naive"
+        chunk_method = "paper"
     key_mapping = {
         "naive": {"chunk_token_num": 128, "delimiter": "\\n!?;。；！？", "html4excel": False, "layout_recognize": "DeepDOC", "raptor": {"use_raptor": False}},
         "qa": {"raptor": {"use_raptor": False}},
@@ -355,7 +357,7 @@ def get_parser_config(chunk_method, parser_config):
         "resume": None,
         "manual": {"raptor": {"use_raptor": False}},
         "table": None,
-        "paper": {"raptor": {"use_raptor": False}},
+        "paper": { "pages": [[1, 1000000]],"layout_recognize":"MinerU","extractor":{"keyvalues":constant.keyvalues_mapping['default']},"classifier":{}},
         "book": {"raptor": {"use_raptor": False}},
         "laws": {"raptor": {"use_raptor": False}},
         "presentation": {"raptor": {"use_raptor": False}},
