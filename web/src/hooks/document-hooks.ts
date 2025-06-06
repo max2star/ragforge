@@ -78,6 +78,8 @@ export const useFetchNextDocumentList = () => {
         keywords: searchString,
         page_size: pagination.pageSize,
         page: pagination.current,
+        orderby: 'run',
+        desc: false,
       });
       if (ret.data.code === 0) {
         return ret.data.data;
