@@ -166,7 +166,7 @@ def extract_directory(tenant_id, images, callback=None):
         dic_result, page_end + 1, page_start, page_end, page_numbers
     ))
 
-    callback(prog=1.0, msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
+    callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
         "main_content_begin": page_end + 1,
