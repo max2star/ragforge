@@ -74,15 +74,20 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
     prompt = (
-        f"提取图中的：{keys_to_use_list}；对于摘要，不要进行修改；"
+        f"提取图中的：{keys_to_use_list} 文本内容；对于摘要，不要修改原文；"
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出纯文本。"
     )
-    callback(msg="正在进行视觉模型调用提取要素...")
+    logging.info(msg="正在进行视觉模型调用提取要素...")
     vision_results = vision_parser(tenant_id, images, prompt=prompt)
     for vr_key, vr_value in vision_results.items():
-        logging.info(f"vr_key ===> {vr_key}\nvr_value ===>{vr_value}")
+        logging.info(f"vr_key ===> {vr_key} vr_value ===>\n{vr_value}")
         if vr_value:
-            r_d = json.loads(vr_value)
+            try:
+                r_d = json.loads(vr_value)
+            except Exception as e:
+                r_d = {}
+                logging.error(f"json loads error: {e} \n{vr_value}")
+
             for key in keys_to_use_list:
                 value_now = fields_map.get(key, None)
                 if value_now:
@@ -103,19 +108,15 @@ def extract_metadata(tenant_id, images, fields=None, callback=None):
 def extract_directory(tenant_id, images, callback=None):
     start_ts = timer()
 
-    fields = ['目录']
-    # 通过视觉模型 从目录页前的内容中 提取: fields=['目录']
-    prompt = (
-        f"现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，"
-        f"请先判断是不是文档的纯粹的目录索引，如果是，请提取图中的：{fields}，"
-        f"以输出目录中的各个章节所对应的页码;如果不是纯粹的目录索引，不要提取。"
-        f"请你以JSON格式输出纯文本，以目录为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成，"
-        f"不要输出```json```等Markdown格式代码段"
-    )
+    # 最大识别图片页数
+    MAX_IMAGES = 40
+    example = """{"目录": [{"章节": "章节1","页码": 1},{"章节": "章节2","页码": 14}]}"""
+    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该>图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
+    logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
-    vision_results = vision_parser(tenant_id, images, prompt=prompt)
-    result = [v for k,v in vision_results]
-    logging.info(f"pdf共{len(images)}页 解析结果： {result}")
+    vision_results = vision_parser(tenant_id, images[:MAX_IMAGES], prompt=prompt)
+    result = [v for k,v in vision_results.items()]
+    logging.info(f"pdf共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
     current_page_index = 0
     page_end = 0
@@ -124,7 +125,11 @@ def extract_directory(tenant_id, images, callback=None):
     index_id = 0
     first_flag = False
     for r in result:
-        r_d = json.loads(r)
+        try:
+            r_d = json.loads(r)
+        except Exception as e:
+            r_d = {}
+            logging.error(f"json loads error: {e} \n{r}")
         index_id = index_id + 1
         if '目录' in r_d:
             logging.info(r_d['目录'])
@@ -161,7 +166,7 @@ def extract_directory(tenant_id, images, callback=None):
         dic_result, page_end + 1, page_start, page_end, page_numbers
     ))
 
-    # callback(prog=1.0, msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
+    callback(prog=1.0, msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
         "main_content_begin": page_end + 1,
