@@ -667,7 +667,7 @@ async def do_handle_task(task):
 
     file_type = task.get("type", "pdf")
     # 用户设置 parser_config.pdf_article_type ['书籍', '论文集', '论文', '期刊', '其他']:
-    pdf_article_type = task_parser_config.get('pdf_article_type', '论文')
+    pdf_article_type = task_parser_config.get('pdf_article_type', '书籍')
     if task["doc_id"] == "a65d9ed4427711f0a0702e965859abd0":
         pdf_article_type = '书籍'
         logging.info("================= 正在测试书籍：核能开发与应用.pdf ================")
@@ -696,8 +696,13 @@ async def do_handle_task(task):
             raise LookupError(f"Can't find this document {task_doc_id}!")
 
         pdf_doc = fitz.open('pdf', pdf_bytes)
+
+        # 最大识别图片页数
+        MAX_IMAGES = 40
         img_results = []
         for page_num in range(len(pdf_doc)):
+            if page_num >= MAX_IMAGES:
+                break
             page = pdf_doc.load_page(page_num)
             # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
             mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
@@ -707,7 +712,7 @@ async def do_handle_task(task):
             img_bytes = pix.tobytes()
             img = Image.open(BytesIO(img_bytes))
             img_results.append(img)
-        logging.info(f"========== pdf文件字节流生成图片列表： {len(img_results)} 张 ==========")
+        logging.info(f"========== pdf文件共{len(pdf_doc)}页；生成图片字节流列表：{len(img_results)} 张 ==========")
 
         # 定义元数据字段
         # fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
@@ -719,6 +724,7 @@ async def do_handle_task(task):
             prompt = extractor_config.get("prompt", None)
             keys = extractor_config.get("keyvalues", None)
             fields = [k["name"] for  k in keys]
+        logging.info(f"========== fields：\n{fields}")
         if pdf_article_type in ["论文集", "书籍"]:
             """
             通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
