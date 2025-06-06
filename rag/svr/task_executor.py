@@ -708,8 +708,15 @@ async def do_handle_task(task):
             img = Image.open(BytesIO(img_bytes))
             img_results.append(img)
         logging.info(f"========== pdf文件字节流生成图片列表： {len(img_results)} 张 ==========")
-        fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
+
+        # 定义元数据字段
         # fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
+        fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
+        extractor_config = task["parser_config"].get('extractor')
+        prompt = None
+        if extractor_config:
+            prompt = extractor_config.get("prompt", None)
+            fields = extractor_config.get("keyvalues", None)
         if pdf_article_type in ["论文集", "书籍"]:
             """
             通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
@@ -817,11 +824,18 @@ async def do_handle_task(task):
             dict_result['sub_paper'] = sub_paper
             # 对应分块
             if page_c_[0] >= sub_paper["main_content_begin"]:
-                pdf_p_begin, pdf_p_end = find_interval(sub_paper["fields_map"].keys(), page_c_[0])
-                sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
-                c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
-                for key, value in sub_paper_dict_result["fields_map_"].items():
-                    c_[key] = value
+                try:
+                    pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
+                    pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
+                    sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
+                    c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
+                    for key, value in sub_paper_dict_result["fields_map_"].items():
+                        c_[key] = value
+                except Exception as e:
+                    logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
+                    c_['meta_fields'] = dict_result
+                    for key, value in dict_result.items():
+                        c_[key] = value
             else:
                 c_['meta_fields'] = dict_result
                 for key, value in dict_result.items():
