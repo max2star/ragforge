@@ -147,12 +147,14 @@ USER root
 
 WORKDIR /ragflow
 
+COPY deps deps
 # install dependencies from uv.lock file
 COPY pyproject.toml uv.lock ./
 
 # https://github.com/astral-sh/uv/issues/10462
 # uv records index url into uv.lock but doesn't failover among multiple indexes
 RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
+    arch="$(uname -m)"; \
     if [ "$NEED_MIRROR" == "1" ]; then \
         sed -i 's|pypi.org|mirrors.aliyun.com/pypi|g' uv.lock; \
     else \
@@ -160,8 +162,22 @@ RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
     fi; \
     if [ "$LIGHTEN" == "1" ]; then \
         uv sync --python 3.10 --frozen; \
+        if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+            echo "Install aclruntime";\
+            cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+            uv pip install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
+        else \
+            echo "Not need install aclruntime";\
+        fi; \
     else \
         uv sync --python 3.10 --frozen --all-extras; \
+        if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+            echo "Install aclruntime";\
+            cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+            uv pip install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
+        else \
+            echo "Not need install aclruntime";\
+        fi; \
     fi
 
 COPY web web
@@ -307,6 +323,17 @@ RUN arch="$(uname -m)" \
         sed -i 's|cpu|cuda|g' /root/magic-pdf.json; \
     fi
 
+#DeepDoc相关适配
+RUN arch="$(uname -m)" \
+ && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
+        echo "Arm platform, copy models and acl infer codes"; \
+        cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+        pip3 install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
+        cp -r /ragflow/deps/arm/npu/deepdoc /ragflow/. ;\
+        cp -r /ragflow/deps/arm/npu/rag /ragflow/. ;\
+    else \
+        echo "Not arm, not need to copy models and acl infer codes"; \
+    fi
 
 # 达梦数据库 环境
 # 安装达梦数据库ODBC驱动依赖
@@ -392,8 +419,6 @@ RUN mkdir -p /usr/local/lib/python3.10/dist-packages/opensearchpy && \
 RUN mkdir -p /ragflow/opensearchpy && \
     echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
     echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
-
-#增加npu上的deepdoc替换
 
 
 #ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH
