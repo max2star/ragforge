@@ -71,4 +71,5 @@ class VisionFigureParser:
                     response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
                 response = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response)  # 移除控制字符
                 texts[idx] = response
+                logging.info("视觉模型图像 idx: {} 返回过滤结果: {}".format(figure_num, response[:50]))
         return texts 

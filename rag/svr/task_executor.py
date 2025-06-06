@@ -666,8 +666,14 @@ async def do_handle_task(task):
     key_now = dict_result.keys()
 
     file_type = task.get("type", "pdf")
-    # 用户设置 parser_config ['论文集', '论文', '书籍、期刊', '其他']:
+    # 用户设置 parser_config.pdf_article_type ['书籍', '论文集', '论文', '期刊', '其他']:
     pdf_article_type = task_parser_config.get('pdf_article_type', '论文')
+    if task["doc_id"] == "a65d9ed4427711f0a0702e965859abd0":
+        pdf_article_type = '书籍'
+        logging.info("================= 正在测试书籍：核能开发与应用.pdf ================")
+    if task["doc_id"] == "b467a5d6427911f093e42e965859abd0":
+        pdf_article_type = '论文集'
+        logging.info("================= 正在测试论文集：风险指引的工程分析技术.pdf ================")
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -701,9 +707,9 @@ async def do_handle_task(task):
             img_bytes = pix.tobytes()
             img = Image.open(BytesIO(img_bytes))
             img_results.append(img)
-
-        # fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
-        fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
+        logging.info(f"========== pdf文件字节流生成图片列表： {len(img_results)} 张 ==========")
+        fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
+        # fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
         if pdf_article_type in ["论文集", "书籍"]:
             """
             通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
@@ -715,7 +721,7 @@ async def do_handle_task(task):
                 callback=progress_callback,
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             page_numbers = result["page_numbers_before_directory"]
-
+            logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
             # 提取元数据
             fields_map = extract_metadata(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
@@ -723,7 +729,7 @@ async def do_handle_task(task):
                 fields=fields,  #  可指定需要提取的元数据字段的列表(有默认值)
                 callback=progress_callback,
             )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
-
+            logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             if pdf_article_type == "论文集":
                 # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
                 main_content_begin = result['main_content_begin']
@@ -733,7 +739,8 @@ async def do_handle_task(task):
                     res = result['dic_result'][i]
                     title_ = res['章节']
                     page_ = res['页码']
-                    pdf_page_ = main_content_begin - 1 + page_
+                    pdf_page_ = main_content_begin - 2 + page_
+                    logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
                     picture_ = img_results[pdf_page_]
                     fields_map_ = extract_metadata(
                         task_tenant_id, images=[picture_], fields=fields, callback=progress_callback,
@@ -742,6 +749,7 @@ async def do_handle_task(task):
                         "title_": title_, "page_": page_,
                         "fields_map_": fields_map_,
                     }
+                logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
         else:
             """
             单篇论文、期刊
