@@ -10,28 +10,28 @@ admin:
   # that can perform any API operation.
   # The admin account can be disabled by setting a value that
   # cannot match any public key - for example, "foobar" or "disabled".
-  identity: 904212668fc9fd0222de3b606fe5411184c068c993072db5fbc6a88ff04f3779 
+  identity: 46c9f700ffbead9c13a69b735e3969669ace8022cf2d073bbdac23a824443583
 
 # The TLS configuration for the KES server. A KES server
 # accepts HTTP only over TLS (HTTPS). Therefore, a TLS
 # private key and public certificate must be specified,
 # either here as part of the config file or via CLI arguments.
 tls:
-  key:      /certs/kes-server.key   # Path to the TLS private key
-  cert:     /certs/kes-server.crt  # Path to the TLS certificate
+  key:      /certs/private.key # Path to the TLS private key
+  cert:     /certs/public.crt # Path to the TLS certificate
   password: ""             # An optional password to decrypt the TLS private key
 
   # Specify how/whether the KES server verifies certificates presented
   # by clients. Valid values are "on" and "off". Defaults to off, which
   # is recommended for most use cases.
-  auth:     ""
+  auth:     "off"
 
   # An optional path to a file or directory containing X.509 certificate(s).
   # If set, the certificate(s) get added to the list of CA certificates for
   # verifying the mTLS certificates sent by the KES clients.
   #
   # If empty, the system root CAs will be used.
-  ca:       ""
+  ca:       "/certs/public.crt"
 
   # The TLS proxy configuration. A TLS proxy, like nginx, sits in
   # between a KES client and the KES server and usually acts as a
@@ -130,7 +130,7 @@ policy:
     - /v1/key/generate/my-app*
     - /v1/key/decrypt/my-app*
     identities:
-    - 104212668fc9fd0222de3b606fe5411184c068c993072db5fbc6a88ff04f377
+    - 16c9f700ffbead9c13a69b735e3969669ace8022cf2d073bbdac23a824443583
 cache:
   # Cache expiry specifies when cache entries expire.
   expiry:
@@ -218,6 +218,12 @@ keystore:
   # and development. It should not be used for production.
   #fs:
   #  path: ./keys # Path to directory. Keys will be stored as files.
+
+  # Hashicorp Vault configuration. The KES server will store/fetch
+  # secret keys at/from Vault's key-value backend.
+  #
+  # For more information, see:
+  # https://www.vaultproject.io/api/secret/kv/kv-v1.html
   vault:
     endpoint: "https://vault:8200"  # The Vault endpoint - for example, https://127.0.0.1:8200
     engine: "kv"    # The path of the K/V engine - for example, secrets. If empty, defaults to: kv. (Vault default)
@@ -226,42 +232,12 @@ keystore:
     approle:    # AppRole credentials. See: https://www.vaultproject.io/docs/auth/approle.html
       namespace: "" # Optional Vault namespace used only for authentication. For the Vault root namespace, use "/".
       engine: ""    # The path to the AppRole engine, for example: authenticate. If empty, defaults to: approle. (Vault default)
-      id: ""        # Your AppRole Role ID
-      secret: ""    # Your AppRole Secret ID
+      id: "4de916de-8a72-aebc-edfb-a9eef028cb8c"        # Your AppRole Role ID
+      secret: "b9b9054e-c49e-046f-9f5d-6871c698e657"    # Your AppRole Secret ID
     tls:        # The Vault client TLS configuration for mTLS authentication and certificate verification
-      key: ""     # Path to the TLS client private key for mTLS authentication to Vault
-      cert: ""    # Path to the TLS client certificate for mTLS authentication to Vault
-      ca: ""      # Path to one or more PEM root CA certificates
+      key: "/certs/private.key"     # Path to the TLS client private key for mTLS authentication to Vault
+      cert: "/certs/public.crt"    # Path to the TLS client certificate for mTLS authentication to Vault
+      ca: "/certs/public.crt"      # Path to one or more PEM root CA certificates
+      skip_verify: true
     status:     # Vault status configuration. The server will periodically reach out to Vault to check its status.
       ping: 10s   # Duration until the server checks Vault's status again.
-
-  # Hashicorp Vault configuration. The KES server will store/fetch
-  # secret keys at/from Vault's key-value backend.
-  #
-  # For more information, see:
-  # https://www.vaultproject.io/api/secret/kv/kv-v1.html
-  #vault:
-  #  endpoint: ""  # The Vault endpoint - for example, https://127.0.0.1:8200
-  #  engine: ""    # The path of the K/V engine - for example, secrets. If empty, defaults to: kv. (Vault default)
-  #  version: ""   # The K/V engine version - either "v1" or "v2". The "v1" engine is recommended.
-  #  namespace: "" # An optional Vault namespace. See: https://www.vaultproject.io/docs/enterprise/namespaces/index.html
-  #  prefix: ""    # An optional K/V prefix. The server will store keys under this prefix.
-  #  transit:      # Optionally encrypt keys stored on the K/V engine with a Vault-managed key.
-  #    engine: ""  # The path of the transit engine - for example, "my-transit". If empty, defaults to: transit (Vault default)
-  #    key: ""     # The key name that should be used to encrypt entries stored on the K/V engine.
-  #  approle:    # AppRole credentials. See: https://www.vaultproject.io/docs/auth/approle.html
-  #    namespace: "" # Optional Vault namespace used only for authentication. For the Vault root namespace, use "/".
-  #    engine: ""    # The path to the AppRole engine, for example: authenticate. If empty, defaults to: approle. (Vault default)
-  #    id: ""        # Your AppRole Role ID
-  #    secret: ""    # Your AppRole Secret ID
-  #  kubernetes: # Kubernetes credentials. See: https://www.vaultproject.io/docs/auth/kubernetes
-  #    namespace: "" # Optional Vault namespace used only for authentication. For the Vault root namespace, use "/".
-  #    engine: ""    # The path of the Kubernetes engine for example, authenticate. If empty, defaults to: kubernetes. (Vault default)
-  #    role: ""      # The Kubernetes JWT role
-  #    jwt:  ""      # Either the JWT provided by K8S or a path to a K8S secret containing the JWT.
-  #  tls:        # The Vault client TLS configuration for mTLS authentication and certificate verification
-  #    key: ""     # Path to the TLS client private key for mTLS authentication to Vault
-  #    cert: ""    # Path to the TLS client certificate for mTLS authentication to Vault
-  #    ca: ""      # Path to one or more PEM root CA certificates
-  #  status:     # Vault status configuration. The server will periodically reach out to Vault to check its status.
-  #    ping: 10s   # Duration until the server checks Vault's status again.
