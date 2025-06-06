@@ -714,9 +714,11 @@ async def do_handle_task(task):
         fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
         extractor_config = task["parser_config"].get('extractor')
         prompt = None
+        keys = None
         if extractor_config:
             prompt = extractor_config.get("prompt", None)
-            fields = extractor_config.get("keyvalues", None)
+            keys = extractor_config.get("keyvalues", None)
+            fields = [k["name"] for  k in keys]
         if pdf_article_type in ["论文集", "书籍"]:
             """
             通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
