@@ -254,7 +254,7 @@ class ESConnection(DocStoreConnection):
         if limit > 0:
             s = s[offset:offset + limit]
         q = s.to_dict()
-        logger.info(f"=======>ESConnection.search {str(indexNames)} query: " + json.dumps(q))
+        logger.info(f"=======>ESConnection.search {str(indexNames)} query: " + json.dumps(q,ensure_ascii=False))
 
         for i in range(ATTEMPT_TIME):
             try:
