@@ -63,52 +63,71 @@ export const useFetchNextDocumentList = () => {
   const { searchString, handleInputChange } = useHandleSearchChange();
   const { pagination, setPagination } = useGetPaginationWithRouter();
   const { id } = useParams();
+ const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
 
-  const { data, isFetching: loading } = useQuery<{
-    docs: IDocumentInfo[];
-    total: number;
-  }>({
-    queryKey: ['fetchDocumentList', searchString, pagination],
-    initialData: { docs: [], total: 0 },
-    refetchInterval: 15000,
-    enabled: !!knowledgeId || !!id,
-    queryFn: async () => {
-      const ret = await kbService.get_document_list({
-        kb_id: knowledgeId || id,
-        keywords: searchString,
-        page_size: pagination.pageSize,
-        page: pagination.current,
-        //orderby: 'run',
-        //desc: false,
-      });
-      if (ret.data.code === 0) {
-        return ret.data.data;
-      }
+ const { data, isFetching: loading } = useQuery<{
+   docs: IDocumentInfo[];
+   total: number;
+ }>({
+   queryKey: ['fetchDocumentList', searchString, pagination, sortOrder],
+   initialData: { docs: [], total: 0 },
+   refetchInterval: 15000,
+   enabled: !!knowledgeId || !!id,
+   queryFn: async () => {
+     const params: any = {
+       kb_id: knowledgeId || id,
+       keywords: searchString,
+       page_size: pagination.pageSize,
+       page: pagination.current,
+     };
 
-      return {
-        docs: [],
-        total: 0,
-      };
-    },
-  });
+     if (sortOrder) {
+       params.orderby = 'run';
+       params.desc = sortOrder === 'desc' ? true : false;
+     }
+     console.log('PARAMS >>>', params.orderby, params.desc);
 
-  console.log('DATA >>>', data.docs);
-  const onInputChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
-    (e) => {
-      setPagination({ page: 1 });
-      handleInputChange(e);
-    },
-    [handleInputChange, setPagination],
-  );
+     const ret = await kbService.get_document_list(params);
+     if (ret.data.code === 0) {
+       return ret.data.data;
+     }
 
-  return {
-    loading,
-    searchString,
-    documents: data.docs,
-    pagination: { ...pagination, total: data?.total },
-    handleInputChange: onInputChange,
-    setPagination,
-  };
+     return {
+       docs: [],
+       total: 0,
+     };
+   },
+ });
+
+ console.log('DATA >>>', data.docs);
+ const onInputChange: React.ChangeEventHandler<HTMLInputElement> = useCallback(
+   (e) => {
+     setPagination({ page: 1 });
+     handleInputChange(e);
+   },
+   [handleInputChange, setPagination],
+ );
+
+ const toggleSortOrder = useCallback(() => {
+   setSortOrder((prev) => {
+     if (prev === null) return 'asc';
+     if (prev === 'asc') return 'desc';
+     return null;
+   });
+   // 重置页码
+   setPagination({ page: 1 });
+ }, [setPagination]);
+
+ return {
+   loading,
+   searchString,
+   documents: data.docs,
+   pagination: { ...pagination, total: data?.total },
+   handleInputChange: onInputChange,
+   setPagination,
+   sortOrder,
+   toggleSortOrder,
+ };
 };
 
 export const useSetNextDocumentStatus = () => {
