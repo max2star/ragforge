@@ -702,7 +702,7 @@ async def do_handle_task(task):
         pdf_doc = fitz.open('pdf', pdf_bytes)
 
         # 最大识别图片页数
-        MAX_IMAGES = 40
+        MAX_IMAGES = 40 if len(pdf_doc) > 40 else len(pdf_doc)
         img_results = []
         for page_num in range(len(pdf_doc)):
             if page_num >= MAX_IMAGES:
