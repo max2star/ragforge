@@ -907,12 +907,12 @@ async def handle_task():
         await trio.sleep(5)
         return
     try:
-        logging.info(f"handle_task begin for task {json.dumps(task)}")
+        logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
         CURRENT_TASKS[task["id"]] = copy.deepcopy(task)
         await do_handle_task(task)
         DONE_TASKS += 1
         CURRENT_TASKS.pop(task["id"], None)
-        logging.info(f"handle_task done for task {json.dumps(task)}")
+        logging.info(f"handle_task done for task {json.dumps(task,ensure_ascii=False)}")
     except Exception as e:
         FAILED_TASKS += 1
         CURRENT_TASKS.pop(task["id"], None)
@@ -924,7 +924,7 @@ async def handle_task():
             set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
         except Exception:
             pass
-        logging.exception(f"handle_task got exception for task {json.dumps(task)}")
+        logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
     redis_msg.ack()
 
 
