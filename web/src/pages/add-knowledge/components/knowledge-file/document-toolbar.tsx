@@ -21,6 +21,11 @@ import { Button, Dropdown, Flex, Input, MenuProps, Space } from 'antd';
 import { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { RunningStatus } from './constant';
+import {
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  SwapOutlined,
+} from '@ant-design/icons';
 
 import styles from './index.less';
 
@@ -32,6 +37,8 @@ interface IProps {
   searchString: string;
   handleInputChange: React.ChangeEventHandler<HTMLInputElement>;
   documents: IDocumentInfo[];
+  sortOrder?: 'asc' | 'desc' | '';
+  toggleSortOrder?: () => void;
 }
 
 const DocumentToolbar = ({
@@ -41,6 +48,8 @@ const DocumentToolbar = ({
   showDocumentUploadModal,
   handleInputChange,
   documents,
+  sortOrder = '',
+  toggleSortOrder = () => {},
 }: IProps) => {
   const { t } = useTranslate('knowledgeDetails');
   const { removeDocument } = useRemoveNextDocument();
@@ -202,21 +211,42 @@ const DocumentToolbar = ({
     handleEnableClick,
   ]);
 
+  const sortIcon =
+    sortOrder === 'asc' ? (
+      <SortAscendingOutlined />
+    ) : sortOrder === 'desc' ? (
+      <SortDescendingOutlined />
+    ) : (
+      <SwapOutlined />
+    );
+
   return (
     <div className={styles.filter}>
-      <Dropdown
-        menu={{ items }}
-        placement="bottom"
-        arrow={false}
-        disabled={disabled}
-      >
-        <Button>
-          <Space>
-            <b> {t('bulk')}</b>
-            <DownOutlined />
-          </Space>
+      <Space>
+        <Dropdown
+          menu={{ items }}
+          placement="bottom"
+          arrow={false}
+          disabled={disabled}
+        >
+          <Button>
+            <Space>
+              <b> {t('bulk')}</b>
+              <DownOutlined />
+            </Space>
+          </Button>
+        </Dropdown>
+        <Button onClick={toggleSortOrder} title="切换排序">
+          {sortIcon}
+          <span style={{ marginLeft: 6 }}>
+            {sortOrder === 'asc'
+              ? '升序'
+              : sortOrder === 'desc'
+                ? '降序'
+                : '默认排序'}
+          </span>
         </Button>
-      </Dropdown>
+      </Space>
       <Space>
         <Input
           placeholder={t('searchFiles')}

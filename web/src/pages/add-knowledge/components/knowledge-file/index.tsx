@@ -40,8 +40,14 @@ const { Text } = Typography;
 const token = getAuthorization();
 
 const KnowledgeFile = () => {
-  const { searchString, documents, pagination, handleInputChange } =
-    useFetchNextDocumentList();
+  const {
+    searchString,
+    documents,
+    pagination,
+    handleInputChange,
+    toggleSortOrder,
+    sortOrder,
+  } = useFetchNextDocumentList();
   const parserList = useSelectParserList();
   const { setDocumentStatus } = useSetNextDocumentStatus();
   const { toChunk } = useNavigateToOtherPage();
@@ -203,6 +209,8 @@ const KnowledgeFile = () => {
         searchString={searchString}
         handleInputChange={handleInputChange}
         documents={documents}
+        toggleSortOrder={toggleSortOrder}
+        sortOrder={sortOrder}
       ></DocumentToolbar>
       <Table
         rowKey="id"
