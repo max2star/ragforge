@@ -532,7 +532,11 @@ async def run_classify(row, chat_mdl, content, callback=None):
         chat_mdl,
         prompt
     )
-    result = await classifier(content,callback)
+    try:
+        result = await classifier(content,callback)
+    except Exception as e:
+        result = {}
+        logging.error(f"PaperClassifier Failed for {e}")
     logging.info(f"run_classify result {result}")
     return result
 
@@ -737,6 +741,8 @@ async def do_handle_task(task):
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             page_numbers = result["page_numbers_before_directory"]
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
+            if not page_numbers:
+                page_numbers = range(MAX_IMAGES)
             # 提取元数据
             fields_map = extract_metadata(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
@@ -834,6 +840,8 @@ async def do_handle_task(task):
             if page_c_[0] >= sub_paper["main_content_begin"]:
                 try:
                     pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
+                    # 确保子论文与相应的chunk范围能一一对应
+                    pages.sort()
                     pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
                     sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
                     c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
