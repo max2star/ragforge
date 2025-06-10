@@ -1017,6 +1017,9 @@ def get_task_status(doc_id):
 @login_required
 @validate_request("doc_id", "filter_fields")
 def set_filter_fields():
+    """
+    知悉范围、级别、期限等字段的过滤
+    """
     req = request.json
     #只有创建者可以设置过滤权限
     if not DocumentService.accessible4deletion(req["doc_id"], current_user.id):
