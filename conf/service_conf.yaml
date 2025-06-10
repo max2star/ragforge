@@ -22,6 +22,7 @@ minio:
   user: 'rag_flow'
   password: 'infini_rag_flow'
   host: 'localhost:9000'
+  bucket_encryption: false
 es:
   hosts: 'https://localhost:1200'
   username: 'elastic'
@@ -52,7 +53,7 @@ user_default_llm:
     embedding_model: 'http://118.193.126.254:8080/'
     rerank_model: 'http://118.193.126.254:1111/rerank'
     asr_model: 'http://118.193.126.254:1111/v1'
-    image2text_model: 'http://118.193.126.254:1111/v1'
+    image2text_model: 'http://118.193.126.254:1135/v1'
 
 minio_backup:
   user: '${MINIO_USER_:-rag_flow}'
