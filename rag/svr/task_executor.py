@@ -705,7 +705,7 @@ async def do_handle_task(task):
         MAX_IMAGES = 40 if len(pdf_doc) > 40 else len(pdf_doc)
         img_results = []
         for page_num in range(len(pdf_doc)):
-            if page_num >= MAX_IMAGES:
+            if page_num >= MAX_IMAGES and (pdf_article_type not in ["论文集"]):
                 break
             try:
                 page = pdf_doc.load_page(page_num)
