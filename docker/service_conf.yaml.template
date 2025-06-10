@@ -22,6 +22,7 @@ minio:
   user: '${MINIO_USER:-rag_flow}'
   password: '${MINIO_PASSWORD:-infini_rag_flow}'
   host: '${MINIO_HOST:-minio}:9000'
+  bucket_encryption: false
 es:
   hosts: 'https://${ES_HOST:-es01}:9200'
   username: '${ES_USER:-elastic}'
@@ -51,7 +52,7 @@ user_default_llm:
     embedding_model: 'http://118.193.126.254:8080/'
     rerank_model: 'http://118.193.126.254:1111/rerank'
     asr_model: 'http://118.193.126.254:1111/v1'
-    image2text_model: 'http://118.193.126.254:1111/v1'
+    image2text_model: 'http://118.193.126.254:1135/v1'
 
 minio_backup:
   user: '${MINIO_USER_:-rag_flow}'
