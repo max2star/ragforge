@@ -380,27 +380,7 @@
             "status": "1",
             "llm": [
                 {
-                    "llm_name": "deepseek-r1-70B-Q8",
-                    "tags": "LLM,CHAT,",
-                    "max_tokens": 128000,
-                    "model_type": "chat",
-                    "is_tools": true
-
-                },
-                {
-                    "llm_name": "bge-m3",
-                    "tags": "TEXT EMBEDDING",
-                    "max_tokens": 8192,
-                    "model_type": "embedding"
-                },
-                {
-                    "llm_name": "jina-reranker-v2-base-multilingual",
-                    "tags": "RE-RANK,8k",
-                    "max_tokens": 8196,
-                    "model_type": "rerank"
-                },
-                {
-                    "llm_name": "qwen2-vl",
+                    "llm_name": "qwen2.5-32b-instruct",
                     "tags": "LLM,IMAGE2TEXT,32k",
                     "max_tokens": 32768,
                     "model_type": "image2text"
@@ -411,7 +391,6 @@
                     "max_tokens": 128000,
                     "model_type": "chat",
                     "is_tools": true
-
                 },
                 {
                     "llm_name": "embed",
