@@ -289,7 +289,7 @@ def not_found(error):
 @app.before_request
 def log_request_info():
     """记录每个请求的详细信息"""
-    logging.info(f"Request: {request.method} {request.url}")
+    logging.debug(f"Request: {request.method} {request.url}")
     if request.is_json and request.get_json():
         logging.debug(f"Request JSON: {request.get_json()}")
 
