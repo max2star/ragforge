@@ -707,21 +707,24 @@ async def do_handle_task(task):
         for page_num in range(len(pdf_doc)):
             if page_num >= MAX_IMAGES:
                 break
-            page = pdf_doc.load_page(page_num)
-            # 获取当前页面的宽度和高度（单位：点/points）
-            width = page.rect.width  # 页面宽度
-            height = page.rect.height  # 页面高度
-            # 将PDF页面转换为高质量图像（根据视觉模型token长度限制调整dpi参数）
-            max_token = 2559
-            factor = math.sqrt((width*height)/(max_token*12*12))
-            logging.info(f"page {page_num} width {width} height {height} factor {factor}")
-            mat = fitz.Matrix(factor, factor)  # 缩放因子，调整分辨率
-            pix = page.get_pixmap(matrix=mat)
+            try:
+                page = pdf_doc.load_page(page_num)
+                # 获取当前页面的宽度和高度（单位：点/points）
+                width = page.rect.width  # 页面宽度
+                height = page.rect.height  # 页面高度
+                # 将PDF页面转换为高质量图像（根据视觉模型token长度限制调整dpi参数）
+                max_token = 2559
+                factor = math.sqrt((width*height)/(max_token*12*12))
+                logging.info(f"page {page_num} width {width} height {height} factor {factor}")
+                mat = fitz.Matrix(factor, factor)  # 缩放因子，调整分辨率
+                pix = page.get_pixmap(matrix=mat)
 
-            # 转换为PIL Image对象
-            img_bytes = pix.tobytes()
-            img = Image.open(BytesIO(img_bytes))
-            img_results.append(img)
+                # 转换为PIL Image对象
+                img_bytes = pix.tobytes()
+                img = Image.open(BytesIO(img_bytes))
+                img_results.append(img)
+            except Exception as e:
+                logging.error(f"document: {task_doc_id} page_num: {page_num} Generate image byte stream error: {e}!")
         logging.info(f"========== pdf文件共{len(pdf_doc)}页；生成图片字节流列表：{len(img_results)} 张 ==========")
 
         # 定义元数据字段
