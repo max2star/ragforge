@@ -20,7 +20,7 @@ import random
 import sys
 import threading
 import time
-
+import math
 sys.path.append('/usr/local/lib/python3.10/dist-packages/')
 import fitz
 from PIL import Image
@@ -708,8 +708,14 @@ async def do_handle_task(task):
             if page_num >= MAX_IMAGES:
                 break
             page = pdf_doc.load_page(page_num)
-            # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
-            mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
+            # 获取当前页面的宽度和高度（单位：点/points）
+            width = page.rect.width  # 页面宽度
+            height = page.rect.height  # 页面高度
+            # 将PDF页面转换为高质量图像（根据视觉模型token长度限制调整dpi参数）
+            max_token = 2559
+            factor = math.sqrt((width*height)/(max_token*12*12))
+            logging.info(f"page {page_num} width {width} height {height} factor {factor}")
+            mat = fitz.Matrix(factor, factor)  # 缩放因子，调整分辨率
             pix = page.get_pixmap(matrix=mat)
 
             # 转换为PIL Image对象
