@@ -380,7 +380,7 @@
             "status": "1",
             "llm": [
                 {
-                    "llm_name": "qwen2.5-32b-instruct",
+                    "llm_name": "qwen2.5-vl-32b-instruct",
                     "tags": "LLM,IMAGE2TEXT,32k",
                     "max_tokens": 32768,
                     "model_type": "image2text"
