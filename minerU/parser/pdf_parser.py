@@ -322,22 +322,22 @@ class MinerUPdf:
 
             # 打开PDF流
             logging.info("正在读取prefix {} file name {}".format(prefix, pdf_file_name))
-            pdf_bytes_new = reader.read(pdf_file_name)
-            pdf_doc = fitz.open('pdf', pdf_bytes_new)
-            img_results = []
+            # pdf_bytes_new = reader.read(pdf_file_name)
+            # pdf_doc = fitz.open('pdf', pdf_bytes_new)
+            # img_results = []
 
-            for page_num in range(len(pdf_doc)):
-                if page_num > 4:
-                    break
-                page = pdf_doc.load_page(page_num)
-                # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
-                mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
-                pix = page.get_pixmap(matrix=mat)
-
-                # 转换为PIL Image对象
-                img_bytes = pix.tobytes()
-                img = Image.open(BytesIO(img_bytes))
-                img_results.append(img)
+            # for page_num in range(len(pdf_doc)):
+            #     if page_num > 4:
+            #         break
+            #     page = pdf_doc.load_page(page_num)
+            #     # 将PDF页面转换为高质量图像（调整dpi参数根据需要）
+            #     mat = fitz.Matrix(2.0, 2.0)  # 缩放因子，提高分辨率
+            #     pix = page.get_pixmap(matrix=mat)
+            #
+            #     # 转换为PIL Image对象
+            #     img_bytes = pix.tobytes()
+            #     img = Image.open(BytesIO(img_bytes))
+            #     img_results.append(img)
             ## Save the PDF
             # pdf_stream = BytesIO()
             # pdf_docs[0].save(pdf_stream)
