@@ -403,6 +403,12 @@
                     "tags": "RE-RANK,8k",
                     "max_tokens": 8196,
                     "model_type": "rerank"
+                },
+                {
+                    "llm_name": "asr",
+                    "tags": "SPEECH2TEXT,",
+                    "max_tokens": "",
+                    "model_type": "asr"
                 }
             ]
         },
