@@ -343,13 +343,14 @@ def list_app():
     try:
         objs = TenantLLMService.query(tenant_id=current_user.id)
         facts = set([o.to_dict()["llm_factory"] for o in objs if o.api_key])
-        llms = LLMService.get_all()
-        llms = [m.to_dict()
-                for m in llms if m.status == StatusEnum.VALID.value and m.fid not in weighted]
-        for m in llms:
-            m["available"] = m["fid"] in facts or m["llm_name"].lower() == "flag-embedding" or m["fid"] in self_deployed
-
-        llm_set = set([m["llm_name"] + "@" + m["fid"] for m in llms])
+        llms = []
+        #llms = LLMService.get_all()
+        #llms = [m.to_dict()
+        #        for m in llms if m.status == StatusEnum.VALID.value and m.fid not in weighted]
+        #for m in llms:
+        #    m["available"] = m["fid"] in facts#or m["llm_name"].lower() == "flag-embedding" or m["fid"] in self_deployed
+        #llm_set = set([m["llm_name"] + "@" + m["fid"] for m in llms])
+        llm_set = set([])
         for o in objs:
             if o.llm_name + "@" + o.llm_factory in llm_set:
                 continue
