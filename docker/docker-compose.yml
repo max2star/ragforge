@@ -120,7 +120,7 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=5
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=2 --host-id=executor-1"
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
     networks:
       - ragflow
     restart: on-failure
@@ -172,7 +172,7 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=6
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=2 --host-id=executor-2"
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
     networks:
       - ragflow
     restart: on-failure
