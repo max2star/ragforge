@@ -638,6 +638,7 @@ async def do_handle_task(task):
         raise LookupError(f"Can't find this document {task_doc_id}!")
 
     #获取过滤字段
+    #知悉范围、级别、期限
     filter_fields_= task.get('filter_fields',{})
     if not filter_fields_:
         logging.error(f"Doc filter field not exists for {task_doc_id}!")
@@ -672,12 +673,9 @@ async def do_handle_task(task):
     file_type = task.get("type", "pdf")
     # 用户设置 parser_config.pdf_article_type ['书籍', '论文集', '论文', '期刊', '其他']:
     pdf_article_type = task_parser_config.get('pdf_article_type', '书籍')
-    if task["doc_id"] == "a65d9ed4427711f0a0702e965859abd0":
-        pdf_article_type = '书籍'
-        logging.info("================= 正在测试书籍：核能开发与应用.pdf ================")
-    if task["doc_id"] == "b467a5d6427911f093e42e965859abd0":
+    if task["doc_id"] in ["b467a5d6427911f093e42e965859abd0", ]:
         pdf_article_type = '论文集'
-        logging.info("================= 正在测试论文集：风险指引的工程分析技术.pdf ================")
+        logging.info(f"================= 正在测试论文集：{task['doc_id']} ================")
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -765,6 +763,7 @@ async def do_handle_task(task):
                 main_content_begin = result['main_content_begin']
                 sub_paper["main_content_begin"] = main_content_begin
                 sub_paper["fields_map"] = {}
+                sub_paper["dic_result"] = result
                 for i in range(len(result['dic_result']) - 1):
                     res = result['dic_result'][i]
                     title_ = res['章节']
@@ -843,9 +842,9 @@ async def do_handle_task(task):
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
         if pdf_article_type == "论文集":
-            # 保存子论文元数据
-            dict_result['sub_paper'] = sub_paper
-            # 对应分块
+            # 保存提取的目录
+            dict_result["dic_result"] = sub_paper["dic_result"]
+            # 保存子论文要素至对应分块
             if page_c_[0] >= sub_paper["main_content_begin"]:
                 try:
                     pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
@@ -873,9 +872,9 @@ async def do_handle_task(task):
         c_['filter_fields'] = filter_fields_
         for key,value in filter_fields_.items():
             c_[key] = value
-        #c_['limit_range'] = limit_range
-        #c_['limit_level'] = limit_level
-        #c_['limit_time'] = limit_time
+        c_['limit_range'] = limit_range
+        c_['limit_level'] = limit_level
+        c_['limit_time'] = limit_time
 
     #更新元数据到文档
     DocumentService.update_meta_fields(task["doc_id"],  dict_result)
