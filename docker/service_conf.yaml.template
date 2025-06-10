@@ -47,7 +47,7 @@ user_default_llm:
     chat_model: 'qwen_large' #'deepseek-r1-70B-Q8'
     embedding_model: 'embed'
     rerank_model: 'rerank'
-    asr_model: ''
+    asr_model: 'asr'
     image2text_model: 'qwen2.5-32b-instruct'
   default_models_config:
     chat_model: 'http://118.193.126.254:1025/v1'
