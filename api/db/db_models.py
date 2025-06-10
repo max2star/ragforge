@@ -727,8 +727,8 @@ class PooledDmDatabase(Database):
             logging.error(f"SQL执行失败: {error_str}")
             logging.error(f"原始SQL: {sql}")
             logging.error(f"处理后SQL: {processed_sql}")
-            logging.error(f"原始参数: {params}")
-            logging.error(f"处理后参数: {processed_params}")
+            # logging.error(f"原始参数: {params}")
+            # logging.error(f"处理后参数: {processed_params}")
             raise
 
         finally:
