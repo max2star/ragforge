@@ -151,7 +151,7 @@ def load_user(web_request):
     authorization = web_request.headers.get("Authorization")
 
     # 添加请求路径日志
-    logging.info(f"Request path: {web_request.path}, Authorization: {'Present' if authorization else 'Missing'}")
+    logging.debug(f"Request path: {web_request.path}, Authorization: {'Present' if authorization else 'Missing'}")
 
     if authorization:
         try:
