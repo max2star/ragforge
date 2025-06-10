@@ -512,6 +512,7 @@ def user_register(user_id, user):
     }
     tenant_llm = []
     for llm in LLMService.query(fid=settings.LLM_FACTORY):
+        logging.info(f"LLM_DEFAULT_MODELS_CONFIG {settings.LLM_DEFAULT_MODELS_CONFIG},current llm {llm}, factory {settings.LLM_FACTORY}")
         tenant_llm.append(
             {
                 "tenant_id": user_id,
