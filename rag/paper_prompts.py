@@ -180,6 +180,7 @@ def paper_classification_prompt(content):
         "22": "医疗应用",
     }
 
+注意：你的回答不需要有任何旁白，若没有符合文本分类的回答，请直接输出一个空花括号即可；
     """
     prompt_2 = f"""
 ### 文本内容
