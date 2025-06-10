@@ -37,6 +37,7 @@ class RAGFlowMinio:
         self.conn = None
         self.remote_conn = None
         self.remote_flag = False
+        self.bucket_encryption = True
         self.__open__()
     def __open__(self):
         try:
@@ -52,6 +53,7 @@ class RAGFlowMinio:
                               secret_key=settings.MINIO["password"],
                               secure=True
                               )
+            self.bucket_encryption = settings.MINIO['bucket_encryption']
             if settings.MINIO_BACKUP.get("host",None):
                 logging.info(f"enable minio backup cluster")
                 self.remote_conn =  Minio(settings.MINIO_BACKUP["host"],
@@ -152,13 +154,15 @@ class RAGFlowMinio:
                         kms_master_key_id='my-key-1'# 指定 KMS 密钥 ID
                     )
                     sse_config = SSEConfig(rule=encryption_rule)
-                    self.conn.set_bucket_encryption(
-                        bucket, sse_config)
+                    if self.bucket_encryption:
+                        self.conn.set_bucket_encryption(
+                            bucket, sse_config)
 
                     if self.remote_flag:
                         self.remote_conn.make_bucket(bucket)
                         self.remote_conn.set_bucket_versioning(bucket, config)
                         self.config_backup_policy(src_cluster_alias=None,source_bucket=bucket,dest_cluster_alias=None,dest_bucket=bucket)
+                    if self.bucket_encryption:
                         self.remote_conn.set_bucket_encryption(bucket, sse_config)
 
                 r = self.conn.put_object(bucket, fnm,
