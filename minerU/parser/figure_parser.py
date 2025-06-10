@@ -68,6 +68,7 @@ class VisionFigureParser:
                 if "</think>" in response:
                     response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
                 if "```json" in response:
+                    response = re.sub(r"^.*?```json", "", response, flags=re.DOTALL)
                     response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
                 response = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response)  # 移除控制字符
                 texts[idx] = response
