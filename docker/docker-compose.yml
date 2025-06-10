@@ -14,6 +14,7 @@ services:
           #minio-ragflow:
           #condition: service_healthy
     image: ${RAGFLOW_IMAGE}
+    privileged: true
     shm_size: '128gb'
     container_name: ragflow-server
     deploy:
@@ -32,11 +33,11 @@ services:
       - 5678:5678
       - 5679:5679
     volumes:
-      - /opt/ragflow/logs:/ragflow/logs
+      - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
-        #- ../rag:/ragflow/rag
-        #- ../api:/ragflow/api
-        #- ../minerU:/ragflow/minerU
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
       #- /root/.cache:/root/.cache
       #- /root/magic-pdf.json:/root/magic-pdf.json
       - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
