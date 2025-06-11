@@ -198,7 +198,7 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         start = timer()
         callback(msg="开始进行分词")
 
-        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"] if paper["authors"] else ""),
+        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"] ),
                "title_tks": rag_tokenizer.tokenize(paper["title"] if paper["title"] else filename)}
         doc["title_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["title_tks"])
         doc["authors_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["authors_tks"])
