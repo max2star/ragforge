@@ -748,7 +748,7 @@ async def do_handle_task(task):
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             page_numbers = result["page_numbers_before_directory"]
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
-            if not page_numbers:
+            if result["dic_result"] and len(result["dic_result"]) <= 0:
                 page_numbers = range(MAX_IMAGES)
             # 提取元数据
             fields_map = extract_metadata(
@@ -760,6 +760,7 @@ async def do_handle_task(task):
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             if pdf_article_type == "论文集":
                 # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+                progress_callback(prog=0.75, msg="准备解析目录页码进行子论文要素抽取")
                 main_content_begin = result['main_content_begin']
                 sub_paper["main_content_begin"] = main_content_begin
                 sub_paper["fields_map"] = {}
