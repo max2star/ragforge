@@ -748,7 +748,7 @@ async def do_handle_task(task):
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             page_numbers = result["page_numbers_before_directory"]
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
-            if result["dic_result"] and len(result["dic_result"]) <= 0:
+            if len(result["dic_result"]) <= 0:
                 page_numbers = range(MAX_IMAGES)
             # 提取元数据
             fields_map = extract_metadata(
