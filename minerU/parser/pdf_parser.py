@@ -309,7 +309,10 @@ class MinerUPdf:
 
         from timeit import default_timer as timer
         callback(msg="处理开始。即将从对象存储读取并进行视觉大模型要素抽取")
-
+        # 在报错代码前插入
+        import torch, os
+        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'  # 防碎片
+        torch.cuda.empty_cache()  # 清缓存
         # 使用MinerU处理
         try:
             start = timer()
@@ -371,7 +374,11 @@ class MinerUPdf:
 
             start = timer()
             # 从对象存储读取文件
-            pdf_bytes = reader.read(pdf_file_name)
+            try:
+                pdf_bytes = reader.read(pdf_file_name)
+            except Exception as e:
+                logging.error(f"pdf_bytes error: {e}")
+                raise
             callback(prog=0.11,
                      msg="MinerU 从对象存储读取文件完成 ({:.2f}s)。即将使用MinerU进行解析".format(timer() - start))
             ## Create Dataset Instance
@@ -616,7 +623,7 @@ class MinerUPdf:
             import traceback
             traceback.print_exc()
             logging.info("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
-            return
+            return {}
 
         # 进一步对信息进行提取
         def _match_content(txt):
