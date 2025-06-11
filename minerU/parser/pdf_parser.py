@@ -623,7 +623,7 @@ class MinerUPdf:
             import traceback
             traceback.print_exc()
             logging.info("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
-            return {}
+            return
 
         # 进一步对信息进行提取
         def _match_content(txt):
