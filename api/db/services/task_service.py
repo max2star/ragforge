@@ -121,8 +121,9 @@ class TaskService(CommonService):
 
         msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task has been received."
         prog = random.random() / 10.0
-        if docs[0]["retry_count"] >= 5:
-            msg = "\nERROR: Task is abandoned after 3 times attempts."
+        retry_count_max = 5
+        if docs[0]["retry_count"] >= retry_count_max:
+            msg = f"\nERROR: Task is abandoned after {retry_count_max} times attempts."
             prog = -1
 
         cls.model.update(
@@ -131,7 +132,7 @@ class TaskService(CommonService):
             retry_count=docs[0]["retry_count"] + 1,
         ).where(cls.model.id == docs[0]["id"]).execute()
 
-        if docs[0]["retry_count"] >= 5:
+        if docs[0]["retry_count"] >= retry_count_max:
             return None
 
         return docs[0]
