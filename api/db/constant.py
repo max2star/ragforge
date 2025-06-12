@@ -1284,38 +1284,38 @@ Report = [
     "must_exist": False,
     "外键": ""
   },
-  {
-    "id": 11,
-    "name": "分类",
-    "code": "class",
-    "description": "数聚平台的技术体系",
-    "must_exist": False,
-    "外键": ""
-  },
-  {
-    "id": 12,
-    "name": "其他分类",
-    "code": "class_alternative",
-    "description": "其他分类体系",
-    "must_exist": False,
-    "外键": ""
-  },
-  {
-    "id": 13,
-    "name": "报告号",
-    "code": "primary_number",
-    "description": "主报告号",
-    "must_exist": False,
-    "外键": ""
-  },
-  {
-    "id": 14,
-    "name": "其他报告号",
-    "code": "alternative_number",
-    "description": "其他报告号",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 11,
+  #   "name": "分类",
+  #   "code": "class",
+  #   "description": "数聚平台的技术体系",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 12,
+  #   "name": "其他分类",
+  #   "code": "class_alternative",
+  #   "description": "其他分类体系",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 13,
+  #   "name": "报告号",
+  #   "code": "primary_number",
+  #   "description": "主报告号",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 14,
+  #   "name": "其他报告号",
+  #   "code": "alternative_number",
+  #   "description": "其他报告号",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 15,
     "name": "ISBN",
@@ -1332,22 +1332,22 @@ Report = [
     "must_exist": False,
     "外键": ""
   },
-  {
-    "id": 17,
-    "name": "出版者",
-    "code": "publisher",
-    "description": "报告发行机构",
-    "must_exist": True,
-    "外键": "机构表 identify"
-  },
-  {
-    "id": 18,
-    "name": "收录机构",
-    "code": "source_agency",
-    "description": "收录该信息的机构",
-    "must_exist": False,
-    "外键": "机构表 identify"
-  },
+  # {
+  #   "id": 17,
+  #   "name": "出版者",
+  #   "code": "publisher",
+  #   "description": "报告发行机构",
+  #   "must_exist": True,
+  #   "外键": "机构表 identify"
+  # },
+  # {
+  #   "id": 18,
+  #   "name": "收录机构",
+  #   "code": "source_agency",
+  #   "description": "收录该信息的机构",
+  #   "must_exist": False,
+  #   "外键": "机构表 identify"
+  # },
   # {
   #   "id": 19,
   #   "name": "文献类型",
