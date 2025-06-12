@@ -21,6 +21,9 @@
         "store": "true"
       }
     },
+    "total_fields":{
+      "limit":5000
+    },
     "date_detection": "true",
     "dynamic_templates": [
       {
