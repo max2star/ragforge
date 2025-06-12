@@ -752,7 +752,7 @@ class MinerUPdf:
                     poss = chunk.get('poss', [])
 
                     # 按句子分割文本
-                    sentences = re.split(r'[。！？；\n]', text)
+                    sentences = re.split(r'(?<=[。！？；])', text)
 
                     current_chunk_text = ""
                     current_chunk_tokens = 0
