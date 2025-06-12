@@ -122,21 +122,19 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     keys_to_use_list = []
     # 过滤字段
     for i in fields:
-        if i["name"] in [j["name"] for j in constant.keyvalues_mapping[metadata_type]]:
-            logging.info(f"=i['description']===>{i['description']}     i ===> {i}\n"
-                         f" constant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
-            keys_to_use_list.append(i["name"])
-            # keys_to_use_list.append({
-            #    "name": i["name"],
-            #    "description": i["description"],
-            #    "must_exist": i["must_exist"],
-            # })
+        if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
+            logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
+            keys_to_use_list.append({
+               "name": i["name"],
+               "description": i["description"] if i["description"] else "",
+               "must_exist": i["must_exist"],
+            })
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
 
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；对于从图片中提取的内容，不要修改原文；"
+        f"提取图中的：{keys_to_use_list} 文本内容；按照 description 进行提取相应的 name 字段、must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
@@ -151,7 +149,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                 r_d = {}
                 logging.error(f"json loads error: {e} \n{vr_value}")
 
-            for key in keys_to_use_list:
+            for key in [v["name"] for k,v in keys_to_use_list]:
                 value_now = fields_map.get(key, None)
                 if value_now:
                     if key not in ['摘要', '正文', '前言']:
