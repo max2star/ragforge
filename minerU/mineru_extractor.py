@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+
 from magic_pdf.data.data_reader_writer import S3DataReader
 from timeit import default_timer as timer
 from minerU.parser.figure_parser import VisionFigureParser
@@ -7,6 +9,66 @@ import fitz
 from api.db import LLMType, constant
 from api.db.services.llm_service import LLMBundle
 from rag import settings
+import trio
+from graphrag.utils import (
+    chat_limiter,
+)
+
+
+class ChatWithModel:
+    def __init__(self, llm_model, prompt):
+        self._llm_model = llm_model
+        self._prompt = prompt
+
+    async def _chat(self, system, history, gen_conf):
+        response = await trio.to_thread.run_sync(
+            lambda: self._llm_model.chat(system, history, gen_conf)
+        )
+        logging.info(f"response begin ==>\n{response}")
+        if "</think>" in response:
+            response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
+        if "```json" in response:
+            response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
+        logging.info(f"response clean ==>\n{response}")
+        if response.find("**ERROR**") >= 0:
+            raise Exception(response)
+        return response
+
+
+    async def __call__(self, callback=None):
+        results = {}
+        async def classifier():
+            nonlocal results
+            result = None
+
+            async with chat_limiter:
+                result = await self._chat(
+                    "You're a helpful assistant.",
+                    [
+                        {
+                            "role": "system",
+                            "content": "",
+                        },
+                        {
+                            "role": "user",
+                            "content": self._prompt,
+                        }
+                    ],
+                    {"temperature": 0.3,'response_format':{'type': 'json_object'}},
+                )
+            try:
+                results = json.loads(result)
+                logging.info(f"dict {results}")
+            except Exception as e:
+                results = {}
+                logging.error(f"chat Failed for {e}")
+
+        async with trio.open_nursery() as nursery:
+               async with chat_limiter:
+                    nursery.start_soon(classifier)
+
+        return results
+
 
 
 def get_pdf_file_bytes(bucketname, filename, doc_id, pdf_flag=True):
@@ -60,20 +122,25 @@ def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
 
 
 # 识别提取元数据
-def extract_metadata(tenant_id, images, fields=None, callback=None):
-    if fields is None:
-        fields = []
-
-    # 获取默认元数据字段
-    keys_to_use_list = [i['name'] for i in constant.keyvalues_mapping['default']]
-    keys_to_use_list = [*keys_to_use_list, *fields]
-    keys_to_use_list = list(set(keys_to_use_list))
+def extract_metadata(tenant_id, images, fields=None, metadata_type="default", callback=None):
+    start_ts = timer()
+    # 获取相应元数据字段
+    keys_to_use_list = []
+    # 过滤字段
+    for i in fields:
+        if i["name"] in [j["name"] for j in constant.keyvalues_mapping[metadata_type]]:
+            keys_to_use_list.append({
+                "name": i["name"],
+                "description": i["description"],
+                "must_exist": i["must_exist"],
+            })
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
+
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；对于摘要，不要修改原文；"
-        f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出纯文本。"
+        f"提取图中的：{keys_to_use_list} 文本内容；按照 description 进行提取相应的 name 字段，must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
+        f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
     logging.info(f"======prompt======{prompt}")
@@ -110,12 +177,12 @@ def extract_directory(tenant_id, images, callback=None):
     # 最大识别图片页数
     MAX_IMAGES = 40
     example = """{"目录": [{"章节": "章节1","页码": 1},{"章节": "章节2","页码": 14}]}"""
-    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该>图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
+    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
     vision_results = vision_parser(tenant_id, images[:MAX_IMAGES], prompt=prompt)
     result = [v for k,v in vision_results.items()]
-    logging.info(f"pdf共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
+    logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
     current_page_index = 0
     page_end = 0
@@ -153,13 +220,7 @@ def extract_directory(tenant_id, images, callback=None):
                 else:
                     continue
 
-    if page_start == 0:
-        page_start = 1
-    elif page_start == 1:
-        page_start = 1
-    elif page_start > 1:
-        page_start = page_start - 1
-    page_numbers = list(range(0, page_start))
+    page_numbers = list(range(page_start - 1))
 
     logging.info('\n章节页码结果{}, 从index_id {}开始是正文,{}~{}是目录.将会对{}进行分析'.format(
         dic_result, page_end + 1, page_start, page_end, page_numbers

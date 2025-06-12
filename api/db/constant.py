@@ -17,14 +17,14 @@ general=[
     "name": "作者",
     "code": "authors",
     "description": "作者",
-    "must_exist": False
+    "must_exist": True
   },
   {
     "id": 4,
     "name": "其他作者",
     "code": "other_authors",
     "description": "其他作者",
-    "must_exist": True
+    "must_exist": False
   },
   {
     "id": 5,
@@ -45,14 +45,14 @@ general=[
     "name": "摘要",
     "code": "",
     "description": "",
-    "must_exist": False
+    "must_exist": True
   },
   {
     "id": 8,
     "name": "关键词",
     "code": "keywords",
     "description": "描述信息内容的关键词",
-    "must_exist": False
+    "must_exist": True
   },
   {
     "id": 9,
@@ -82,13 +82,13 @@ general=[
     "description": "",
     "must_exist": False
   },
-  {
-    "id": 13,
-    "name": "出版时间",
-    "code": "",
-    "description": "",
-    "must_exist": False
-  },
+  # {
+  #   "id": 13,
+  #   "name": "出版时间",
+  #   "code": "",
+  #   "description": "",
+  #   "must_exist": False
+  # },
 ]
 journal=[
   {
@@ -140,20 +140,20 @@ journal=[
     "description": "期刊出版单位",
     "must_exist": True
   },
-  {
-    "id": 8,
-    "name": "创刊日期",
-    "code": "start_date",
-    "description": "期刊创刊日期",
-    "must_exist": True
-  },
-  {
-    "id": 9,
-    "name": "停刊日期",
-    "code": "end_date",
-    "description": "期刊停刊日期",
-    "must_exist": False
-  },
+  # {
+  #   "id": 8,
+  #   "name": "创刊日期",
+  #   "code": "start_date",
+  #   "description": "期刊创刊日期",
+  #   "must_exist": True
+  # },
+  # {
+  #   "id": 9,
+  #   "name": "停刊日期",
+  #   "code": "end_date",
+  #   "description": "期刊停刊日期",
+  #   "must_exist": False
+  # },
   {
     "id": 10,
     "name": "简介",
@@ -286,14 +286,14 @@ Book = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  {
-    "id": 11,
-    "name": "发布日期",
-    "code": "issue_date",
-    "description": "图书出版日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 11,
+  #   "name": "发布日期",
+  #   "code": "issue_date",
+  #   "description": "图书出版日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 12,
     "name": "主题",
@@ -498,22 +498,22 @@ Journal = [
     "must_exist": True,
     "外键": "机构表 identify"
   },
-  {
-    "id": 8,
-    "name": "创刊日期",
-    "code": "start_date",
-    "description": "期刊创刊日期",
-    "must_exist": True,
-    "外键": ""
-  },
-  {
-    "id": 9,
-    "name": "停刊日期",
-    "code": "end_date",
-    "description": "期刊停刊日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 8,
+  #   "name": "创刊日期",
+  #   "code": "start_date",
+  #   "description": "期刊创刊日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 9,
+  #   "name": "停刊日期",
+  #   "code": "end_date",
+  #   "description": "期刊停刊日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 10,
     "name": "简介",
@@ -622,14 +622,14 @@ Conference = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  {
-    "id": 7,
-    "name": "会议日期",
-    "code": "start_end_date",
-    "description": "会议起止日期,格式示例 20250410-20250415",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 7,
+  #   "name": "会议日期",
+  #   "code": "start_end_date",
+  #   "description": "会议起止日期,格式示例 20250410-20250415",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 8,
     "name": "会议地点",
@@ -891,14 +891,14 @@ JournalPaper = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  {
-    "id": 24,
-    "name": "发布日期",
-    "code": "issue_date",
-    "description": "新闻发布日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 24,
+  #   "name": "发布日期",
+  #   "code": "issue_date",
+  #   "description": "新闻发布日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 25,
     "name": "收录机构",
@@ -1087,14 +1087,14 @@ ConferencePaper = [
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 15,
-    "name": "会议时间",
-    "code": "conference_period",
-    "description": "会议的开始时间和结束时间",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 15,
+  #   "name": "会议时间",
+  #   "code": "conference_period",
+  #   "description": "会议的开始时间和结束时间",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 16,
     "name": "责任单位",
@@ -1259,14 +1259,14 @@ Report = [
     "must_exist": True,
     "外键": "机构表 identify"
   },
-  {
-    "id": 8,
-    "name": "发布日期",
-    "code": "issue_date",
-    "description": "报告出版日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 8,
+  #   "name": "发布日期",
+  #   "code": "issue_date",
+  #   "description": "报告出版日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 9,
     "name": "主题",
@@ -1471,30 +1471,30 @@ Standard = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  {
-    "id": 8,
-    "name": "发布日期",
-    "code": "issue_date",
-    "description": "标准发布日期",
-    "must_exist": True,
-    "外键": ""
-  },
-  {
-    "id": 9,
-    "name": "实施日期",
-    "code": "effective_date",
-    "description": "标准生效日期",
-    "must_exist": False,
-    "外键": ""
-  },
-  {
-    "id": 10,
-    "name": "废止日期",
-    "code": "abolition_date",
-    "description": "标准废止日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 8,
+  #   "name": "发布日期",
+  #   "code": "issue_date",
+  #   "description": "标准发布日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 9,
+  #   "name": "实施日期",
+  #   "code": "effective_date",
+  #   "description": "标准生效日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 10,
+  #   "name": "废止日期",
+  #   "code": "abolition_date",
+  #   "description": "标准废止日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 11,
     "name": "主题",
@@ -1991,14 +1991,14 @@ Dissertation  = [
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 14,
-    "name": "论文提交日期",
-    "字段英文名": "paper_submit_date",
-    "description": "硕博论文提交日期",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 14,
+  #   "name": "论文提交日期",
+  #   "字段英文名": "paper_submit_date",
+  #   "description": "硕博论文提交日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 15,
     "name": "主题",
@@ -2156,14 +2156,14 @@ News  = [
     "must_exist": True,
     "外键": "机构表 identify"
   },
-  {
-    "id": 7,
-    "name": "发布时间",
-    "字段英文名": "issue_date",
-    "description": "新闻发布日期",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 7,
+  #   "name": "发布时间",
+  #   "字段英文名": "issue_date",
+  #   "description": "新闻发布日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 8,
     "name": "主题",
@@ -2320,30 +2320,30 @@ OfficialDocument  =[
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 6,
-    "name": "发布时间",
-    "字段英文名": "issue_date",
-    "description": "公文发布日期",
-    "must_exist": True,
-    "外键": ""
-  },
-  {
-    "id": 7,
-    "name": "通过时间",
-    "字段英文名": "pass_date",
-    "description": "公文审议通过日期",
-    "must_exist": True,
-    "外键": ""
-  },
-  {
-    "id": 8,
-    "name": "生效日期",
-    "字段英文名": "effective_date",
-    "description": "公文生效日期日期",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 6,
+  #   "name": "发布时间",
+  #   "字段英文名": "issue_date",
+  #   "description": "公文发布日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 7,
+  #   "name": "通过时间",
+  #   "字段英文名": "pass_date",
+  #   "description": "公文审议通过日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 8,
+  #   "name": "生效日期",
+  #   "字段英文名": "effective_date",
+  #   "description": "公文生效日期日期",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 9,
     "name": "主题",
@@ -2468,14 +2468,14 @@ Achievement=[
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 6,
-    "name": "发布日期",
-    "code": "Issue_date",
-    "description": "成果发布日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 6,
+  #   "name": "发布日期",
+  #   "code": "Issue_date",
+  #   "description": "成果发布日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 7,
     "name": "主题",
@@ -2672,22 +2672,22 @@ Project = [
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 9,
-    "name": "起始日期",
-    "code": "start_date",
-    "description": "合同规定的项目开始时间",
-    "must_exist": True,
-    "外键": ""
-  },
-  {
-    "id": 10,
-    "name": "结束日期",
-    "code": "end_date",
-    "description": "合同规定的项目完成时间",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 9,
+  #   "name": "起始日期",
+  #   "code": "start_date",
+  #   "description": "合同规定的项目开始时间",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
+  # {
+  #   "id": 10,
+  #   "name": "结束日期",
+  #   "code": "end_date",
+  #   "description": "合同规定的项目完成时间",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 11,
     "name": "主题",
@@ -2844,14 +2844,14 @@ Glossary=  [
     "must_exist": False,
     "外键": ""
   },
-  {
-    "id": 6,
-    "name": "发布时间",
-    "code": "issue_date",
-    "description": "新闻发布日期",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 6,
+  #   "name": "发布时间",
+  #   "code": "issue_date",
+  #   "description": "新闻发布日期",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   # {
   #   "id": 7,
   #   "name": "文献类型",
@@ -2922,18 +2922,18 @@ Glossary=  [
 keyvalues_mapping = {
     'default':general,
     # 'journal':journal,
-    'Book':Book,# 图书元数据
-    'Journal':Journal,# 期刊元数据
-    'Conference':Conference,# 会议元数据
-    'JournalPaper':JournalPaper,# 期刊论文元数据
-    'ConferencePaper':ConferencePaper, # 会议论文元数据
-    'Report':Report, # 报告元数据
-    'Standard':Standard,# 标准元数据
-    'Patent':Patent,# 专利元数据
-    'Dissertation':Dissertation, # 硕博元数据
-    'News':News, # 动态元数据
-    'OfficialDocument':OfficialDocument, # 公文元数据
-    'Achievement':Achievement, # 成果元数据
-    'Project':Project, # 项目元数据
-    'Glossary':Glossary, # 术语元数据
+    '图书':Book,# 图书元数据
+    '期刊':Journal,# 期刊元数据
+    '会议':Conference,# 会议元数据
+    '期刊论文':JournalPaper,# 期刊论文元数据
+    '会议论文':ConferencePaper, # 会议论文元数据
+    '报告':Report, # 报告元数据
+    '标准':Standard,# 标准元数据
+    '专利':Patent,# 专利元数据
+    '硕博':Dissertation, # 硕博元数据
+    '动态':News, # 动态元数据
+    '公文':OfficialDocument, # 公文元数据
+    '成果':Achievement, # 成果元数据
+    '项目':Project, # 项目元数据
+    '术语':Glossary, # 术语元数据
   }
