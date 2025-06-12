@@ -255,6 +255,10 @@ services:
       - redis_data:/data
     networks:
       - ragflow
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
     healthcheck:
       test: ["CMD", "redis-cli" ,"ping"]
       interval: 10s
