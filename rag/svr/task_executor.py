@@ -28,7 +28,7 @@ from PIL import Image
 from api.utils.log_utils import initRootLogger, get_project_base_directory
 from graphrag.general.index import run_graphrag
 from graphrag.utils import get_llm_cache, set_llm_cache, get_tags_from_cache, set_tags_to_cache
-from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory
+from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, ChatWithModel
 from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
@@ -53,7 +53,7 @@ import faulthandler
 import numpy as np
 from peewee import DoesNotExist
 
-from api.db import LLMType, ParserType, TaskStatus
+from api.db import LLMType, ParserType, TaskStatus, constant
 from api.db.services.document_service import DocumentService
 from api.db.services.llm_service import LLMBundle
 from api.db.services.task_service import TaskService
@@ -522,6 +522,20 @@ async def run_extract(row, chat_mdl, content,callback=None):
     return result
 
 
+async def run_chat(chat_mdl, prompt=None, callback=None):
+    chatter = ChatWithModel(
+        chat_mdl,
+        prompt
+    )
+    try:
+        result = await chatter(callback)
+    except Exception as e:
+        result = {}
+        logging.error(f"run_chat Failed for {e}")
+    logging.info(f"run_chat result {result}")
+    return result
+
+
 async def run_classify(row, chat_mdl, content, callback=None):
     classify_config = row["parser_config"].get('classifier')
     prompt = None
@@ -658,6 +672,7 @@ async def do_handle_task(task):
         raise LookupError(f"Doc filter field error, doc owner {doc.created_by} not exists in filter {filter_fields_}!")
     filter_fields_.pop('create_time',None)
     limit_time = filter_fields_.get('limit_time')
+    # TODO ES首次存储时会自动将时间字符串转换为时间类型，后续若格式不符则会出现问题
     limit_time = str(datetime.fromtimestamp(limit_time/1000)).replace("T", " ")[:19]
     filter_fields_['limit_time'] = limit_time
 
@@ -671,11 +686,18 @@ async def do_handle_task(task):
     key_now = dict_result.keys()
 
     file_type = task.get("type", "pdf")
-    # 用户设置 parser_config.pdf_article_type ['书籍', '论文集', '论文', '期刊', '其他']:
-    pdf_article_type = task_parser_config.get('pdf_article_type', '书籍')
-    if task["doc_id"] in ["b467a5d6427911f093e42e965859abd0", ]:
-        pdf_article_type = '论文集'
-        logging.info(f"================= 正在测试论文集：{task['doc_id']} ================")
+    pdf_article_type = None
+
+    # 获取元数据字段
+    extractor_config = task["parser_config"].get('extractor')
+    prompt = extractor_config.get("prompt", None)
+    metadata_type = extractor_config.get("metadata_type", "default")
+    if extractor_config:
+        keys = extractor_config.get("keyvalues", None)
+    else:
+        keys = constant.keyvalues_mapping['default']
+    logging.info(f"========= keys ========= \n{keys}")
+    fields = keys
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -684,83 +706,88 @@ async def do_handle_task(task):
     content = ""
 
     sub_paper = {}
+    # 获取字节流
+    bucket, name = File2DocumentService.get_storage_address(doc_id=task_doc_id)
+    logging.info("pdf_bytes for bucket {} doc name {},doc_id {},tenant_id {}".format(
+        bucket, name, task_doc_id, task_tenant_id
+    ))
+    pdf_bytes = get_pdf_file_bytes(bucket, name, task_doc_id, pdf_flag=True if file_type in ["pdf", ] else False)
+    if not pdf_bytes:
+        logging.error(f"Can't find this document {task_doc_id}!")
+        raise LookupError(f"Can't find this document {task_doc_id}!")
+
+    pdf_doc = fitz.open('pdf', pdf_bytes)
+    # 最大识别图片页数
+    MAX_NUM = 30
+
     # 是否使用视觉模型
-    use_vision_parser = True if file_type in ["pdf", ] else False
+    use_vision_parser = True if len(pdf_doc) > MAX_NUM else False
     if use_vision_parser:
-        # 获取字节流
-        bucket, name = File2DocumentService.get_storage_address(doc_id=task_doc_id)
-        logging.info("pdf_bytes for bucket {} doc name {},doc_id {},tenant_id {}".format(
-            bucket, name, task_doc_id, task_tenant_id
-        ))
-        pdf_bytes = get_pdf_file_bytes(bucket, name, task_doc_id)
-        if not pdf_bytes:
-            logging.error(f"Can't find this document {task_doc_id}!")
-            raise LookupError(f"Can't find this document {task_doc_id}!")
-
-        pdf_doc = fitz.open('pdf', pdf_bytes)
-
-        # 最大识别图片页数
-        MAX_IMAGES = 40 if len(pdf_doc) > 40 else len(pdf_doc)
         img_results = []
         for page_num in range(len(pdf_doc)):
-            if page_num >= MAX_IMAGES and (pdf_article_type not in ["论文集"]):
-                break
             try:
                 page = pdf_doc.load_page(page_num)
-                # 获取当前页面的宽度和高度（单位：点/points）
-                width = page.rect.width  # 页面宽度
-                height = page.rect.height  # 页面高度
-                # 将PDF页面转换为高质量图像（根据视觉模型token长度限制调整dpi参数）
-                max_token = 2559
-                factor = math.sqrt((width*height)/(max_token*12*12))
-                logging.info(f"page {page_num} width {width} height {height} factor {factor}")
+                factor = 1.0
                 mat = fitz.Matrix(factor, factor)  # 缩放因子，调整分辨率
                 pix = page.get_pixmap(matrix=mat)
 
                 # 转换为PIL Image对象
                 img_bytes = pix.tobytes()
                 img = Image.open(BytesIO(img_bytes))
+                width, height = img.size
+                # logging.info(f"原图片宽度: {width}px, 高度: {height}px")
+                size = 600
+                target_size = (size,  int(size*height/width))  # 调整大小
+                img = img.resize(target_size, Image.LANCZOS)
                 img_results.append(img)
+                width, height = img.size
+                logging.info(f"resize 图片宽度: {width}px, 高度: {height}px")
             except Exception as e:
                 logging.error(f"document: {task_doc_id} page_num: {page_num} Generate image byte stream error: {e}!")
         logging.info(f"========== pdf文件共{len(pdf_doc)}页；生成图片字节流列表：{len(img_results)} 张 ==========")
 
-        # 定义元数据字段
-        # fields = ['书名', '其他书名', '编者', '作者', '出版日期', '摘要', '关键词', '前言', '分类', 'ISBN', '出版社']
-        fields = None  # 使用默认name字段 constant.keyvalues_mapping['default']
-        extractor_config = task["parser_config"].get('extractor')
-        prompt = None
-        keys = None
-        if extractor_config:
-            prompt = extractor_config.get("prompt", None)
-            keys = extractor_config.get("keyvalues", None)
-            fields = [k["name"] for  k in keys]
-        logging.info(f"========== fields：\n{fields}")
-        if pdf_article_type in ["论文集", "书籍"]:
-            """
-            通过将pdf转换为图像，使用视觉模型进行目录页定位; 将目录页前内容用于元数据要素提取（摘要、标题、关键词等）
-            """
-            # 提取目录
+        result = None
+        directory_begin = 0
+        # 提取目录
+        try:
             result = extract_directory(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
-                images=img_results,
+                images=img_results[:MAX_NUM],
                 callback=progress_callback,
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
-            page_numbers = result["page_numbers_before_directory"]
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
-            if len(result["dic_result"]) <= 0:
-                page_numbers = range(MAX_IMAGES)
-            # 提取元数据
-            fields_map = extract_metadata(
-                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
-                images=[img_results[i] for i in page_numbers],
-                fields=fields,  #  可指定需要提取的元数据字段的列表(有默认值)
-                callback=progress_callback,
-            )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
-            logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
-            if pdf_article_type == "论文集":
+            directory_begin = result["directory_begin"]
+        except Exception as e:
+            logging.error(f"提取目录 error {e}!")
+
+        num = directory_begin - 1
+        if directory_begin <= 0:
+            num = 10
+
+        # 提取元数据
+        fields_map = extract_metadata(
+            task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
+            images=img_results[:num],
+            fields=fields,
+            metadata_type=metadata_type,
+            callback=progress_callback,
+        )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
+        progress_callback(msg="提取元数据完成")
+        logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
+        # 前往分析子目录对应的文章
+        if result:
+            content = str(result["dic_result"])
+            chat_prompt = f"你的回答不需要有任何旁白，只需回答单词：[yes or no]；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
+            try:
+                chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
+            except Exception as e:
+                logging.error(f"run_chat error {e}!")
+                chat_result = ""
+            logging.info(f"========== chat_result : {chat_result} ==========")
+            if 'yes' in chat_result and len(result["dic_result"]) > 0:
+                pdf_article_type = "论文集"
                 # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
-                progress_callback(prog=0.75, msg="准备解析目录页码进行子论文要素抽取")
+                progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
                 main_content_begin = result['main_content_begin']
                 sub_paper["main_content_begin"] = main_content_begin
                 sub_paper["fields_map"] = {}
@@ -769,29 +796,17 @@ async def do_handle_task(task):
                     res = result['dic_result'][i]
                     title_ = res['章节']
                     page_ = res['页码']
-                    pdf_page_ = main_content_begin - 2 + page_
+                    pdf_page_ = main_content_begin - 1 + page_
                     logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
                     picture_ = img_results[pdf_page_]
                     fields_map_ = extract_metadata(
-                        task_tenant_id, images=[picture_], fields=fields, callback=progress_callback,
+                        task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type, callback=progress_callback,
                     )
                     sub_paper["fields_map"][pdf_page_] = {
                         "title_": title_, "page_": page_,
                         "fields_map_": fields_map_,
                     }
                 logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
-        else:
-            """
-            单篇论文、期刊
-            通过将pdf转换为图像，使用视觉模型进行元数据要素提取打标签（摘要、标题、关键词等）
-            """
-            # 提取元数据
-            fields_map = extract_metadata(
-                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
-                images=img_results[:10],
-                fields=fields,  # 可指定需要提取的元数据字段的列表(有默认值)
-                callback=progress_callback,
-            )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
 
         dict_result_add = fields_map
     else:
@@ -843,8 +858,8 @@ async def do_handle_task(task):
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
         if pdf_article_type == "论文集":
-            # 保存提取的目录
             dict_result["dic_result"] = sub_paper["dic_result"]
+            # dict_result['sub_paper'] = sub_paper
             # 保存子论文要素至对应分块
             if page_c_[0] >= sub_paper["main_content_begin"]:
                 try:
