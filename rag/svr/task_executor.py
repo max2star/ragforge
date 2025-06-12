@@ -508,7 +508,7 @@ async def run_raptor(row, chat_mdl, embd_mdl, vector_size, callback=None):
 
 async def run_extract(row, chat_mdl, content,callback=None):
     extractor_config = row["parser_config"].get('extractor')
-    #metadata_type = extractor_config.get("metadata_type", "default")
+    metadata_type = extractor_config.get("metadata_type", "default")
     prompt = None
     key = None
     if extractor_config:
@@ -519,8 +519,7 @@ async def run_extract(row, chat_mdl, content,callback=None):
         prompt,
         key
     )
-    result = await extractor(content,key,callback=callback)
-    # result = await extractor(content,key,metadata_type,callback)
+    result = await extractor(content,key,metadata_type,callback)
     return result
 
 
@@ -780,11 +779,12 @@ async def do_handle_task(task):
             progress_callback(msg="提取元数据完成")
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             # 前往分析子目录对应的文章
-            if result:
+            if len(result["dic_result"]) >= 1:
                 content = str(result["dic_result"])
                 chat_prompt = f"你的回答不需要有任何旁白，只需回答一个json字符包含：yes or no；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
                 try:
-                    chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
+                    # chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
+                    chat_result = ""
                 except Exception as e:
                     logging.error(f"run_chat error {e}!")
                     chat_result = ""
