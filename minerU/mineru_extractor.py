@@ -129,17 +129,19 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     # 过滤字段
     for i in fields:
         if i["name"] in [j["name"] for j in constant.keyvalues_mapping[metadata_type]]:
-            keys_to_use_list.append({
-                "name": i["name"],
-                "description": i["description"],
-                "must_exist": i["must_exist"],
-            })
+            logging.info(f"i=========== {i}\n constant.keyvalues_mapping[metadata_type]==>\n{constant.keyvalues_mapping[metadata_type]}")
+            keys_to_use_list.append(i["name"])
+            # keys_to_use_list.append({
+            #    "name": i["name"],
+            #    "description": i["description"],
+            #    "must_exist": i["must_exist"],
+            # })
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
 
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；按照 description 进行提取相应的 name 字段，must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
+        f"提取图中的：{keys_to_use_list} 文本内容；对于从图片中提取的内容，不要修改原文；"
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
