@@ -731,6 +731,85 @@ class MinerUPdf:
             logging.debug("befor merge section {}".format(sec))
             add_chunk(sec)
 
+        # 添加拆分过长块的逻辑
+        def split_long_chunks(chunks, token_nums, max_tokens=512):
+            """
+            对过长的文本块进行拆分
+            Args:
+                chunks: 块列表
+                token_nums: 对应的token数量列表
+                max_tokens: 最大token数量阈值
+            Returns:
+                拆分后的块列表和token数量列表
+            """
+            new_chunks = []
+            new_token_nums = []
+
+            for i, (chunk, token_num) in enumerate(zip(chunks, token_nums)):
+                # 只对文本类型且超过阈值的块进行拆分
+                if chunk.get('type') == 'text' and token_num > max_tokens:
+                    text = chunk.get('text', '')
+                    poss = chunk.get('poss', [])
+
+                    # 按句子分割文本
+                    sentences = re.split(r'[。！？；\n]', text)
+
+                    current_chunk_text = ""
+                    current_chunk_tokens = 0
+                    current_chunk_poss = []
+
+                    for sentence in sentences:
+                        if not sentence.strip():
+                            continue
+
+                        sentence_tokens = num_tokens_from_string(sentence)
+
+                        # 如果当前句子加入后会超过阈值，先保存当前块
+                        if current_chunk_tokens + sentence_tokens > max_tokens and current_chunk_text:
+                            new_chunk = {
+                                'type': chunk['type'],
+                                'mineru_detail_type': chunk.get('mineru_detail_type'),
+                                'chunk_idx': len(new_chunks),
+                                'text': current_chunk_text.strip(),
+                                'poss': current_chunk_poss if current_chunk_poss else poss
+                            }
+                            new_chunks.append(new_chunk)
+                            new_token_nums.append(current_chunk_tokens)
+
+                            # 重置当前块
+                            current_chunk_text = sentence
+                            current_chunk_tokens = sentence_tokens
+                            current_chunk_poss = []
+                        else:
+                            # 将句子添加到当前块
+                            if current_chunk_text:
+                                current_chunk_text += sentence
+                            else:
+                                current_chunk_text = sentence
+                            current_chunk_tokens += sentence_tokens
+
+                    # 处理最后一个块
+                    if current_chunk_text.strip():
+                        new_chunk = {
+                            'type': chunk['type'],
+                            'mineru_detail_type': chunk.get('mineru_detail_type'),
+                            'chunk_idx': len(new_chunks),
+                            'text': current_chunk_text.strip(),
+                            'poss': current_chunk_poss if current_chunk_poss else poss
+                        }
+                        new_chunks.append(new_chunk)
+                        new_token_nums.append(current_chunk_tokens)
+                else:
+                    # 非文本类型或未超过阈值的块直接添加
+                    chunk['chunk_idx'] = len(new_chunks)
+                    new_chunks.append(chunk)
+                    new_token_nums.append(token_num)
+
+            return new_chunks, new_token_nums
+
+        # 对合并后的块进行拆分处理
+        cks, tk_nums = split_long_chunks(cks, tk_nums, max_tokens=chunk_token_num * 2)
+
         for s in cks:
             logging.debug("after merge section {}".format(s))
 
