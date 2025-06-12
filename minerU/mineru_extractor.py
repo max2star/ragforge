@@ -36,7 +36,7 @@ class ChatWithModel:
 
 
     async def __call__(self, callback=None):
-        results = {}
+        results = None
         async def classifier():
             nonlocal results
             result = None
@@ -46,23 +46,17 @@ class ChatWithModel:
                     "You're a helpful assistant.",
                     [
                         {
-                            "role": "system",
-                            "content": "",
+                            "role": "user",
+                            "content": self._prompt,
                         },
                         {
-                            "role": "user",
+                            "role": "system",
                             "content": self._prompt,
                         }
                     ],
-                    {"temperature": 0.3,'response_format':{'type': 'json_object'}},
+                    {"temperature": 0.3},
                 )
-            try:
-                results = json.loads(result)
-                logging.info(f"dict {results}")
-            except Exception as e:
-                results = {}
-                logging.error(f"chat Failed for {e}")
-
+            results = await result
         async with trio.open_nursery() as nursery:
                async with chat_limiter:
                     nursery.start_soon(classifier)

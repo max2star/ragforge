@@ -726,6 +726,7 @@ async def do_handle_task(task):
     use_vision_parser = True if len(pdf_doc) > MAX_NUM else False
     if use_vision_parser:
         img_results = []
+        flag = False
         for page_num in range(len(pdf_doc)):
             try:
                 page = pdf_doc.load_page(page_num)
@@ -737,13 +738,15 @@ async def do_handle_task(task):
                 img_bytes = pix.tobytes()
                 img = Image.open(BytesIO(img_bytes))
                 width, height = img.size
-                # logging.info(f"原图片宽度: {width}px, 高度: {height}px")
                 size = 600
                 target_size = (size,  int(size*height/width))  # 调整大小
                 img = img.resize(target_size, Image.LANCZOS)
                 img_results.append(img)
-                width, height = img.size
-                logging.info(f"resize 图片宽度: {width}px, 高度: {height}px")
+                if not flag:
+                    flag = True
+                    w_bar, h_bar = img.size
+                    token_size = int((h_bar * w_bar) / (28 * 28))
+                    logging.info(f"原图片宽度: {width}px, 高度: {height}px, 缩放后图片宽度: {w_bar}px, 高度: {h_bar}px，计算token为：{token_size}")
             except Exception as e:
                 logging.error(f"document: {task_doc_id} page_num: {page_num} Generate image byte stream error: {e}!")
         logging.info(f"========== pdf文件共{len(pdf_doc)}页；生成图片字节流列表：{len(img_results)} 张 ==========")
@@ -779,7 +782,7 @@ async def do_handle_task(task):
             # 前往分析子目录对应的文章
             if result:
                 content = str(result["dic_result"])
-                chat_prompt = f"你的回答不需要有任何旁白，只需回答单词：[yes or no]；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
+                chat_prompt = f"你的回答不需要有任何旁白，只需回答一个json字符包含：yes or no；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
                 try:
                     chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
                 except Exception as e:
