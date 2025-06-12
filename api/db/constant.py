@@ -3,6 +3,7 @@ general=[
     "id": 1,
     "name": "标题",
     "code": "title",
+    "description": "标题",
     "must_exist": True
   },
   {
