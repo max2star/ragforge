@@ -123,7 +123,8 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     # 过滤字段
     for i in fields:
         if i["name"] in [j["name"] for j in constant.keyvalues_mapping[metadata_type]]:
-            logging.info(f"i=========== {i}\n constant.keyvalues_mapping[metadata_type]==>\n{constant.keyvalues_mapping[metadata_type]}")
+            logging.info(f"=i['description']===>{i['description']}     i ===> {i}\n"
+                         f" constant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
             keys_to_use_list.append(i["name"])
             # keys_to_use_list.append({
             #    "name": i["name"],
