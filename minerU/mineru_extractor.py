@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import re
@@ -13,7 +14,30 @@ import trio
 from graphrag.utils import (
     chat_limiter,
 )
+def format_time(time_field_value):
+    time_field_value_format = None
 
+    formats = [
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y年%m月%d日",
+        "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%d",
+        "%Y.%m.%d",
+        "%m/%d/%Y %H:%M",
+    ]
+    for format_string in formats:
+        try:
+            time_field_value_format = datetime.strptime(time_field_value, format_string)
+            logging.info(f"Parsed date {time_field_value}-->{time_field_value_format}")
+            time_field_value_format = "{}".format(time_field_value_format.strftime('%Y-%m-%d %H:%M:%SZ'))
+            return time_field_value_format
+        except Exception as e:
+            logging.error("Failed to parse {} use format {} for Exception {}".format(time_field_value,format_string,time_field_value_format))
+            continue
+    return time_field_value_format
 
 class ChatWithModel:
     def __init__(self, llm_model, prompt):
@@ -134,7 +158,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     fields_map = {}
 
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；按照 description 进行提取相应的 name 字段、must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
+        f"提取图中的：{keys_to_use_list} 文本内容；在图片中提取符合description描述的相应字段、must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
         f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
