@@ -33,7 +33,6 @@ from rag.utils import num_tokens_from_string, truncate
 import google.generativeai as genai
 import json
 
-
 class Base(ABC):
     def __init__(self, key, model_name):
         pass
@@ -120,14 +119,32 @@ class OpenAIEmbed(Base):
     def encode(self, texts: list):
         # OpenAI requires batch size <=16
         batch_size = 16
-        texts = [truncate(t, 8191) for t in texts]
+        #直接截取6500个字符
+        texts = [truncate(t, 6500) for t in texts]
         ress = []
+        res = None
         total_tokens = 0
         for i in range(0, len(texts), batch_size):
-            res = self.client.embeddings.create(input=texts[i:i + batch_size],
-                                                model=self.model_name,encoding_format="float")
-            ress.extend([d.embedding for d in res.data])
-            total_tokens += self.total_token_count(res)
+            try:
+                res = self.client.embeddings.create(input=texts[i:i + batch_size],
+                                                    model=self.model_name,encoding_format="float")
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                logging.error("embeddings Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            if not res:
+                test = texts[i:i + batch_size]
+                c_n = 0
+                for t in test:
+                    c_n = c_n + 1
+                    res = self.client.embeddings.create(input=[t],
+                                                        model=self.model_name,encoding_format="float")
+                    logging.info(f"try embeddings one by one {c_n}/{batch_size}...")
+                    ress.extend([d.embedding for d in res.data])
+                    total_tokens += self.total_token_count(res)
+            else:
+                ress.extend([d.embedding for d in res.data])
+                total_tokens += self.total_token_count(res)
         return np.array(ress), total_tokens
 
     def encode_queries(self, text):
