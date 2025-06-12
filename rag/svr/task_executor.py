@@ -874,8 +874,8 @@ async def do_handle_task(task):
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
         if pdf_article_type == "论文集":
-            dict_result["dic_result"] = sub_paper["dic_result"]
-            # dict_result['sub_paper'] = sub_paper
+            # dict_result["dic_result"] = sub_paper["dic_result"]
+            dict_result['sub_paper'] = sub_paper
             # 保存子论文要素至对应分块
             if page_c_[0] >= sub_paper["main_content_begin"]:
                 try:

@@ -518,7 +518,7 @@ Journal = [
   {
     "id": 10,
     "name": "简介",
-    "字段极码": "introduction",
+    "code": "introduction",
     "description": "期刊的基本介绍",
     "must_exist": True,
     "外键": ""
@@ -1222,7 +1222,7 @@ Report = [
   },
   {
     "id": 3,
-    "字段极称": "其他题名",
+    "name": "其他题名",
     "code": "alternative",
     "description": "报告其他题名",
     "must_exist": False,
@@ -1663,7 +1663,7 @@ Patent = [
   # {
   #   "id": 1,
   #   "name": "唯一标识",
-  #   "字段英文名": "identifier",
+  #   "code": "identifier",
   #   "description": "专利的唯一标识",
   #   "must_exist": True,
   #   "外键": ""
@@ -1671,7 +1671,7 @@ Patent = [
   {
     "id": 2,
     "name": "题名",
-    "字段英文名": "title",
+    "code": "title",
     "description": "专利的题名",
     "must_exist": True,
     "外键": ""
@@ -1679,7 +1679,7 @@ Patent = [
   {
     "id": 3,
     "name": "其他题名",
-    "字段英文名": "alternative",
+    "code": "alternative",
     "description": "专利的其他题名",
     "must_exist": False,
     "外键": ""
@@ -1687,7 +1687,7 @@ Patent = [
   {
     "id": 4,
     "name": "语种",
-    "字段英文名": "language",
+    "code": "language",
     "description": "专利的正文语种",
     "must_exist": True,
     "外键": "语种代码表 三位代码"
@@ -1695,7 +1695,7 @@ Patent = [
   {
     "id": 5,
     "name": "主题",
-    "字段英文名": "subject",
+    "code": "subject",
     "description": "描述信息内容的5~8个关键词",
     "must_exist": True,
     "外键": ""
@@ -1703,7 +1703,7 @@ Patent = [
   {
     "id": 6,
     "name": "摘要",
-    "字段英文名": "abstract",
+    "code": "abstract",
     "description": "专利的摘要",
     "must_exist": True,
     "外键": ""
@@ -1711,7 +1711,7 @@ Patent = [
   {
     "id": 7,
     "name": "其他摘要",
-    "字段英文名": "abstract_alternative",
+    "code": "abstract_alternative",
     "description": "专利的其他摘要",
     "must_exist": False,
     "外键": ""
@@ -1719,7 +1719,7 @@ Patent = [
   {
     "id": 8,
     "name": "专利分类号",
-    "字段英文名": "patent_class",
+    "code": "patent_class",
     "description": "专利的主分类号",
     "must_exist": True,
     "外键": ""
@@ -1727,23 +1727,23 @@ Patent = [
   {
     "id": 9,
     "name": "分类",
-    "字段英文名": "class",
+    "code": "class",
     "description": "数聚平台技术体系",
     "must_exist": False,
     "外键": ""
   },
-  {
-    "id": 10,
-    "name": "公开日",
-    "字段英文名": "publication_date",
-    "description": "授权公告日",
-    "must_exist": False,
-    "外键": ""
-  },
+  # {
+  #   "id": 10,
+  #   "name": "公开日",
+  #   "code": "publication_date",
+  #   "description": "授权公告日",
+  #   "must_exist": False,
+  #   "外键": ""
+  # },
   {
     "id": 11,
     "name": "公开号",
-    "字段英文名": "publication_number",
+    "code": "publication_number",
     "description": "授权公告号",
     "must_exist": False,
     "外键": ""
@@ -1751,23 +1751,23 @@ Patent = [
   {
     "id": 12,
     "name": "申请号",
-    "字段英文名": "application_number",
+    "code": "application_number",
     "description": "申请号",
     "must_exist": True,
     "外键": ""
   },
-  {
-    "id": 13,
-    "name": "申请日",
-    "字段英文名": "application_date",
-    "description": "申请日",
-    "must_exist": True,
-    "外键": ""
-  },
+  # {
+  #   "id": 13,
+  #   "name": "申请日",
+  #   "code": "application_date",
+  #   "description": "申请日",
+  #   "must_exist": True,
+  #   "外键": ""
+  # },
   {
     "id": 14,
     "name": "专利申请人",
-    "字段英文名": "applicant",
+    "code": "applicant",
     "description": "专利申请人",
     "must_exist": True,
     "外键": "作者表 identify"
@@ -1775,7 +1775,7 @@ Patent = [
   {
     "id": 15,
     "name": "专利权人",
-    "字段英文名": "patentee",
+    "code": "patentee",
     "description": "专利权人",
     "must_exist": False,
     "外键": "作者表 identify"
@@ -1783,7 +1783,7 @@ Patent = [
   {
     "id": 16,
     "name": "专利权人地址",
-    "字段英文名": "patentee_address",
+    "code": "patentee_address",
     "description": "专利权人地址",
     "must_exist": False,
     "外键": ""
@@ -1791,7 +1791,7 @@ Patent = [
   {
     "id": 17,
     "name": "发明人",
-    "字段英文名": "inventor",
+    "code": "inventor",
     "description": "专利发明人",
     "must_exist": False,
     "外键": "作者表 identify"
@@ -1799,7 +1799,7 @@ Patent = [
   {
     "id": 18,
     "name": "专利代理机构",
-    "字段英文名": "patent_agency",
+    "code": "patent_agency",
     "description": "专利代理机构",
     "must_exist": True,
     "外键": "机构表 identify"
@@ -1807,7 +1807,7 @@ Patent = [
   {
     "id": 19,
     "name": "代理人",
-    "字段英文名": "agent",
+    "code": "agent",
     "description": "专利代理人",
     "must_exist": True,
     "外键": "作者 identify"
@@ -1815,7 +1815,7 @@ Patent = [
   # {
   #   "id": 20,
   #   "name": "收录机构",
-  #   "字段英文名": "source_agency",
+  #   "code": "source_agency",
   #   "description": "收录该信息的机构",
   #   "must_exist": False,
   #   "外键": "机构表 identify"
@@ -1823,7 +1823,7 @@ Patent = [
   # {
   #   "id": 21,
   #   "name": "文献类型",
-  #   "字段英文名": "literature_type",
+  #   "code": "literature_type",
   #   "description": "本条知识的文献类型",
   #   "must_exist": True,
   #   "外键": ""
@@ -1831,7 +1831,7 @@ Patent = [
   # {
   #   "id": 22,
   #   "name": "知识所有者",
-  #   "字段英文名": "belong_to",
+  #   "code": "belong_to",
   #   "description": "本条知识的所有者",
   #   "must_exist": True,
   #   "外键": ""
@@ -1839,7 +1839,7 @@ Patent = [
   # {
   #   "id": 23,
   #   "name": "所属部所",
-  #   "字段英文名": "of_department",
+  #   "code": "of_department",
   #   "description": "知识所有者所属部所",
   #   "must_exist": True,
   #   "外键": ""
@@ -1847,7 +1847,7 @@ Patent = [
   # {
   #   "id": 24,
   #   "name": "附件",
-  #   "字段英文名": "enclosure",
+  #   "code": "enclosure",
   #   "description": "本条知识的原文",
   #   "must_exist": True,
   #   "外键": ""
@@ -1855,7 +1855,7 @@ Patent = [
   # {
   #   "id": 25,
   #   "name": "密级",
-  #   "字段英文名": "confidential",
+  #   "code": "confidential",
   #   "description": "选择公开/内部/秘密/机密",
   #   "must_exist": True,
   #   "外键": ""
@@ -1863,7 +1863,7 @@ Patent = [
   # {
   #   "id": 26,
   #   "name": "知悉范围",
-  #   "字段英文名": "scope_of_information",
+  #   "code": "scope_of_information",
   #   "description": "完全共享/选择知悉范围",
   #   "must_exist": True,
   #   "外键": ""
@@ -1871,7 +1871,7 @@ Patent = [
   # {
   #   "id": 27,
   #   "name": "知识提交者",
-  #   "字段英文名": "submiter",
+  #   "code": "submiter",
   #   "description": "本条知识的提交者",
   #   "must_exist": True,
   #   "外键": ""
@@ -1879,7 +1879,7 @@ Patent = [
   # {
   #   "id": 28,
   #   "name": "提交日期",
-  #   "字段英文名": "submit_date",
+  #   "code": "submit_date",
   #   "description": "本条知识的提交日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -1891,7 +1891,7 @@ Dissertation  = [
   # {
   #   "id": 1,
   #   "name": "唯一标识",
-  #   "字段英文名": "identifier",
+  #   "code": "identifier",
   #   "description": "专利的唯一标识",
   #   "must_exist": True,
   #   "外键": ""
@@ -1899,7 +1899,7 @@ Dissertation  = [
   {
     "id": 2,
     "name": "题名",
-    "字段英文名": "title",
+    "code": "title",
     "description": "硕博论文题名",
     "must_exist": True,
     "外键": ""
@@ -1907,7 +1907,7 @@ Dissertation  = [
   {
     "id": 3,
     "name": "其他题名",
-    "字段英文名": "alternative",
+    "code": "alternative",
     "description": "硕博论文其他题名",
     "must_exist": True,
     "外键": ""
@@ -1915,7 +1915,7 @@ Dissertation  = [
   {
     "id": 4,
     "name": "语种",
-    "字段英文名": "language",
+    "code": "language",
     "description": "正文语种",
     "must_exist": True,
     "外键": "语种代码表 三位代码"
@@ -1923,7 +1923,7 @@ Dissertation  = [
   {
     "id": 5,
     "name": "其他语种",
-    "字段英文名": "language_alternative",
+    "code": "language_alternative",
     "description": "其他正文语种",
     "must_exist": False,
     "外键": "语种代码表 三位代码"
@@ -1931,7 +1931,7 @@ Dissertation  = [
   {
     "id": 6,
     "name": "作者",
-    "字段英文名": "author",
+    "code": "author",
     "description": "硕博论文的作者",
     "极否必备": True,
     "外键": "作者表 identify"
@@ -1939,7 +1939,7 @@ Dissertation  = [
   {
     "id": 7,
     "name": "其他作者",
-    "字段英文名": "author_alternative",
+    "code": "author_alternative",
     "description": "其他作者",
     "must_exist": False,
     "外键": "作者表 identify"
@@ -1947,7 +1947,7 @@ Dissertation  = [
   {
     "id": 8,
     "name": "单位",
-    "字段英文名": "corporate",
+    "code": "corporate",
     "description": "作者的所属单位",
     "must_exist": True,
     "外键": "机构表 identify"
@@ -1955,7 +1955,7 @@ Dissertation  = [
   {
     "id": 9,
     "name": "其他单位",
-    "字段英文名": "corporate_alternative",
+    "code": "corporate_alternative",
     "description": "作者的所属单位其他名称",
     "must_exist": False,
     "外键": "机构表 identify"
@@ -1963,7 +1963,7 @@ Dissertation  = [
   {
     "id": 10,
     "name": "单位代码",
-    "字段英文名": "corporate_code",
+    "code": "corporate_code",
     "description": "所属学校的代码",
     "must_exist": False,
     "外键": ""
@@ -1971,7 +1971,7 @@ Dissertation  = [
   {
     "id": 11,
     "name": "申请学位",
-    "字段英文名": "Academic_Degree",
+    "code": "Academic_Degree",
     "description": "硕士/博士",
     "must_exist": True,
     "外键": ""
@@ -1979,7 +1979,7 @@ Dissertation  = [
   {
     "id": 12,
     "name": "第一导师",
-    "字段英文名": "firsttutor",
+    "code": "firsttutor",
     "description": "硕博论文作者的导师",
     "must_exist": True,
     "外键": ""
@@ -1987,7 +1987,7 @@ Dissertation  = [
   {
     "id": 13,
     "name": "学科专业名称",
-    "字段英文名": "professional_name",
+    "code": "professional_name",
     "description": "硕博论文作者所学专业",
     "must_exist": True,
     "外键": ""
@@ -1995,7 +1995,7 @@ Dissertation  = [
   # {
   #   "id": 14,
   #   "name": "论文提交日期",
-  #   "字段英文名": "paper_submit_date",
+  #   "code": "paper_submit_date",
   #   "description": "硕博论文提交日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2003,7 +2003,7 @@ Dissertation  = [
   {
     "id": 15,
     "name": "主题",
-    "字段英文名": "subject",
+    "code": "subject",
     "description": "描述信息内容的5~8个关键词",
     "must_exist": True,
     "外键": ""
@@ -2011,7 +2011,7 @@ Dissertation  = [
   {
     "id": 16,
     "name": "其他主题",
-    "字段英文名": "subject_alternative",
+    "code": "subject_alternative",
     "description": "描述信息内容的5~8个其他语种关键词",
     "must_exist": False,
     "外键": ""
@@ -2019,7 +2019,7 @@ Dissertation  = [
   {
     "id": 17,
     "name": "摘要",
-    "字段英文名": "abstract",
+    "code": "abstract",
     "description": "正文摘要",
     "must_exist": True,
     "外键": ""
@@ -2027,7 +2027,7 @@ Dissertation  = [
   {
     "id": 18,
     "name": "其他摘要",
-    "字段英文名": "abstract_alternative",
+    "code": "abstract_alternative",
     "description": "其他语种摘要",
     "must_exist": False,
     "外键": ""
@@ -2035,7 +2035,7 @@ Dissertation  = [
   # {
   #   "id": 19,
   #   "name": "收录机构",
-  #   "字段英文名": "source_agency",
+  #   "code": "source_agency",
   #   "description": "收录该信息的机构",
   #   "must_exist": False,
   #   "外键": "机构表 identify"
@@ -2043,7 +2043,7 @@ Dissertation  = [
   # {
   #   "id": 20,
   #   "name": "文献类型",
-  #   "字段英文名": "literature_type",
+  #   "code": "literature_type",
   #   "description": "条知识的文献类型",
   #   "must_exist": True,
   #   "外键": ""
@@ -2051,7 +2051,7 @@ Dissertation  = [
   # {
   #   "id": 21,
   #   "name": "知识所有者",
-  #   "字段英文名": "belong_to",
+  #   "code": "belong_to",
   #   "description": "本条知识的所有者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2059,7 +2059,7 @@ Dissertation  = [
   # {
   #   "id": 22,
   #   "name": "所属部所",
-  #   "字段英文名": "of_department",
+  #   "code": "of_department",
   #   "description": "知识所有者所属部所",
   #   "must_exist": True,
   #   "外键": ""
@@ -2067,7 +2067,7 @@ Dissertation  = [
   # {
   #   "id": 23,
   #   "name": "附件",
-  #   "字段英文名": "enclosure",
+  #   "code": "enclosure",
   #   "description": "本条知识的原文",
   #   "must_exist": True,
   #   "外键": ""
@@ -2075,7 +2075,7 @@ Dissertation  = [
   # {
   #   "id": 24,
   #   "name": "密级",
-  #   "字段英文名": "confidential",
+  #   "code": "confidential",
   #   "description": "选择公开/内部/秘密/机密",
   #   "must_exist": True,
   #   "外键": ""
@@ -2083,7 +2083,7 @@ Dissertation  = [
   # {
   #   "id": 25,
   #   "name": "知悉范围",
-  #   "字段英文名": "scope_of_information",
+  #   "code": "scope_of_information",
   #   "description": "完全共享/选择知悉范围",
   #   "must_exist": True,
   #   "外键": ""
@@ -2091,7 +2091,7 @@ Dissertation  = [
   # {
   #   "id": 26,
   #   "name": "知识提交者",
-  #   "字段英文名": "submiter",
+  #   "code": "submiter",
   #   "description": "本条知识的提交者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2099,7 +2099,7 @@ Dissertation  = [
   # {
   #   "id": 27,
   #   "name": "提交日期",
-  #   "字段英文名": "submit_date",
+  #   "code": "submit_date",
   #   "description": "本条知识的提交日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2112,7 +2112,7 @@ News  = [
   {
     "id": 1,
     "name": "题名",
-    "字段英文名": "title",
+    "code": "title",
     "description": "新闻题名",
     "must_exist": True,
     "外键": ""
@@ -2120,7 +2120,7 @@ News  = [
   {
     "id": 2,
     "name": "其他题名",
-    "字段英文名": "alternative",
+    "code": "alternative",
     "description": "新闻其他题名",
     "must_exist": False,
     "外键": ""
@@ -2128,7 +2128,7 @@ News  = [
   {
     "id": 3,
     "name": "语种",
-    "字段英文名": "language",
+    "code": "language",
     "description": "新闻正文语种",
     "must_exist": True,
     "外键": "语种代码表 三位代码"
@@ -2136,7 +2136,7 @@ News  = [
   {
     "id": 4,
     "name": "其他语种",
-    "字段英文名": "language_alternative",
+    "code": "language_alternative",
     "description": "新闻正文其他语种",
     "must_exist": False,
     "外键": "语种代码表 三位代码"
@@ -2144,15 +2144,15 @@ News  = [
   {
     "id": 5,
     "name": "作者",
-    "字段英文名": "author",
-    "著录极明": "包括记者、通讯员、翻译者等",
+    "code": "author",
+    "description": "包括记者、通讯员、翻译者等",
     "must_exist": False,
     "外键": ""
   },
   {
     "id": 6,
     "name": "责任单位",
-    "字段英文名": "corporate",
+    "code": "corporate",
     "description": "新闻发布的机构",
     "must_exist": True,
     "外键": "机构表 identify"
@@ -2160,7 +2160,7 @@ News  = [
   # {
   #   "id": 7,
   #   "name": "发布时间",
-  #   "字段英文名": "issue_date",
+  #   "code": "issue_date",
   #   "description": "新闻发布日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2168,7 +2168,7 @@ News  = [
   {
     "id": 8,
     "name": "主题",
-    "字段英文名": "subject",
+    "code": "subject",
     "description": "描述信息内容的5~8个关键词",
     "must_exist": True,
     "外键": ""
@@ -2176,7 +2176,7 @@ News  = [
   {
     "id": 9,
     "name": "其他主题",
-    "字段英文名": "subject_alternative",
+    "code": "subject_alternative",
     "description": "描述信息内容的5~8个其他语种关键词",
     "must_exist": False,
     "外键": ""
@@ -2184,7 +2184,7 @@ News  = [
   {
     "id": 10,
     "name": "正文",
-    "字段英文名": "content",
+    "code": "content",
     "description": "新闻内容",
     "must_exist": True,
     "外键": ""
@@ -2192,7 +2192,7 @@ News  = [
   {
     "id": 11,
     "name": "刊名",
-    "字段英文名": "journal",
+    "code": "journal",
     "description": "新闻合集期刊刊名",
     "must_exist": False,
     "外键": "期刊表 identify"
@@ -2200,7 +2200,7 @@ News  = [
   {
     "id": 12,
     "name": "年",
-    "字段英文名": "year",
+    "code": "year",
     "description": "发行年",
     "must_exist": False,
     "外键": ""
@@ -2208,7 +2208,7 @@ News  = [
   {
     "id": 13,
     "name": "期",
-    "字段英文名": "issue",
+    "code": "issue",
     "description": "发行期次",
     "must_exist": False,
     "外键": ""
@@ -2216,7 +2216,7 @@ News  = [
   # {
   #   "id": 14,
   #   "name": "文献类型",
-  #   "字段英文名": "literature_type",
+  #   "code": "literature_type",
   #   "description": "本条知识的文献类型",
   #   "must_exist": True,
   #   "外键": ""
@@ -2224,7 +2224,7 @@ News  = [
   # {
   #   "id": 15,
   #   "name": "知识所有者",
-  #   "字段英文名": "belong_to",
+  #   "code": "belong_to",
   #   "description": "本条知识的所有者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2232,7 +2232,7 @@ News  = [
   # {
   #   "id": 16,
   #   "name": "所属部所",
-  #   "字段英文名": "of_department",
+  #   "code": "of_department",
   #   "description": "知识所有者所属部所",
   #   "must_exist": True,
   #   "外键": ""
@@ -2240,7 +2240,7 @@ News  = [
   # {
   #   "id": 17,
   #   "name": "附件",
-  #   "字段英文名": "enclosure",
+  #   "code": "enclosure",
   #   "description": "本条知识的原文",
   #   "must_exist": True,
   #   "外键": ""
@@ -2248,7 +2248,7 @@ News  = [
   # {
   #   "id": 18,
   #   "name": "密级",
-  #   "字段英文名": "confidential",
+  #   "code": "confidential",
   #   "description": "选择公开/内部/秘密/机密",
   #   "must_exist": True,
   #   "外键": ""
@@ -2256,7 +2256,7 @@ News  = [
   # {
   #   "id": 19,
   #   "name": "知悉范围",
-  #   "字段英文名": "scope_of_information",
+  #   "code": "scope_of_information",
   #   "description": "完全共享/选择知悉范围",
   #   "must_exist": True,
   #   "外键": ""
@@ -2264,7 +2264,7 @@ News  = [
   # {
   #   "id": 20,
   #   "name": "知识提交者",
-  #   "字段英文名": "submiter",
+  #   "code": "submiter",
   #   "description": "本条知识的提交者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2272,7 +2272,7 @@ News  = [
   # {
   #   "id": 21,
   #   "name": "提交日期",
-  #   "字段英文名": "submit_date",
+  #   "code": "submit_date",
   #   "description": "本条知识的提交日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2284,7 +2284,7 @@ OfficialDocument  =[
   {
     "id": 1,
     "name": "题名",
-    "字段英文名": "title",
+    "code": "title",
     "description": "公文题名",
     "must_exist": True,
     "外键": ""
@@ -2292,7 +2292,7 @@ OfficialDocument  =[
   {
     "id": 2,
     "name": "语种",
-    "字段英文名": "language",
+    "code": "language",
     "description": "公文正文语种",
     "must_exist": True,
     "外键": "语种代码表 三位代码"
@@ -2300,7 +2300,7 @@ OfficialDocument  =[
   {
     "id": 3,
     "name": "其他责任者",
-    "字段英文名": "contribute",
+    "code": "contribute",
     "description": "公文签发人",
     "must_exist": True,
     "外键": ""
@@ -2308,7 +2308,7 @@ OfficialDocument  =[
   {
     "id": 4,
     "name": "责任单位",
-    "字段英文名": "corporate",
+    "code": "corporate",
     "description": "公文发布机构",
     "must_exist": True,
     "外键": ""
@@ -2316,7 +2316,7 @@ OfficialDocument  =[
   {
     "id": 5,
     "name": "公文编号",
-    "字段英文名": "document_no",
+    "code": "document_no",
     "description": "公文编号",
     "must_exist": True,
     "外键": ""
@@ -2324,7 +2324,7 @@ OfficialDocument  =[
   # {
   #   "id": 6,
   #   "name": "发布时间",
-  #   "字段英文名": "issue_date",
+  #   "code": "issue_date",
   #   "description": "公文发布日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2332,7 +2332,7 @@ OfficialDocument  =[
   # {
   #   "id": 7,
   #   "name": "通过时间",
-  #   "字段英文名": "pass_date",
+  #   "code": "pass_date",
   #   "description": "公文审议通过日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2340,7 +2340,7 @@ OfficialDocument  =[
   # {
   #   "id": 8,
   #   "name": "生效日期",
-  #   "字段英文名": "effective_date",
+  #   "code": "effective_date",
   #   "description": "公文生效日期日期",
   #   "must_exist": True,
   #   "外键": ""
@@ -2348,7 +2348,7 @@ OfficialDocument  =[
   {
     "id": 9,
     "name": "主题",
-    "字段英文名": "subject",
+    "code": "subject",
     "description": "用5到8个关键词描述",
     "must_exist": True,
     "外键": ""
@@ -2356,7 +2356,7 @@ OfficialDocument  =[
   {
     "id": 10,
     "name": "公文类型",
-    "字段英文名": "document_type",
+    "code": "document_type",
     "description": "会议纪要,制度",
     "must_exist": "",
     "外键": ""
@@ -2364,7 +2364,7 @@ OfficialDocument  =[
   # {
   #   "id": 11,
   #   "name": "文献类型",
-  #   "字段英文名": "literature_type",
+  #   "code": "literature_type",
   #   "description": "本条知识的文献类型",
   #   "must_exist": True,
   #   "外键": ""
@@ -2372,7 +2372,7 @@ OfficialDocument  =[
   # {
   #   "id": 12,
   #   "name": "知识所有者",
-  #   "字段英文名": "belong_to",
+  #   "code": "belong_to",
   #   "description": "本条知识的所有者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2380,7 +2380,7 @@ OfficialDocument  =[
   # {
   #   "id": 13,
   #   "name": "所属部所",
-  #   "字段英文名": "of_department极",
+  #   "code": "of_department极",
   #   "description": "知识所有者所属部所",
   #   "must_exist": True,
   #   "外键": ""
@@ -2388,7 +2388,7 @@ OfficialDocument  =[
   # {
   #   "id": 14,
   #   "name": "附件",
-  #   "字段英文名": "enclosure",
+  #   "code": "enclosure",
   #   "description": "本条知识的原文",
   #   "must_exist": True,
   #   "外键": ""
@@ -2396,7 +2396,7 @@ OfficialDocument  =[
   # {
   #   "id": 15,
   #   "name": "密级",
-  #   "字段英文名": "confidential",
+  #   "code": "confidential",
   #   "description": "选择公开/内部/秘密/机密",
   #   "must_exist": True,
   #   "外键": ""
@@ -2404,7 +2404,7 @@ OfficialDocument  =[
   # {
   #   "id": 16,
   #   "name": "知悉范围",
-  #   "字段英文名": "scope_of_information",
+  #   "code": "scope_of_information",
   #   "description": "完全共享/选择知悉范围",
   #   "must_exist": True,
   #   "外键": ""
@@ -2412,7 +2412,7 @@ OfficialDocument  =[
   # {
   #   "id": 17,
   #   "name": "知识提交者",
-  #   "字段英文名": "submiter",
+  #   "code": "submiter",
   #   "description": "本条知识的提交者",
   #   "must_exist": True,
   #   "外键": ""
@@ -2420,7 +2420,7 @@ OfficialDocument  =[
   # {
   #   "id": 18,
   #   "name": "提交日期",
-  #   "字段英文名": "submit_date",
+  #   "code": "submit_date",
   #   "description": "本条知识的提交日期",
   #   "must_exist": True,
   #   "外键": ""
