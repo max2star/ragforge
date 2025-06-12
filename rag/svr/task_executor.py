@@ -28,7 +28,7 @@ from PIL import Image
 from api.utils.log_utils import initRootLogger, get_project_base_directory
 from graphrag.general.index import run_graphrag
 from graphrag.utils import get_llm_cache, set_llm_cache, get_tags_from_cache, set_tags_to_cache
-from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, ChatWithModel
+from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, ChatWithModel, format_time
 from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
@@ -697,7 +697,7 @@ async def do_handle_task(task):
         keys = extractor_config.get("keyvalues", None)
     else:
         keys = constant.keyvalues_mapping['default']
-    logging.info(f"========= keys ========= \n{keys}")
+    logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
     # 进行要素提取和分类
@@ -903,6 +903,13 @@ async def do_handle_task(task):
                 c_[key] = value
         c_['filter_fields'] = filter_fields_
         for key,value in filter_fields_.items():
+            try:
+                if re.search(r'时间|日期', key, re.IGNORECASE):
+                    value = format_time(value)
+                    if value:
+                        value = value[:19]
+            except Exception as e:
+                logging.info(f"fromtimestamp error {e}")
             c_[key] = value
         c_['limit_range'] = limit_range
         c_['limit_level'] = limit_level
