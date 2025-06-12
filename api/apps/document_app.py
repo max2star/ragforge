@@ -591,6 +591,7 @@ def get(doc_id):
 
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:
+            logging.info(f"get for {doc_id},type {ext.group(1)}")
             if doc.type == FileType.VISUAL.value:
                 response.headers.set('Content-Type', 'image/%s' % ext.group(1))
             else:
