@@ -508,6 +508,7 @@ async def run_raptor(row, chat_mdl, embd_mdl, vector_size, callback=None):
 
 async def run_extract(row, chat_mdl, content,callback=None):
     extractor_config = row["parser_config"].get('extractor')
+    #metadata_type = extractor_config.get("metadata_type", "default")
     prompt = None
     key = None
     if extractor_config:
@@ -518,7 +519,8 @@ async def run_extract(row, chat_mdl, content,callback=None):
         prompt,
         key
     )
-    result = await extractor(content,key,callback)
+    result = await extractor(content,key,callback=callback)
+    # result = await extractor(content,key,metadata_type,callback)
     return result
 
 
@@ -763,57 +765,68 @@ async def do_handle_task(task):
         num = directory_begin - 1
         if directory_begin <= 0:
             num = 10
+        try:
+            # 提取元数据
+            fields_map = extract_metadata(
+                task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
+                images=img_results[:num],
+                fields=fields,
+                metadata_type=metadata_type,
+                callback=progress_callback,
+            )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
+            progress_callback(msg="提取元数据完成")
+            logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
+            # 前往分析子目录对应的文章
+            if result:
+                content = str(result["dic_result"])
+                chat_prompt = f"你的回答不需要有任何旁白，只需回答单词：[yes or no]；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
+                try:
+                    chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
+                except Exception as e:
+                    logging.error(f"run_chat error {e}!")
+                    chat_result = ""
+                logging.info(f"========== chat_result : {chat_result} ==========")
+                if 'yes' in chat_result and len(result["dic_result"]) > 0:
+                    pdf_article_type = "论文集"
+                    # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+                    progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
+                    main_content_begin = result['main_content_begin']
+                    sub_paper["main_content_begin"] = main_content_begin
+                    sub_paper["fields_map"] = {}
+                    sub_paper["dic_result"] = result
+                    for i in range(len(result['dic_result']) - 1):
+                        res = result['dic_result'][i]
+                        title_ = res['章节']
+                        page_ = res['页码']
+                        pdf_page_ = main_content_begin - 1 + page_
+                        logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
+                        picture_ = img_results[pdf_page_]
+                        fields_map_ = extract_metadata(
+                            task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type, callback=progress_callback,
+                        )
+                        sub_paper["fields_map"][pdf_page_] = {
+                            "title_": title_, "page_": page_,
+                            "fields_map_": fields_map_,
+                        }
+                    logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
+        except Exception as e:
+            logging.error(f"视觉模型提取失败，替换文本模型 error {e}!")
+            for c_ in chunks:
+                content = content + "\n" + c_['content_with_weight']
+                c_count = c_count + len(c_['content_with_weight'])
+                if c_count >= 10000:
+                    break
+            logging.debug(f"do_handle_task current content {content}")
 
-        # 提取元数据
-        fields_map = extract_metadata(
-            task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
-            images=img_results[:num],
-            fields=fields,
-            metadata_type=metadata_type,
-            callback=progress_callback,
-        )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
-        progress_callback(msg="提取元数据完成")
-        logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
-        # 前往分析子目录对应的文章
-        if result:
-            content = str(result["dic_result"])
-            chat_prompt = f"你的回答不需要有任何旁白，只需回答单词：[yes or no]；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
-            try:
-                chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
-            except Exception as e:
-                logging.error(f"run_chat error {e}!")
-                chat_result = ""
-            logging.info(f"========== chat_result : {chat_result} ==========")
-            if 'yes' in chat_result and len(result["dic_result"]) > 0:
-                pdf_article_type = "论文集"
-                # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
-                progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
-                main_content_begin = result['main_content_begin']
-                sub_paper["main_content_begin"] = main_content_begin
-                sub_paper["fields_map"] = {}
-                sub_paper["dic_result"] = result
-                for i in range(len(result['dic_result']) - 1):
-                    res = result['dic_result'][i]
-                    title_ = res['章节']
-                    page_ = res['页码']
-                    pdf_page_ = main_content_begin - 1 + page_
-                    logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
-                    picture_ = img_results[pdf_page_]
-                    fields_map_ = extract_metadata(
-                        task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type, callback=progress_callback,
-                    )
-                    sub_paper["fields_map"][pdf_page_] = {
-                        "title_": title_, "page_": page_,
-                        "fields_map_": fields_map_,
-                    }
-                logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
+            fields_map = await run_extract(task, chat_model, content, progress_callback)
+
 
         dict_result_add = fields_map
     else:
         for c_ in chunks:
             content = content + "\n" + c_['content_with_weight']
             c_count = c_count + len(c_['content_with_weight'])
-            if c_count >= 5000:
+            if c_count >= 10000:
                 break
         logging.debug(f"do_handle_task current content {content}")
 
