@@ -68,6 +68,7 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
   const knowledgeDetails = useFetchKnowledgeConfigurationOnMount(form);
   const parserId: DocumentParserType = Form.useWatch('parser_id', form);
   const ConfigurationComponent = useMemo(() => {
+    console.log('finalParserId >>>>, ', finalParserId);
     return finalParserId
       ? ConfigurationComponentMap[finalParserId]
       : EmptyComponent;
