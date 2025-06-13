@@ -63,13 +63,14 @@ class PaperExtractor:
             nonlocal key_to_parse
             result = None
             logging.info(f"PaperExtractor extract for {key_to_parse}")
-            if not key_to_parse:
-               key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
+            # if not key_to_parse:
+            #     key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
+            key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
             # 过滤字段
             keys_to_use_list = []
             for i in key_to_parse:
-                if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
-                    keys_to_use_list.append(i['name'])
+                # if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
+                keys_to_use_list.append(i['name'])
 
             keys_to_use = "、".join(keys_to_use_list)
             logging.info(f"PaperExtractor extract for {keys_to_use}")

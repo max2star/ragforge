@@ -1271,7 +1271,7 @@ Report = [
   {
     "id": 9,
     "name": "主题",
-    "code": "subject极",
+    "code": "subject",
     "description": "描述信息内容的5~8个关键词",
     "must_exist": True,
     "外键": ""
@@ -1411,7 +1411,14 @@ Report = [
   #   "description": "本条知识的提交日期",
   #   "must_exist": True,
   #   "外键": ""
-  # }
+  # },
+  {
+    "id": 27,
+    "name": "关键词",
+    "code": "keywords",
+    "description": "描述信息内容的关键词",
+    "must_exist": True
+  },
 ]
 
 # 标准元数据
@@ -1526,7 +1533,7 @@ Standard = [
     "code": "class_alternative",
     "description": "其他分类,如ics",
     "must_exist": True,
-    "外极": ""
+    "外键": ""
   },
   {
     "id": 15,
@@ -1933,7 +1940,7 @@ Dissertation  = [
     "name": "作者",
     "code": "author",
     "description": "硕博论文的作者",
-    "极否必备": True,
+    "must_exist": True,
     "外键": "作者表 identify"
   },
   {
@@ -2921,7 +2928,7 @@ Glossary=  [
 
 
 keyvalues_mapping = {
-    'default':general,
+    'default':Report,
     # 'journal':journal,
     '图书':Book,# 图书元数据
     '期刊':Journal,# 期刊元数据
