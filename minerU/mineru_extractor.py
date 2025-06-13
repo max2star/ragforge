@@ -136,6 +136,7 @@ def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
             return boosted_figures
         except Exception as e:
             logging.error(f"Visual model error: {e}")
+            raise e
     return None
 
 
@@ -145,14 +146,23 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     # 获取相应元数据字段
     keys_to_use_list = []
     # 过滤字段
-    for i in fields:
-        if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
-            logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
-            keys_to_use_list.append({
-               "name": i["name"],
-               "description": i["description"] if i.get("description") else "",
-               "must_exist": i["must_exist"],
-            })
+    # for i in fields:
+    #     if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
+    #         logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
+    #         keys_to_use_list.append({
+    #            "name": i["name"],
+    #            "description": i["description"] if i.get("description") else "",
+    #            "must_exist": i["must_exist"],
+    #         })
+
+    for i in constant.keyvalues_mapping.get(metadata_type, "default"):
+        logging.info(
+            f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping.get(metadata_type, 'default')}")
+        keys_to_use_list.append({
+            "name": i["name"],
+            "description": i["description"] if i.get("description") else "",
+            "must_exist": i["must_exist"],
+        })
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
