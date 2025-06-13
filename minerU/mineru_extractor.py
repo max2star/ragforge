@@ -150,7 +150,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
             logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
             keys_to_use_list.append({
                "name": i["name"],
-               "description": i["description"] if i["description"] else "",
+               "description": i["description"] if i.get("description") else "",
                "must_exist": i["must_exist"],
             })
 
