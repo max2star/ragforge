@@ -44,11 +44,12 @@ const LayoutRecognize = ({ isPdf }: { isPdf: boolean }) => {
     return [...list, ...image2TextList];
   }, [allOptions, t, isPdf]);
 
+  console.log('options >>>', options);
   return (
     <Form.Item
       name={['parser_config', 'layout_recognize']}
       label={t('layoutRecognize')}
-      initialValue={DocumentType.DeepDOC}
+      initialValue={DocumentType.PlainText}
       tooltip={t('layoutRecognizeTip')}
     >
       <Select options={options} popupMatchSelectWidth={false} />
