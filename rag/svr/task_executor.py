@@ -782,6 +782,9 @@ async def do_handle_task(task):
             content += json.dumps(fields_map)
             progress_callback(msg="视觉模型提取元数据完成")
         except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
             logging.error(f"视觉模型提取失败，替换文本模型 error {e}!")
             for c_ in chunks:
                 content = content + "\n" + c_['content_with_weight']
