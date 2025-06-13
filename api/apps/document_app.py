@@ -577,6 +577,7 @@ def get(doc_id):
     try:
         e, doc = DocumentService.get_by_id(doc_id)
         if not e:
+            logging.info(f"get for {doc_id},not found")
             return get_data_error_result(message="Document not found!")
 
         #if not DocumentService.accessible(doc_id, current_user.id):
@@ -591,6 +592,7 @@ def get(doc_id):
 
         ext = re.search(r"\.([^.]+)$", doc.name)
         if ext:
+            logging.info(f"get for {doc_id},type {ext.group(1)}")
             if doc.type == FileType.VISUAL.value:
                 response.headers.set('Content-Type', 'image/%s' % ext.group(1))
             else:
