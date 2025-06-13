@@ -173,7 +173,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                 r_d = {}
                 logging.error(f"json loads error: {e} \n{vr_value}")
 
-            for key in [v["name"] for k,v in keys_to_use_list]:
+            for key in [v["name"] for v in keys_to_use_list]:
                 value_now = fields_map.get(key, None)
                 if value_now:
                     if key not in ['摘要', '正文', '前言']:
