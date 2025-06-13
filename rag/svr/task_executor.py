@@ -522,7 +522,7 @@ async def run_extract(row, chat_mdl, content,callback=None):
     result = await extractor(content,key,metadata_type,callback)
     return result
 
-
+# todo modify
 async def run_chat(chat_mdl, prompt=None, callback=None):
     chatter = ChatWithModel(
         chat_mdl,
@@ -719,11 +719,13 @@ async def do_handle_task(task):
 
     pdf_doc = fitz.open('pdf', pdf_bytes)
     # 最大识别图片页数
-    MAX_NUM = 30
+    MAX_NUM = 40
 
     # 是否使用视觉模型
-    use_vision_parser = True if len(pdf_doc) > MAX_NUM else False
+    # use_vision_parser = True if len(pdf_doc) > MAX_NUM else False
+    use_vision_parser = True
     if use_vision_parser:
+        # 生成图片列表
         img_results = []
         flag = False
         for page_num in range(len(pdf_doc)):
@@ -750,9 +752,9 @@ async def do_handle_task(task):
                 logging.error(f"document: {task_doc_id} page_num: {page_num} Generate image byte stream error: {e}!")
         logging.info(f"========== pdf文件共{len(pdf_doc)}页；生成图片字节流列表：{len(img_results)} 张 ==========")
 
+        # 提取目录
         result = None
         directory_begin = 0
-        # 提取目录
         try:
             result = extract_directory(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
@@ -764,10 +766,12 @@ async def do_handle_task(task):
         except Exception as e:
             logging.error(f"提取目录 error {e}!")
 
-        num = directory_begin - 1
-        if directory_begin <= 0:
-            num = 10
+        # 根据目录结果提取元数据：存在目录使用目录前内容；反之取前10页；
+        num = max(10,directory_begin - 1)
+        flag = directory_begin > 0 and len(result["dic_result"]) >= 1 # 是否存在目录
         try:
+            if not flag:
+                num = 10
             # 提取元数据
             fields_map = extract_metadata(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
@@ -776,42 +780,9 @@ async def do_handle_task(task):
                 metadata_type=metadata_type,
                 callback=progress_callback,
             )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
-            progress_callback(msg="提取元数据完成")
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
-            # 前往分析子目录对应的文章
-            if len(result["dic_result"]) >= 1:
-                content = str(result["dic_result"])
-                chat_prompt = f"你的回答不需要有任何旁白，只需回答一个json字符包含：yes or no；请结合以下内容，判断分析其是否属于多篇论文的目录：{content[:5000]} "
-                try:
-                    # chat_result = await run_chat(chat_model, chat_prompt, progress_callback)
-                    chat_result = ""
-                except Exception as e:
-                    logging.error(f"run_chat error {e}!")
-                    chat_result = ""
-                logging.info(f"========== chat_result : {chat_result} ==========")
-                if 'yes' in chat_result and len(result["dic_result"]) > 0:
-                    pdf_article_type = "论文集"
-                    # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
-                    progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
-                    main_content_begin = result['main_content_begin']
-                    sub_paper["main_content_begin"] = main_content_begin
-                    sub_paper["fields_map"] = {}
-                    sub_paper["dic_result"] = result
-                    for i in range(len(result['dic_result']) - 1):
-                        res = result['dic_result'][i]
-                        title_ = res['章节']
-                        page_ = res['页码']
-                        pdf_page_ = main_content_begin - 1 + page_
-                        logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
-                        picture_ = img_results[pdf_page_]
-                        fields_map_ = extract_metadata(
-                            task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type, callback=progress_callback,
-                        )
-                        sub_paper["fields_map"][pdf_page_] = {
-                            "title_": title_, "page_": page_,
-                            "fields_map_": fields_map_,
-                        }
-                    logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
+            content += json.dumps(fields_map)
+            progress_callback(msg="视觉模型提取元数据完成")
         except Exception as e:
             logging.error(f"视觉模型提取失败，替换文本模型 error {e}!")
             for c_ in chunks:
@@ -822,7 +793,38 @@ async def do_handle_task(task):
             logging.debug(f"do_handle_task current content {content}")
 
             fields_map = await run_extract(task, chat_model, content, progress_callback)
+            progress_callback(msg="文本模型提取元数据完成")
 
+        # if flag:
+            # prompt = f""
+            # logging.info(msg="判断是否属于论文集")
+            # vision_results = vision_parser(task_tenant_id, img_results[:num], prompt=prompt)
+
+            # 前往分析子目录对应的文章
+            # if len(result["dic_result"]) >= 1:
+            #     pdf_article_type = "论文集"
+            #     # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+            #     progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
+            #     main_content_begin = result['main_content_begin']
+            #     sub_paper["main_content_begin"] = main_content_begin
+            #     sub_paper["fields_map"] = {}
+            #     sub_paper["dic_result"] = result
+            #     for i in range(len(result['dic_result']) - 1):
+            #         res = result['dic_result'][i]
+            #         title_ = res['章节']
+            #         page_ = res['页码']
+            #         pdf_page_ = main_content_begin - 1 + page_
+            #         logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
+            #         picture_ = img_results[pdf_page_]
+            #         fields_map_ = extract_metadata(
+            #             task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type,
+            #             callback=progress_callback,
+            #         )
+            #         sub_paper["fields_map"][pdf_page_] = {
+            #             "title_": title_, "page_": page_,
+            #             "fields_map_": fields_map_,
+            #         }
+            #     logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
 
         dict_result_add = fields_map
     else:
@@ -834,6 +836,7 @@ async def do_handle_task(task):
         logging.debug(f"do_handle_task current content {content}")
 
         dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+        progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
     for key,value in dict_result_add.items():
@@ -845,15 +848,7 @@ async def do_handle_task(task):
     logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
 
     # 分类标签
-    if use_vision_parser:
-        """
-        重新赋值content：使用视觉模型解析的标题、摘要、关键词等元数据，从中重新提取文本进行标签分类
-        """
-        content = json.dumps(dict_result)
-        classification_result = await run_classify(task, chat_model, content[:5000], progress_callback)
-    else:
-        """原文本模型"""
-        classification_result = await run_classify(task, chat_model, content, progress_callback)
+    classification_result = await run_classify(task, chat_model, content[:10000], progress_callback)
 
     #抽取失败用空覆盖之前
     classify_result = []
