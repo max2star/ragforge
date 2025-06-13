@@ -47,13 +47,13 @@ user_default_llm:
     embedding_model: 'embed'
     rerank_model: 'rerank'
     asr_model: ''
-    image2text_model: 'qwen2-vl'
+    image2text_model: 'qwen2.5-vl-32b-instruct'
   default_models_config:
     chat_model: 'http://118.193.126.254:1025/v1'
     embedding_model: 'http://118.193.126.254:8080/'
     rerank_model: 'http://118.193.126.254:1111/rerank'
     asr_model: 'http://118.193.126.254:1111/v1'
-    image2text_model: 'http://118.193.126.254:1135/v1'
+    image2text_model: 'http://118.193.126.254:3525/v1'
 
 minio_backup:
   user: '${MINIO_USER_:-rag_flow}'
