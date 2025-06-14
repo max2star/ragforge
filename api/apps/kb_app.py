@@ -35,7 +35,7 @@ from rag.nlp import search
 from api.constants import DATASET_NAME_LIMIT
 from rag.settings import PAGERANK_FLD
 import datetime
-
+import logging
 @manager.route('/create', methods=['post'])  # noqa: F821
 @login_required
 @validate_request("name")
@@ -184,6 +184,7 @@ def list_kbs():
 
     req = request.get_json()
     owner_ids = req.get("owner_ids", [])
+
     try:
         if not owner_ids:
             tenants = TenantService.get_joined_tenants_by_user_id(current_user.id)
@@ -193,7 +194,8 @@ def list_kbs():
                 items_per_page, orderby, desc, keywords, parser_id)
         else:
             tenants_stored = TenantService.get_joined_tenants_by_user_id(current_user.id)
-            tenants_stored = [m["tenant_id"] for m in tenants]
+            tenants_stored = [m["tenant_id"] for m in tenants_stored]
+            tenants_stored.append(current_user.id)
             not_in = []
             for o in owner_ids:
                 if o not in tenants_stored:
@@ -201,9 +203,10 @@ def list_kbs():
             if not_in:
                 return get_json_result(
                             data=False,
-                            message=f'The kbs {not_in} in owner_ids not accessible for user {current_user.id}.',
+                            message=f'The user {current_user.id} only joined or own {tenants_stored},but not joined or own {not_in}.',
                             code=settings.RetCode.AUTHENTICATION_ERROR
                 )
+            tenants = tenants_stored
             kbs, total = KnowledgebaseService.get_by_tenant_ids(
                 tenants, current_user.id, 0,
                 0, orderby, desc, keywords, parser_id)

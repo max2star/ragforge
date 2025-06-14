@@ -1441,6 +1441,8 @@ def retrieval_test(tenant_id):
     """
     import logging
     req = request.json
+    top = int(req.get("top_k", 1024))
+    logging.info(f"retrieval sdk parameter top {top}")
     if not req.get("dataset_ids"):
         return get_error_data_result("`dataset_ids` is required.")
     req['limit_range'] = tenant_id
@@ -1451,15 +1453,18 @@ def retrieval_test(tenant_id):
         return get_error_data_result("`dataset_ids` should be a list")
     for id in kb_ids:
         if not KnowledgebaseService.accessible(kb_id=id, user_id=tenant_id):
-            return get_error_data_result(f"You don't own the dataset {id}.")
+            return get_error_data_result(f"You user {tenant_id} don't own the dataset {id}.")
     kbs = KnowledgebaseService.get_by_ids(kb_ids)
     embd_nms = list(set([TenantLLMService.split_model_name_and_factory(kb.embd_id)[0] for kb in kbs]))  # remove vendor suffix for comparison
+    for kb in kbs:
+        logging.info(f"retrieval sdk kb=={kb} kb.embd_id=={kb.embd_id}\n")
     if len(embd_nms) != 1:
         return get_result(
-            message='Datasets use different embedding models."',
+            message=f'Datasets {kb_ids} use different embedding models {embd_nms}."',
             code=settings.RetCode.DATA_ERROR,
         )
     if "question" not in req:
+        logging.info(f"retrieval sdk question None")
         return get_error_data_result("`question` is required.")
     page = int(req.get("page", 1))
     size = int(req.get("page_size", 30))
@@ -1483,11 +1488,9 @@ def retrieval_test(tenant_id):
 
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
     vector_similarity_weight = float(req.get("vector_similarity_weight", 0.3))
-    top = int(req.get("top_k", 1024))
     limit_range= req.get('limit_range',tenant_id)
     limit_time = str(datetime.datetime.now()).replace("T", " ")[:19]
     limit_level= req.get('limit_level',1)
-
     if req.get("highlight") == "False" or req.get("highlight") == "false":
         highlight = False
     else:
@@ -1554,8 +1557,12 @@ def retrieval_test(tenant_id):
                 rename_chunk[new_key] = value
             renamed_chunks.append(rename_chunk)
         ranks["chunks"] = renamed_chunks
+        if len(ranks["chunks"])>top:
+            ranks["chunks"] = ranks["chunks"][:top]
+        logging.info(f"retrieval sdk {top},page {page},size {size},result length {len(ranks['chunks'])}")
         return get_result(data=ranks)
     except Exception as e:
+        logging.error(f"retrieval exeception {e}")
         if str(e).find("not_found") > 0:
             return get_result(
                 message="No chunk found! Check the chunk status please!",

@@ -833,7 +833,7 @@ def retrieval():
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
     vector_similarity_weight = float(req.get("vector_similarity_weight", 0.3))
     top = int(req.get("top_k", 1024))
-
+    logging.info(f"retrieval api top {top},page {page},size {size},similarity_threshold {similarity_threshold},vector_similarity_weight {vector_similarity_weight}")
     try:
         kbs = KnowledgebaseService.get_by_ids(kb_ids)
         embd_nms = list(set([kb.embd_id for kb in kbs]))
@@ -856,6 +856,7 @@ def retrieval():
                                                similarity_threshold, vector_similarity_weight, top,
                                                doc_ids, rerank_mdl=rerank_mdl,
                                                rank_feature=label_question(question, kbs))
+        logging.info(f"retrieval api for top {top},page {page},size {size},result chunks len {len(ranks.get('chunks', []))}")
         for c in ranks["chunks"]:
             c.pop("vector", None)
         return get_json_result(data=ranks)
