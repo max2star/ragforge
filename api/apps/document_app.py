@@ -765,7 +765,7 @@ def get_layout(doc_id):
 @validate_request("doc_id", "parser_id")
 def change_parser():
     req = request.json
-
+    logging.info(f"\n\nchange_parser =========> {req}\n\n")
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
