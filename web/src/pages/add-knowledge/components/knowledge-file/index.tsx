@@ -145,6 +145,14 @@ const KnowledgeFile = () => {
       },
     },
     {
+      title: '更新日期',
+      dataIndex: 'update_date',
+      key: 'update_date',
+      render(value) {
+        return formatDate(value);
+      },
+    },
+    {
       title: t('chunkMethod'),
       dataIndex: 'parser_id',
       key: 'parser_id',
