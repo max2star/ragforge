@@ -96,9 +96,11 @@ services:
     volumes:
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
+      - ../web:/ragflow/web
       - ../rag:/ragflow/rag
       - ../api:/ragflow/api
       - ../minerU:/ragflow/minerU
+      - ../tests:/ragflow/tests
       - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
       #- /root/.cache:/root/.cache
       #- /root/magic-pdf.json:/root/magic-pdf.json
@@ -111,7 +113,6 @@ services:
       - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragflow/tests
     env_file: .env
     environment:
       - TZ=${TIMEZONE}
