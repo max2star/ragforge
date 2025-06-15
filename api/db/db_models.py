@@ -755,6 +755,8 @@ class PooledDmDatabase(Database):
         processed_sql = processed_sql.replace("AUTO_INCREMENT", "IDENTITY")
         processed_sql = processed_sql.replace("LONGTEXT", "TEXT")
         processed_sql = processed_sql.replace("BIGINT UNSIGNED", "BIGINT")
+        # 达梦数据库配置：utf-8，大小写不敏感，替换"ILIKE"为"LIKE"
+        processed_sql = processed_sql.replace("ILIKE", "LIKE")
 
         # 处理INSERT IGNORE
         if "INSERT IGNORE" in processed_sql.upper():
