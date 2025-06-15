@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 
 from flask import request
 from api.db import StatusEnum, FileSource
@@ -92,6 +93,9 @@ def create(tenant_id):
     permission = req.get("permission")
     chunk_method = req.get("chunk_method")
     parser_config = req.get("parser_config")
+    # 创建文件夹时的元数据类型
+    metadata_type = req.get("metadata_type", "default")
+    logging.info(f"parser_config metadata_type={metadata_type}, chunk_method={chunk_method}, parser_config={parser_config}")
     valid_parser_config(parser_config)
     valid_permission = ["me", "team"]
     valid_chunk_method = [
@@ -116,7 +120,7 @@ def create(tenant_id):
     )
     if check_validation:
         return check_validation
-    req["parser_config"] = get_parser_config(chunk_method, parser_config)
+    req["parser_config"] = get_parser_config(chunk_method, parser_config, metadata_type=metadata_type)
     if "tenant_id" in req:
         return get_error_data_result(message="`tenant_id` must not be provided")
     if "chunk_count" in req or "document_count" in req:
