@@ -345,11 +345,12 @@ def dataset_readonly_fields(field_name):
     return field_name in ["chunk_count", "create_date", "create_time", "update_date", "update_time", "created_by", "document_count", "token_num", "status", "tenant_id", "id"]
 
 
-def get_parser_config(chunk_method, parser_config):
+def get_parser_config(chunk_method, parser_config, metadata_type="default"):
     if parser_config:
         return parser_config
     if not chunk_method:
         chunk_method = "paper"
+    metadata_type = metadata_type if metadata_type in constant.keyvalues_mapping.keys() else "default"
     key_mapping = {
         "naive": {"chunk_token_num": 128, "delimiter": "\\n!?;。；！？", "html4excel": False, "layout_recognize": "DeepDOC", "raptor": {"use_raptor": False}},
         "qa": {"raptor": {"use_raptor": False}},
@@ -357,7 +358,13 @@ def get_parser_config(chunk_method, parser_config):
         "resume": None,
         "manual": {"raptor": {"use_raptor": False}},
         "table": None,
-        "paper": { "pages": [[1, 1000000]],"layout_recognize":"MinerU","extractor":{"keyvalues":constant.keyvalues_mapping['default']},"classifier":{}},
+        "paper": { "pages": [[1, 1000000]],
+                   "layout_recognize":"MinerU",
+                   "extractor":{
+                       "keyvalues":constant.keyvalues_mapping.get(metadata_type,"default"),
+                       "metadata_type":metadata_type,
+                   },
+                   "classifier":{}},
         "book": {"raptor": {"use_raptor": False}},
         "laws": {"raptor": {"use_raptor": False}},
         "presentation": {"raptor": {"use_raptor": False}},
@@ -367,6 +374,7 @@ def get_parser_config(chunk_method, parser_config):
         "picture": None,
     }
     parser_config = key_mapping[chunk_method]
+    logging.info(f"parser_config chunk_method={chunk_method}, metadata_type={metadata_type}, parser_config={parser_config}")
     return parser_config
 
 
