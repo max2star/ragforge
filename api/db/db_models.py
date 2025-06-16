@@ -1149,67 +1149,140 @@ class DmDatabaseLock:
 
     @with_retry(max_retries=3, retry_delay=1.0)
     def lock(self):
-        # 达梦数据库锁实现
-        # 获取当前进程ID作为锁标识
+        """获取锁"""
         process_id = str(os.getpid()) + "_" + str(threading.get_ident())
 
         try:
-            # 尝试获取锁 - 使用达梦兼容的插入语法
-            cursor = self.db.execute_sql(
-                f'''
-                        INSERT INTO "{self.lock_table}" 
-                        ("LOCK_NAME", "PROCESS_ID", "TIMEOUT")
-                        VALUES (?, ?, ?)
+            # 对于update_progress这样的特殊锁，使用更宽松的策略
+            if self.lock_name == "update_progress":
+                try:
+                    # 直接尝试更新，如果失败则插入
+                    cursor = self.db.execute_sql(
+                        f'''
+                        UPDATE "{self.lock_table}"
+                        SET "PROCESS_ID" = ?,
+                            "LOCK_TIME" = CURRENT_TIMESTAMP,
+                            "TIMEOUT" = ?
+                        WHERE "LOCK_NAME" = ?
                         ''',
-                (self.lock_name, process_id, self.timeout)
+                        (process_id, self.timeout, self.lock_name)
+                    )
+                    self.db.commit()
+                    
+                    if cursor.rowcount == 0:
+                        # 如果更新失败（记录不存在），尝试插入
+                        try:
+                            cursor = self.db.execute_sql(
+                                f'''
+                                INSERT INTO "{self.lock_table}"
+                                ("LOCK_NAME", "PROCESS_ID", "TIMEOUT", "LOCK_TIME")
+                                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                                ''',
+                                (self.lock_name, process_id, self.timeout)
+                            )
+                            self.db.commit()
+                        except Exception as insert_error:
+                            if 'unique constraint' in str(insert_error).lower():
+                                # 如果插入时发现记录已存在，说明是并发情况，直接返回成功
+                                self.db.rollback()
+                                return True
+                            raise
+                    return True
+                except Exception as e:
+                    self.db.rollback()
+                    # 对于update_progress，如果获取锁失败，记录警告但不阻止操作
+                    logging.warning(f"获取进度更新锁失败，继续执行: {str(e)}")
+                    return True
+            
+            # 对于其他普通锁，使用严格的锁策略
+            # 清理过期的锁
+            self.db.execute_sql(
+                f'''
+                DELETE FROM "{self.lock_table}"
+                WHERE TIMESTAMPDIFF(SECOND, "LOCK_TIME", CURRENT_TIMESTAMP) > "TIMEOUT"
+                ''',
             )
             self.db.commit()
-            return True
-        except Exception as e:
-            # 如果插入失败，检查锁是否已超时
+
+            # 尝试获取锁
             try:
                 cursor = self.db.execute_sql(
                     f'''
-                    SELECT "LOCK_TIME", "PROCESS_ID", "TIMEOUT"
-                    FROM "{self.lock_table}"
-                    WHERE "LOCK_NAME" = ?
+                    INSERT INTO "{self.lock_table}"
+                    ("LOCK_NAME", "PROCESS_ID", "TIMEOUT", "LOCK_TIME")
+                    VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                     ''',
-                    (self.lock_name,)
+                    (self.lock_name, process_id, self.timeout)
                 )
-                lock_record = cursor.fetchone()
+                self.db.commit()
+                return True
+            except Exception as insert_error:
+                if 'unique constraint' not in str(insert_error).lower():
+                    raise
 
-                if lock_record:
-                    lock_time, lock_process_id, lock_timeout = lock_record
-                    # 检查是否是自己的锁
-                    if lock_process_id == process_id:
-                        return True
+            # 如果插入失败（锁已存在），检查是否是自己的锁或者锁已超时
+            cursor = self.db.execute_sql(
+                f'''
+                SELECT "LOCK_TIME", "PROCESS_ID", "TIMEOUT"
+                FROM "{self.lock_table}"
+                WHERE "LOCK_NAME" = ?
+                ''',
+                (self.lock_name,)
+            )
+            lock_record = cursor.fetchone()
+            
+            if not lock_record:
+                # 锁记录不存在（可能刚被其他进程删除），重试获取
+                return self.lock()
 
-                    # 计算锁是否已超时
-                    cursor = self.db.execute_sql("SELECT CURRENT_TIMESTAMP FROM DUAL")
-                    current_time = cursor.fetchone()[0]
-                    # 计算时间差（秒）
-                    if hasattr(current_time, 'timestamp') and hasattr(lock_time, 'timestamp'):
-                        time_diff = current_time.timestamp() - lock_time.timestamp()
-                    else:
-                        # 简单估计，两个日期的差异
-                        time_diff = (current_time - lock_time).total_seconds()
+            lock_time, lock_process_id, lock_timeout = lock_record
+            
+            # 如果是自己的锁，更新时间戳
+            if lock_process_id == process_id:
+                cursor = self.db.execute_sql(
+                    f'''
+                    UPDATE "{self.lock_table}"
+                    SET "LOCK_TIME" = CURRENT_TIMESTAMP
+                    WHERE "LOCK_NAME" = ? AND "PROCESS_ID" = ?
+                    ''',
+                    (self.lock_name, process_id)
+                )
+                self.db.commit()
+                return True
 
-                    # 如果锁超时，则强制获取锁
-                    if time_diff > lock_timeout:
-                        self.db.execute_sql(
-                            f'''
-                            UPDATE "{self.lock_table}"
-                            SET "PROCESS_ID" = ?, "LOCK_TIME" = CURRENT_TIMESTAMP, "TIMEOUT" = ?
-                            WHERE "LOCK_NAME" = ?
-                            ''',
-                            (process_id, self.timeout, self.lock_name)
-                        )
-                        self.db.commit()
-                        return True
-            except Exception as check_ex:
-                logging.error(f"检查锁超时时出错: {check_ex}")
+            # 检查锁是否超时
+            cursor = self.db.execute_sql("SELECT CURRENT_TIMESTAMP FROM DUAL")
+            current_time = cursor.fetchone()[0]
+            lock_time = to_datetime(lock_time)
+            current_time = to_datetime(current_time)
+            time_diff = (current_time - lock_time).total_seconds()
 
-            raise Exception(f"无法获取达梦数据库锁 {self.lock_name}")
+            if time_diff > lock_timeout:
+                cursor = self.db.execute_sql(
+                    f'''
+                    UPDATE "{self.lock_table}"
+                    SET "PROCESS_ID" = ?,
+                        "LOCK_TIME" = CURRENT_TIMESTAMP,
+                        "TIMEOUT" = ?
+                    WHERE "LOCK_NAME" = ? 
+                    AND TIMESTAMPDIFF(SECOND, "LOCK_TIME", CURRENT_TIMESTAMP) > "TIMEOUT"
+                    ''',
+                    (process_id, self.timeout, self.lock_name)
+                )
+                self.db.commit()
+                
+                if cursor.rowcount > 0:
+                    return True
+
+            raise Exception(f"无法获取锁 {self.lock_name}：锁已被其他进程持有")
+            
+        except Exception as e:
+            self.db.rollback()
+            if self.lock_name == "update_progress":
+                # 对于update_progress，发生错误时也允许继续执行
+                logging.warning(f"获取进度更新锁失败，继续执行: {str(e)}")
+                return True
+            raise Exception(f"无法获取达梦数据库锁 {self.lock_name}: {str(e)}")
 
     @with_retry(max_retries=3, retry_delay=1.0)
     def unlock(self):
@@ -1226,11 +1299,12 @@ class DmDatabaseLock:
                 (self.lock_name, process_id)
             )
             self.db.commit()
-            rows_affected = cursor.rowcount
-            if rows_affected == 0:
+            
+            if cursor.rowcount == 0:
                 logging.warning(f"没有找到进程 {process_id} 持有的锁 {self.lock_name}")
             return True
         except Exception as e:
+            self.db.rollback()
             logging.error(f"释放达梦数据库锁 {self.lock_name} 时出错: {e}")
             raise Exception(f"无法释放达梦数据库锁 {self.lock_name}")
 
@@ -1823,3 +1897,47 @@ except Exception as e:
     logging.error(f"Failed to initialize database connection: {e}")
     # 不要在这里抛出异常，让应用继续启动
     DB = None
+
+
+def to_datetime(val):
+    if isinstance(val, datetime.datetime):
+        # 如果输入的datetime没有时区信息，添加UTC时区
+        if val.tzinfo is None:
+            return val.replace(tzinfo=datetime.timezone.utc)
+        return val
+    if isinstance(val, str):
+        # 先尝试 fromisoformat
+        try:
+            dt = datetime.datetime.fromisoformat(val)
+            # 如果解析出的时间没有时区信息，添加UTC时区
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=datetime.timezone.utc)
+            return dt
+        except Exception:
+            pass
+
+        # 尝试解析带时区的格式 "2025-06-16 11:39:43.850953 +08:00"
+        tz_match = re.match(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?)[ ]*([+-]\d{2}:\d{2})$", val)
+        if tz_match:
+            dt_str, tz_str = tz_match.groups()
+            # 先解析主时间部分
+            try:
+                dt = datetime.datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S.%f")
+            except ValueError:
+                dt = datetime.datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            # 解析时区
+            sign = 1 if tz_str[0] == '+' else -1
+            hours, minutes = map(int, tz_str[1:].split(':'))
+            delta = datetime.timedelta(hours=sign * hours, minutes=sign * minutes)
+            tzinfo = datetime.timezone(delta)
+            return dt.replace(tzinfo=tzinfo)
+
+        # 最后尝试常见格式（无时区的情况，添加UTC时区）
+        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S.%f"):
+            try:
+                dt = datetime.datetime.strptime(val, fmt)
+                return dt.replace(tzinfo=datetime.timezone.utc)
+            except Exception:
+                continue
+        raise ValueError(f"无法解析时间字符串: {val}")
+    raise TypeError(f"不支持的时间类型: {type(val)}")
