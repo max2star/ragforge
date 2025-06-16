@@ -14,6 +14,49 @@ import trio
 from graphrag.utils import (
     chat_limiter,
 )
+
+def extract_first_json(text):
+    """
+    从文本中提取第一组完整的JSON字符串
+    :param text: 待处理的原始文本
+    :return: 第一个有效的JSON字符串（若存在），否则返回None
+    """
+    start = text.find('{')
+    if start == -1:  # 无左花括号直接退出
+        return None
+
+    brace_count = 0
+    in_string = False
+    escape = False
+    json_chars = []
+
+    for i, char in enumerate(text[start:]):
+        # 处理字符串内的转义和边界
+        if char == '"' and not escape:
+            in_string = not in_string
+        if char == '\\' and not escape:
+            escape = True
+        else:
+            escape = False
+
+        # 统计花括号（仅当不在字符串内时）
+        if not in_string:
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    json_chars.append(char)
+                    candidate = "".join(json_chars)
+                    try:
+                        json.loads(candidate)  # 验证JSON有效性
+                        return candidate
+                    except json.JSONDecodeError:
+                        continue  # 无效则继续扫描
+        json_chars.append(char)
+
+    return None
+
 def format_time(time_field_value):
     time_field_value_format = None
 
@@ -146,30 +189,21 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     # 获取相应元数据字段
     keys_to_use_list = []
     # 过滤字段
-    # for i in fields:
-    #     if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
-    #         logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
-    #         keys_to_use_list.append({
-    #            "name": i["name"],
-    #            "description": i["description"] if i.get("description") else "",
-    #            "must_exist": i["must_exist"],
-    #         })
-
-    for i in constant.keyvalues_mapping.get(metadata_type, "default"):
+    for i in fields:
         logging.info(
-            f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping.get(metadata_type, 'default')}")
+            f"metadata_type [{metadata_type}] ==== i ===> {i}")
         keys_to_use_list.append({
             "name": i["name"],
-            "description": i["description"] if i.get("description") else "",
+            #"description": i["description"] if i.get("description") else "",
             "must_exist": i["must_exist"],
         })
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
     fields_map = {}
-
+    example = """{"name1": 提取内容a,"name2": 提取内容b,"name3": 提取内容c}"""
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；在图片中提取符合description描述的相应字段、must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
-        f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
+        f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
+        f"请你以JSON格式输出。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
     logging.info(f"======prompt======{prompt}")
