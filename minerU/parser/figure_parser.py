@@ -17,7 +17,7 @@
 
 from PIL import Image
 
-from minerU.mineru_extractor import extract_first_json
+from api.utils.file_utils import extract_first_json
 from rag.paper_prompts import vision_llm_paper_extraction_prompt
 from rag.utils import clean_markdown_block
 import logging
