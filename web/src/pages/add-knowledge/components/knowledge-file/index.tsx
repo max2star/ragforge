@@ -29,11 +29,11 @@ import WebCrawlModal from './web-crawl-modal';
 
 import FileUploadModal from '@/components/file-upload-modal';
 import { IDocumentInfo } from '@/interfaces/database/document';
+import { getAuthorization } from '@/utils/authorization-util';
 import { formatDate } from '@/utils/date';
+import AuthorizedImage from './authorized-image';
 import styles from './index.less';
 import { SetMetaModal } from './set-meta-modal';
-import AuthorizedImage from './authorized-image';
-import { getAuthorization } from '@/utils/authorization-util';
 
 const { Text } = Typography;
 
@@ -145,7 +145,7 @@ const KnowledgeFile = () => {
       },
     },
     {
-      title: '更新日期',
+      title: t('updateDate'), //'更新日期',
       dataIndex: 'update_date',
       key: 'update_date',
       render(value) {

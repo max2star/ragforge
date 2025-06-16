@@ -100,6 +100,7 @@ export default {
       webCrawl: 'Web Crawl',
       chunkNumber: 'Chunk Number',
       uploadDate: 'Upload Date',
+      updateDate: 'Update Date',
       chunkMethod: 'Chunk Method',
       enabled: 'Enable',
       disabled: 'Disable',
