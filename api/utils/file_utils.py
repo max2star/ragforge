@@ -253,7 +253,7 @@ def extract_first_json(text):
     """
     start = text.find('{')
     if start == -1:  # 无左花括号直接退出
-        return None
+        return "{}"
 
     brace_count = 0
     in_string = False
@@ -285,4 +285,4 @@ def extract_first_json(text):
                         continue  # 无效则继续扫描
         json_chars.append(char)
 
-    return None
+    return "".join(json_chars)
