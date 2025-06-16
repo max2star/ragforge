@@ -337,6 +337,9 @@ def list_docs():
             #thumbnail 是一个 ID
             if doc_item['thumbnail'] and not doc_item['thumbnail'].startswith(IMG_BASE64_PREFIX):
                 doc_item['thumbnail'] = f"/v1/document/image/{kb_id}-{doc_item['thumbnail']}"
+            if 'progress' in doc_item:
+                rounded = round(doc_item['progress'], 4)
+                doc_item['progress'] = int(rounded) if rounded == int(rounded) else rounded
 
         return get_json_result(data={"total": tol, "docs": docs})
     except Exception as e:
