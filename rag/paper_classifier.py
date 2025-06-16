@@ -19,7 +19,7 @@ import numpy as np
 import trio
 import json
 
-from minerU.mineru_extractor import extract_first_json
+from api.utils.file_utils import extract_first_json
 from rag.utils import truncate
 from rag.paper_prompts import paper_classification_prompt
 from graphrag.utils import (
