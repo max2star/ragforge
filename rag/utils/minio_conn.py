@@ -54,6 +54,10 @@ class RAGFlowMinio:
                               secure=True
                               )
             self.bucket_encryption = settings.MINIO['bucket_encryption']
+            if type(settings.MINIO['bucket_encryption']) == str:
+                logging.info(f"settings.MINIO['bucket_encryption'] {settings.MINIO['bucket_encryption']} type {type(settings.MINIO['bucket_encryption'])}")
+                self.bucket_encryption = settings.MINIO['bucket_encryption'].lower() == "true"
+            logging.info(f"self.bucket_encryption {self.bucket_encryption} type {type(self.bucket_encryption)}")
             if settings.MINIO_BACKUP.get("host",None):
                 logging.info(f"enable minio backup cluster")
                 self.remote_conn =  Minio(settings.MINIO_BACKUP["host"],
