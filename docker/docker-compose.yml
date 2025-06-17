@@ -59,6 +59,9 @@ services:
       - MACOS=${MACOS}
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
         #- CUDA_VISIBLE_DEVICES=0
         #- LLM_BASE_DELAY=2
         # - SSL_CERT_FILE="/etc/nginx/public.crt"
@@ -122,6 +125,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=0
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-0"
     networks:
       - ragflow
@@ -174,6 +180,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=1
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
     networks:
       - ragflow
@@ -226,6 +235,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=2
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
     networks:
       - ragflow
@@ -279,6 +291,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=3
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
     networks:
       - ragflow
@@ -331,6 +346,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=4
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-4"
     networks:
       - ragflow
@@ -383,6 +401,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=5
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-5"
     networks:
       - ragflow
@@ -435,6 +456,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=6
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-6"
     networks:
       - ragflow
@@ -489,6 +513,9 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=7
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
+      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
+      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
     entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-7"
     networks:
       - ragflow
