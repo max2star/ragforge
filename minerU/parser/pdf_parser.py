@@ -632,6 +632,7 @@ class MinerUPdf:
             import traceback
             traceback.print_exc()
             logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            callback(prog=-1.0, msg=f"文件 {filename} 解析发生错误 {e})")
             return
 
         # 进一步对信息进行提取
