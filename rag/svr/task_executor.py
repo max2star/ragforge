@@ -224,6 +224,7 @@ async def collect():
         return None, None
 
     if not redis_msg:
+        logging.error("redis msg none")
         return None, None
     msg = redis_msg.get_message()
     if not msg:
@@ -682,7 +683,7 @@ async def do_handle_task(task):
     #先获取现有的元数据
     dict_result = task.get('meta_fields',{})
     DocumentService.update_meta_fields(task["doc_id"],  {})
-    # dict_result.pop('meta_fields',None)
+    dict_result.pop('meta_fields',None)
     logging.info(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
 
@@ -697,11 +698,6 @@ async def do_handle_task(task):
         keys = extractor_config.get("keyvalues", None)
     else:
         keys = constant.keyvalues_mapping['default']
-    key_names = [k['name'] for k in keys]
-    for kn in key_now:
-        if kn not in key_names:
-            logging.info(f"新增 key {kn} in extractor config!")
-            keys.append({"name": kn,"must_exist": True})
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
@@ -961,6 +957,7 @@ async def handle_task():
     redis_msg, task = await collect()
     if not task:
         await trio.sleep(5)
+        logging.info(f"handle_task no collected...")
         return
     try:
         logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
@@ -979,6 +976,7 @@ async def handle_task():
                 err_msg += ' -- ' + str(e)
             set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
         except Exception:
+            logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)},but set error msg {err_msg} failed")
             pass
         logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
     redis_msg.ack()
