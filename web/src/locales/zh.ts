@@ -99,6 +99,7 @@ export default {
       webCrawl: '网页抓取',
       chunkNumber: '分块数',
       uploadDate: '上传日期',
+      updateDate: '更新日期',
       chunkMethod: '切片方法',
       enabled: '启用',
       disabled: '禁用',
