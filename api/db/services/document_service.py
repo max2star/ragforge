@@ -564,7 +564,7 @@ class DocumentService(CommonService):
                     d["process_begin_at"].timestamp(),
                     "run": status}
                 if prg != 0:
-                    info["progress"] = round(prg,2)
+                    info["progress"] = round(prg, 4)
                 if msg:
                     info["progress_msg"] = msg
                 cls.update_by_id(d["id"], info)
