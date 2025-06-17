@@ -387,11 +387,11 @@ class MinerUPdf:
             use_ocr = False
             if ds.classify() == SupportedPdfParseMethod.OCR:
                 use_ocr = True
-                logging.info(f"[MinerU] 处理 apply start for {pdf_file_name}")
+                logging.info(f"[MinerU] 处理 apply start ocr for {pdf_file_name}")
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_ocr_mode(image_writer)
-                logging.info(f"[MinerU] 处理 apply end for {pdf_file_name}")
+                logging.info(f"[MinerU] 处理 apply end ocr for {pdf_file_name}")
             else:
                 logging.info(f"[MinerU] 处理 apply start for {pdf_file_name}")
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
