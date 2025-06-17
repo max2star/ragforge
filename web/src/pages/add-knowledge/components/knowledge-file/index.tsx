@@ -146,7 +146,7 @@ const KnowledgeFile = () => {
     },
     {
       title: t('updateDate'), //'更新日期',
-      dataIndex: 'update_date',
+      dataIndex: 'update_time',
       key: 'update_date',
       render(value) {
         return formatDate(value);
