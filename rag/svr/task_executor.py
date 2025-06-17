@@ -962,34 +962,34 @@ async def do_handle_task(task):
 
 
 async def handle_task():
-    global DONE_TASKS, FAILED_TASKS
-    redis_msg, task = await collect()
-    if not task:
-        await trio.sleep(5)
-        logging.debug(f"handle_task not collect...")
-        return
-    try:
-        logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
-        CURRENT_TASKS[task["id"]] = copy.deepcopy(task)
-        await do_handle_task(task)
-        DONE_TASKS += 1
-        CURRENT_TASKS.pop(task["id"], None)
-        logging.info(f"handle_task done for task {json.dumps(task,ensure_ascii=False)}")
-    except Exception as e:
-        FAILED_TASKS += 1
-        CURRENT_TASKS.pop(task["id"], None)
+    async with task_limiter:
+        global DONE_TASKS, FAILED_TASKS
+        redis_msg, task = await collect()
+        if not task:
+            await trio.sleep(5)
+            logging.debug(f"handle_task not collect...")
+            return
         try:
-            err_msg = str(e)
-            while isinstance(e, exceptiongroup.ExceptionGroup):
-                e = e.exceptions[0]
-                err_msg += ' -- ' + str(e)
-            set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
-        except Exception:
-            logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)},but set error msg {err_msg} failed")
-            pass
-        logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
-    redis_msg.ack()
-
+            logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
+            CURRENT_TASKS[task["id"]] = copy.deepcopy(task)
+            await do_handle_task(task)
+            DONE_TASKS += 1
+            CURRENT_TASKS.pop(task["id"], None)
+            logging.info(f"handle_task done for task {json.dumps(task,ensure_ascii=False)}")
+        except Exception as e:
+            FAILED_TASKS += 1
+            CURRENT_TASKS.pop(task["id"], None)
+            try:
+                err_msg = str(e)
+                while isinstance(e, exceptiongroup.ExceptionGroup):
+                    e = e.exceptions[0]
+                    err_msg += ' -- ' + str(e)
+                set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
+            except Exception:
+                logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)},but set error msg {err_msg} failed")
+                pass
+            logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
+        redis_msg.ack()
 
 async def report_status():
     global CONSUMER_NAME, BOOT_AT, PENDING_TASKS, LAG_TASKS, DONE_TASKS, FAILED_TASKS
@@ -1112,6 +1112,8 @@ async def main():
         nursery.start_soon(report_status)
         while not stop_event.is_set():
             async with task_limiter:
+                logging.info(f"task_limiter {task_limiter}")
+                #await handle_task()
                 nursery.start_soon(handle_task)
     logging.error("BUG!!! You should not reach here!!!")
 
