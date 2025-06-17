@@ -308,11 +308,11 @@ class MinerUPdf:
         # local_image_dir, local_md_dir = "/var/lib/gpustack/output/images", "/var/lib/gpustack/output/output"
 
         from timeit import default_timer as timer
-        callback(msg="处理开始。即将从对象存储读取并进行视觉大模型要素抽取")
+        callback(msg="处理开始。即将从对象存储读取并进行解析")
         # 在报错代码前插入
-        import torch, os
-        os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'  # 防碎片
-        torch.cuda.empty_cache()  # 清缓存
+        #import torch, os
+        #os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'  # 防碎片
+        #torch.cuda.empty_cache()  # 清缓存
         # 使用MinerU处理
         try:
             start = timer()
@@ -387,13 +387,17 @@ class MinerUPdf:
             use_ocr = False
             if ds.classify() == SupportedPdfParseMethod.OCR:
                 use_ocr = True
+                logging.info(f"[MinerU] 处理 apply start ocr for {pdf_file_name}")
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_ocr_mode(image_writer)
+                logging.info(f"[MinerU] 处理 apply end ocr for {pdf_file_name}")
             else:
+                logging.info(f"[MinerU] 处理 apply start for {pdf_file_name}")
                 infer_result = ds.apply(doc_analyze, ocr=use_ocr)
                 ## pipeline
                 pipe_result = infer_result.pipe_txt_mode(image_writer)
+                logging.info(f"[MinerU] 处理 apply end for {pdf_file_name}")
             callback(prog=0.25,
                      msg="MinerU 分析处理完成 ({:.2f}s),是否OCR :{}。即将进行结果绘制".format(timer() - start, use_ocr))
 
@@ -618,11 +622,16 @@ class MinerUPdf:
                 'file {} MinerU 解析花费 {} md_content 长度 {} md_content_to 长度 {}'.format(filename, time_cost,
                                                                                              len(md_content),
                                                                                              len(md_content_to)))
+            ## 打印mineru解析出来的原始块（内容+坐标+页码）
+            #for idx, sec in enumerate(sections):
+            #    text_preview = sec.get('text', '')[:100].replace('\n', ' ')  # 只打印前100字符，防止太长
+            #    poss = sec.get('poss', [])
+            #    print(f"[MINERU原始块] idx={idx}, 页码/坐标={poss}, 内容预览={text_preview}")
         except Exception as e:
-            logging.info("发生错误,文件 {},错误 {}".format(filename, e))
+            logging.error("发生错误,文件 {},错误 {}".format(filename, e))
             import traceback
             traceback.print_exc()
-            logging.info("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
             return
 
         # 进一步对信息进行提取

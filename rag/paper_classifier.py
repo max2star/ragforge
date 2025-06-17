@@ -18,6 +18,8 @@ import re
 import numpy as np
 import trio
 import json
+
+from api.utils.file_utils import extract_first_json
 from rag.utils import truncate
 from rag.paper_prompts import paper_classification_prompt
 from graphrag.utils import (
@@ -46,6 +48,7 @@ class PaperClassifier:
             response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
         if "```json" in response:
             response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
+        response = extract_first_json(response)
         logging.info(f"response clean ==>\n{response}")
         if response.find("**ERROR**") >= 0:
             raise Exception(response)
