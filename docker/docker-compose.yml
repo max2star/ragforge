@@ -17,6 +17,285 @@ services:
     privileged: true
     shm_size: '128gb'
     container_name: ragflow-server
+      #deploy:
+      #  resources:
+      #    reservations:
+      #      devices:
+      #        - driver: nvidia
+      #          #count: all
+      #          device_ids: ['0']
+      #          capabilities: [gpu]
+    ports:
+      - ${SVR_HTTP_PORT}:9380
+      - 80:80
+      - 9980:9980
+      - 443:443
+      - 5678:5678
+      - 5679:5679
+    volumes:
+      - /opt/ragflow_logs:/ragflow/logs
+      - ../web:/ragflow/web
+      - ./certs/ca.crt:/ragflow/ca.crt
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
+      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      #- /root/.cache:/root/.cache
+      #- /root/magic-pdf.json:/root/magic-pdf.json
+      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/private.key:/etc/nginx/private.key
+      - ./nginx/public.crt:/etc/nginx/public.crt
+      - ../history_data_agent:/ragflow/history_data_agent
+      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
+      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../tests:/ragflow/tests
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+      - HF_ENDPOINT=${HF_ENDPOINT}
+      - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=300
+      - LLM_MAX_RETRIES=3
+        #- CUDA_VISIBLE_DEVICES=0
+        #- LLM_BASE_DELAY=2
+        # - SSL_CERT_FILE="/etc/nginx/public.crt"
+        #- CUDA_VISIBLE_DEVICES=1
+        #- NCCL_SOCKET_IFNAME=bond0.128
+        #- NCCL_IB_DISABLE=1
+        #- NCCL_P2P_DISABLE=1
+        #- NCCL_DEBUG=INFO
+    entrypoint: "/ragflow/entrypoint.sh --disable-taskexecutor --host-id=api"
+    networks:
+      ragflow:
+        ipv4_address: 172.20.0.254
+    restart: on-failure
+    # https://docs.docker.com/engine/daemon/prometheus/#create-a-prometheus-configuration
+    # If you're using Docker Desktop, the --add-host flag is optional. This flag makes sure that the host's internal IP gets exposed to the Prometheus container.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  executor-0:
+    depends_on:
+      mysql-ragflow:
+        condition: service_healthy
+      redis-ragflow:
+        condition: service_healthy
+    privileged: true
+    shm_size: '128gb'
+    image: ${RAGFLOW_IMAGE}
+    container_name: ragflow-executor-0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              #count: all
+              device_ids: ['0']
+              capabilities: [gpu]
+    volumes:
+      - /opt/ragflow_logs:/ragflow/logs
+      - ./certs/ca.crt:/ragflow/ca.crt
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
+      - ../tests:/ragflow/tests
+      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      #- /root/.cache:/root/.cache
+      #- /root/magic-pdf.json:/root/magic-pdf.json
+      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/private.key:/etc/nginx/private.key
+      - ./nginx/public.crt:/etc/nginx/public.crt
+      - ../history_data_agent:/ragflow/history_data_agent
+      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
+      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+      - HF_ENDPOINT=${HF_ENDPOINT}
+      - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=300
+      - LLM_MAX_RETRIES=3
+      - CUDA_VISIBLE_DEVICES=0
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-0"
+    networks:
+      - ragflow
+    restart: on-failure
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  executor-1:
+    depends_on:
+      mysql-ragflow:
+        condition: service_healthy
+      redis-ragflow:
+        condition: service_healthy
+    privileged: true
+    shm_size: '128gb'
+    image: ${RAGFLOW_IMAGE}
+    container_name: ragflow-executor-1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              #count: all
+              device_ids: ['1']
+              capabilities: [gpu]
+    volumes:
+      - /opt/ragflow_logs:/ragflow/logs
+      - ./certs/ca.crt:/ragflow/ca.crt
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
+      - ../tests:/ragflow/tests
+      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      #- /root/.cache:/root/.cache
+      #- /root/magic-pdf.json:/root/magic-pdf.json
+      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/private.key:/etc/nginx/private.key
+      - ./nginx/public.crt:/etc/nginx/public.crt
+      - ../history_data_agent:/ragflow/history_data_agent
+      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
+      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+      - HF_ENDPOINT=${HF_ENDPOINT}
+      - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=300
+      - LLM_MAX_RETRIES=3
+      - CUDA_VISIBLE_DEVICES=1
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
+    networks:
+      - ragflow
+    restart: on-failure
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  executor-2:
+    depends_on:
+      mysql-ragflow:
+        condition: service_healthy
+      redis-ragflow:
+        condition: service_healthy
+    privileged: true
+    shm_size: '128gb'
+    image: ${RAGFLOW_IMAGE}
+    container_name: ragflow-executor-2
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              #count: all
+              device_ids: ['2']
+              capabilities: [gpu]
+    volumes:
+      - /opt/ragflow_logs:/ragflow/logs
+      - ./certs/ca.crt:/ragflow/ca.crt
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
+      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      #- /root/.cache:/root/.cache
+      #- /root/magic-pdf.json:/root/magic-pdf.json
+      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/private.key:/etc/nginx/private.key
+      - ./nginx/public.crt:/etc/nginx/public.crt
+      - ../history_data_agent:/ragflow/history_data_agent
+      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
+      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../tests:/ragflow/tests
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+      - HF_ENDPOINT=${HF_ENDPOINT}
+      - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=300
+      - LLM_MAX_RETRIES=3
+      - CUDA_VISIBLE_DEVICES=2
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
+    networks:
+      - ragflow
+    restart: on-failure
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  executor-3:
+    depends_on:
+      mysql-ragflow:
+        condition: service_healthy
+      redis-ragflow:
+        condition: service_healthy
+    privileged: true
+    shm_size: '128gb'
+    image: ${RAGFLOW_IMAGE}
+    container_name: ragflow-executor-3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              #count: all
+              device_ids: ['3']
+              capabilities: [gpu]
+    volumes:
+      - /opt/ragflow_logs:/ragflow/logs
+      - ./certs/ca.crt:/ragflow/ca.crt
+      - ../rag:/ragflow/rag
+      - ../api:/ragflow/api
+      - ../minerU:/ragflow/minerU
+      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      #- /root/.cache:/root/.cache
+      #- /root/magic-pdf.json:/root/magic-pdf.json
+      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/private.key:/etc/nginx/private.key
+      - ./nginx/public.crt:/etc/nginx/public.crt
+      - ../history_data_agent:/ragflow/history_data_agent
+      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
+      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../tests:/ragflow/tests
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+      - HF_ENDPOINT=${HF_ENDPOINT}
+      - MACOS=${MACOS}
+      - LM_TIMEOUT_SECONDS=300
+      - LLM_MAX_RETRIES=3
+      - CUDA_VISIBLE_DEVICES=3
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
+    networks:
+      - ragflow
+    restart: on-failure
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  executor-4:
+    depends_on:
+      mysql-ragflow:
+        condition: service_healthy
+      redis-ragflow:
+        condition: service_healthy
+    privileged: true
+    shm_size: '128gb'
+    image: ${RAGFLOW_IMAGE}
+    container_name: ragflow-executor-4
     deploy:
       resources:
         reservations:
@@ -25,13 +304,6 @@ services:
               #count: all
               device_ids: ['4']
               capabilities: [gpu]
-    ports:
-      - ${SVR_HTTP_PORT}:9380
-      - 80:80
-      - 9980:9980
-      - 443:443
-      - 5678:5678
-      - 5679:5679
     volumes:
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
@@ -59,23 +331,14 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=4
-        #- LLM_BASE_DELAY=2
-        # - SSL_CERT_FILE="/etc/nginx/public.crt"
-        #- CUDA_VISIBLE_DEVICES=1
-        #- NCCL_SOCKET_IFNAME=bond0.128
-        #- NCCL_IB_DISABLE=1
-        #- NCCL_P2P_DISABLE=1
-        #- NCCL_DEBUG=INFO
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-4"
     networks:
-      ragflow:
-        ipv4_address: 172.20.0.254
+      - ragflow
     restart: on-failure
-    # https://docs.docker.com/engine/daemon/prometheus/#create-a-prometheus-configuration
-    # If you're using Docker Desktop, the --add-host flag is optional. This flag makes sure that the host's internal IP gets exposed to the Prometheus container.
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  executor-1:
+  executor-5:
     depends_on:
       mysql-ragflow:
         condition: service_healthy
@@ -84,7 +347,7 @@ services:
     privileged: true
     shm_size: '128gb'
     image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-1
+    container_name: ragflow-executor-5
     deploy:
       resources:
         reservations:
@@ -96,11 +359,9 @@ services:
     volumes:
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
-      - ../web:/ragflow/web
       - ../rag:/ragflow/rag
       - ../api:/ragflow/api
       - ../minerU:/ragflow/minerU
-      - ../tests:/ragflow/tests
       - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
       #- /root/.cache:/root/.cache
       #- /root/magic-pdf.json:/root/magic-pdf.json
@@ -113,6 +374,7 @@ services:
       - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../tests:/ragflow/tests
     env_file: .env
     environment:
       - TZ=${TIMEZONE}
@@ -121,14 +383,14 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=5
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-5"
     networks:
       - ragflow
     restart: on-failure
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  executor-2:
+  executor-6:
     depends_on:
       mysql-ragflow:
         condition: service_healthy
@@ -137,7 +399,7 @@ services:
     privileged: true
     shm_size: '128gb'
     image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-2
+    container_name: ragflow-executor-6
     deploy:
       resources:
         reservations:
@@ -173,7 +435,7 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=6
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-6"
     networks:
       - ragflow
     restart: on-failure
@@ -181,7 +443,7 @@ services:
       - "host.docker.internal:host-gateway"
 
 
-  executor-3:
+  executor-7:
     depends_on:
       mysql-ragflow:
         condition: service_healthy
@@ -190,7 +452,7 @@ services:
     privileged: true
     shm_size: '128gb'
     image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-3
+    container_name: ragflow-executor-7
     deploy:
       resources:
         reservations:
@@ -204,6 +466,7 @@ services:
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
       - ../api:/ragflow/api
+      - ../web:/ragflow/web
       - ../minerU:/ragflow/minerU
       - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
       #- /root/.cache:/root/.cache
@@ -226,7 +489,7 @@ services:
       - LM_TIMEOUT_SECONDS=300
       - LLM_MAX_RETRIES=3
       - CUDA_VISIBLE_DEVICES=7
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
+    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-7"
     networks:
       - ragflow
     restart: on-failure
