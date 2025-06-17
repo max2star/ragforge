@@ -190,7 +190,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
             msg = datetime.now().strftime("%H:%M:%S") + " " + msg
         d = {"progress_msg": msg}
         if prog is not None:
-            d["progress"] = round(prog,2)
+            d["progress"] = round(prog, 4)
 
         TaskService.update_progress(task_id, d)
 
@@ -687,7 +687,7 @@ async def do_handle_task(task):
     #先获取现有的元数据
     dict_result = task.get('meta_fields',{})
     DocumentService.update_meta_fields(task["doc_id"],  {})
-    dict_result.pop('meta_fields',None)
+    # dict_result.pop('meta_fields',None)
     logging.info(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
 
@@ -702,6 +702,11 @@ async def do_handle_task(task):
         keys = extractor_config.get("keyvalues", None)
     else:
         keys = constant.keyvalues_mapping['default']
+    key_names = [k['name'] for k in keys]
+    for kn in key_now:
+        if kn not in key_names:
+            logging.info(f"新增 key {kn} in extractor config!")
+            keys.append({"name": kn, "must_exist": True})
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
