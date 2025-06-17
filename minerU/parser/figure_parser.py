@@ -17,6 +17,7 @@
 
 from PIL import Image
 
+from api.utils.file_utils import extract_first_json
 from rag.paper_prompts import vision_llm_paper_extraction_prompt
 from rag.utils import clean_markdown_block
 import logging
@@ -71,6 +72,7 @@ class VisionFigureParser:
                     response = re.sub(r"^.*?```json", "", response, flags=re.DOTALL)
                     response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
                 response = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response)  # 移除控制字符
+                response = extract_first_json(response)
                 texts[idx] = response
                 logging.info("视觉模型图像 idx: {} 返回过滤结果: {}".format(figure_num, response[:50]))
         return texts 

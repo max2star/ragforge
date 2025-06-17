@@ -190,7 +190,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
             msg = datetime.now().strftime("%H:%M:%S") + " " + msg
         d = {"progress_msg": msg}
         if prog is not None:
-            d["progress"] = prog
+            d["progress"] = round(prog,2)
 
         TaskService.update_progress(task_id, d)
 
@@ -275,7 +275,9 @@ async def build_chunks(task, progress_callback):
             progress_callback(-1, "Can not find file <%s> from minio. Could you try it again?" % task["name"])
         else:
             progress_callback(-1, "Get file from minio: %s" % str(e).replace("'", ""))
-        logging.exception("Chunking {}/{} got exception".format(task["location"], task["name"]))
+        import traceback
+        traceback.print_exc()
+        logging.exception("Chunking {}/{} got exception {}".format(task["location"], task["name"],traceback.format_exc()))
         raise
 
     try:
@@ -285,6 +287,7 @@ async def build_chunks(task, progress_callback):
                                 kb_id=task["kb_id"], parser_config=task["parser_config"], tenant_id=task["tenant_id"],doc_id=task["doc_id"]))
         logging.info("Chunking({}) {}/{} done".format(timer() - st, task["location"], task["name"]))
     except TaskCanceledException:
+        logging.exception("Chunking {}/{} got exception {}".format(task["location"], task["name"],"TaskCanceledException"))
         raise
     except Exception as e:
         progress_callback(-1, "Internal server error while chunking: %s" % str(e).replace("'", ""))
@@ -624,9 +627,11 @@ async def do_handle_task(task):
         chunks = await build_chunks(task, progress_callback)
         logging.info("Build document {}: {:.2f}s".format(task_document_name, timer() - start_ts))
         if chunks is None:
+            logging.error("Build document {} failed".format(task_document_name))
             return
         if not chunks:
-            progress_callback(1., msg=f"No chunk built from {task_document_name}")
+            logging.error("Build document chunks {} failed".format(task_document_name))
+            progress_callback(-1., msg=f"No chunk built from {task_document_name}")
             return
         # TODO: exception handler
         ## set_progress(task["did"], -1, "ERROR: ")
@@ -956,6 +961,7 @@ async def handle_task():
     redis_msg, task = await collect()
     if not task:
         await trio.sleep(5)
+        logging.debug(f"handle_task not collect...")
         return
     try:
         logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
@@ -974,6 +980,7 @@ async def handle_task():
                 err_msg += ' -- ' + str(e)
             set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
         except Exception:
+            logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)},but set error msg {err_msg} failed")
             pass
         logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
     redis_msg.ack()
@@ -1073,7 +1080,15 @@ async def main():
  / / / /_/ (__  ) ,<    / /____>  </  __/ /__/ /_/ / /_/ /_/ / /
 /_/  \__,_/____/_/|_|  /_____/_/|_|\___/\___/\__,_/\__/\____/_/
     """)
-    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()}')
+    global FIRST_ARG
+    global task_limiter
+    global chunk_limiter
+    FIRST_ARG = None
+    if len(sys.argv) >= 1:
+        # 获取第一个参数
+        FIRST_ARG = sys.argv[1]
+        logging.info(f"参数数量{len(sys.argv)},第一个参数 {FIRST_ARG}")
+    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()},executor {FIRST_ARG},task_limiter {task_limiter},chunk_limiter {chunk_limiter}')
     settings.init_settings()
     print_rag_settings()
     if sys.platform != "win32":
