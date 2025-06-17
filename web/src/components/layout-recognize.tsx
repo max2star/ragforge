@@ -49,7 +49,7 @@ const LayoutRecognize = ({ isPdf }: { isPdf: boolean }) => {
     <Form.Item
       name={['parser_config', 'layout_recognize']}
       label={t('layoutRecognize')}
-      initialValue={DocumentType.PlainText}
+      initialValue={DocumentType.MinerU}
       tooltip={t('layoutRecognizeTip')}
     >
       <Select options={options} popupMatchSelectWidth={false} />
