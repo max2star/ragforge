@@ -179,7 +179,8 @@ const KnowledgeFile = () => {
       title: t('parsingStatus'),
       dataIndex: 'run',
       key: 'run',
-      sorter: (a, b) => Number(a.run) - Number(b.run),
+      //使用点击后台排序，不使用单页里的排序
+      //sorter: (a, b) => Number(a.run) - Number(b.run),
       render: (text, record) => {
         return <ParsingStatusCell record={record}></ParsingStatusCell>;
       },
