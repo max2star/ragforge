@@ -119,7 +119,7 @@ class TaskService(CommonService):
         if not docs:
             return None
 
-        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received for doc {docs[0]['doc_id']},this is the docs[0]['retry_count'] time."
+        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received for doc {docs[0]['doc_id']},this is the {docs[0]['retry_count']} time."
         prog = random.random() / 10.0
         retry_count_max = 5
         if docs[0]["retry_count"] >= retry_count_max:
