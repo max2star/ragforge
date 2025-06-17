@@ -1081,12 +1081,14 @@ async def main():
 /_/  \__,_/____/_/|_|  /_____/_/|_|\___/\___/\__,_/\__/\____/_/
     """)
     global FIRST_ARG
+    global task_limiter
+    global chunk_limiter
     FIRST_ARG = None
     if len(sys.argv) >= 1:
         # 获取第一个参数
         FIRST_ARG = sys.argv[1]
         logging.info(f"参数数量{len(sys.argv)},第一个参数 {FIRST_ARG}")
-    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()},executor {FIRST_ARG}')
+    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()},executor {FIRST_ARG},task_limiter {task_limiter},chunk_limiter {chunk_limiter}')
     settings.init_settings()
     print_rag_settings()
     if sys.platform != "win32":
