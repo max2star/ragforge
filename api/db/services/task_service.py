@@ -258,6 +258,7 @@ class TaskService(CommonService):
             import traceback
             traceback.print_exc()
             logging.info("do_cancel Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            return True
         return doc.run == TaskStatus.CANCEL.value or doc.progress < 0
 
     @classmethod
