@@ -520,6 +520,7 @@ class DocumentService(CommonService):
             try:
                 tsks = Task.query(doc_id=d["id"], order_by=Task.create_time)
                 if not tsks:
+                    logging.warning(f"update_progress not find doc {d['id']}")
                     continue
                 msg = []
                 prg = 0
@@ -563,7 +564,7 @@ class DocumentService(CommonService):
                     d["process_begin_at"].timestamp(),
                     "run": status}
                 if prg != 0:
-                    info["progress"] = prg
+                    info["progress"] = round(prg,2)
                 if msg:
                     info["progress_msg"] = msg
                 cls.update_by_id(d["id"], info)
