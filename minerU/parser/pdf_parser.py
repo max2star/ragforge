@@ -312,7 +312,7 @@ class MinerUPdf:
         # 在报错代码前插入
         import torch, os
         os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'  # 防碎片
-        torch.cuda.empty_cache()  # 清缓存
+        #torch.cuda.empty_cache()  # 清缓存
         # 使用MinerU处理
         try:
             start = timer()
