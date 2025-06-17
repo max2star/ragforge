@@ -140,9 +140,11 @@ def create(tenant_id):
     if KnowledgebaseService.query(
         name=req["name"], tenant_id=tenant_id, status=StatusEnum.VALID.value
     ):
-        return get_error_data_result(
-            message="Duplicated dataset name in creating dataset."
-        )
+        logging.info(f"Dataset {req['name']} already exists.")
+        # 允许创建重名知识库
+        # return get_error_data_result(
+        #     message="Duplicated dataset name in creating dataset."
+        # )
     req["tenant_id"] = tenant_id
     req["created_by"] = tenant_id
     if not req.get("embedding_model"):

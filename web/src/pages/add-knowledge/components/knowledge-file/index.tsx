@@ -29,11 +29,11 @@ import WebCrawlModal from './web-crawl-modal';
 
 import FileUploadModal from '@/components/file-upload-modal';
 import { IDocumentInfo } from '@/interfaces/database/document';
+import { getAuthorization } from '@/utils/authorization-util';
 import { formatDate } from '@/utils/date';
+import AuthorizedImage from './authorized-image';
 import styles from './index.less';
 import { SetMetaModal } from './set-meta-modal';
-import AuthorizedImage from './authorized-image';
-import { getAuthorization } from '@/utils/authorization-util';
 
 const { Text } = Typography;
 
@@ -145,7 +145,7 @@ const KnowledgeFile = () => {
       },
     },
     {
-      title: '更新日期',
+      title: t('updateDate'), //'更新日期',
       dataIndex: 'update_date',
       key: 'update_date',
       render(value) {
@@ -179,7 +179,8 @@ const KnowledgeFile = () => {
       title: t('parsingStatus'),
       dataIndex: 'run',
       key: 'run',
-      sorter: (a, b) => Number(a.run) - Number(b.run),
+      //使用点击后台排序，不使用单页里的排序
+      //sorter: (a, b) => Number(a.run) - Number(b.run),
       render: (text, record) => {
         return <ParsingStatusCell record={record}></ParsingStatusCell>;
       },
