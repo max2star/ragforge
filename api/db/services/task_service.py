@@ -119,7 +119,7 @@ class TaskService(CommonService):
         if not docs:
             return None
 
-        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task has been received."
+        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received for doc {docs[0]['doc_id']},this is the docs[0]['retry_count'] time."
         prog = random.random() / 10.0
         retry_count_max = 5
         if docs[0]["retry_count"] >= retry_count_max:
@@ -251,8 +251,13 @@ class TaskService(CommonService):
         Returns:
             bool: True if the task should be cancelled, False otherwise.
         """
-        task = cls.model.get_by_id(id)
-        _, doc = DocumentService.get_by_id(task.doc_id)
+        try:
+            task = cls.model.get_by_id(id)
+            _, doc = DocumentService.get_by_id(task.doc_id)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logging.info("do_cancel Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
         return doc.run == TaskStatus.CANCEL.value or doc.progress < 0
 
     @classmethod
