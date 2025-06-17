@@ -253,7 +253,7 @@ def extract_first_json(text):
     """
     start = text.find('{')
     if start == -1:  # 无左花括号直接退出
-        return "{}"
+        return text
 
     brace_count = 0
     in_string = False
