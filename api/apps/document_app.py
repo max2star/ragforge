@@ -38,7 +38,7 @@ from api.db.services.document_service import DocumentService, doc_upload_and_par
 from api.utils.api_utils import (
     server_error_response,
     get_data_error_result,
-    validate_request,
+    validate_request, get_extractor,
 )
 import uuid
 from api.utils import get_uuid,current_timestamp
@@ -768,7 +768,7 @@ def get_layout(doc_id):
 @validate_request("doc_id", "parser_id")
 def change_parser():
     req = request.json
-    logging.info(f"\n\nchange_parser =========> {req}\n\n")
+    logging.info(f"change_parser type {type(req)} req {req}")
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
@@ -797,7 +797,11 @@ def change_parser():
         if not e:
             return get_data_error_result(message=f"Document {doc.id} not found!")
         if "parser_config" in req:
-            DocumentService.update_parser_config(doc.id, req["parser_config"])
+            logging.info(
+                f"update parser config type {type(req.get('parser_config'))} parser_config {req.get('parser_config')}")
+            parser_config = req["parser_config"]
+            parser_config["extractor"] = get_extractor(parser_config)
+            DocumentService.update_parser_config(doc.id, parser_config)
         if doc.token_num > 0:
             e = DocumentService.increment_chunk_num(doc.id, doc.kb_id, doc.token_num * -1, doc.chunk_num * -1,
                                                     doc.process_duation * -1)
