@@ -362,8 +362,8 @@ def get_extractor(parser_config, metadata_type="default"):
                 "name": k["name"], "code": k["code"], "must_exist": k["must_exist"],
                 "description": k["description"], "type": None,
             } for k in constant.keyvalues_mapping.get(metadata_type)]
-        else:
-            metadata_type = "default"
+        # else:
+            # metadata_type = "default"
 
         temp_keyvalues = {}
         for i in default_keyvalues:
@@ -376,7 +376,7 @@ def get_extractor(parser_config, metadata_type="default"):
                 if k["name"] not in constant.exclude_fields:
                     temp_keyvalues[k["name"]] = k
 
-        return {"keyvalues": [v for k,v in temp_keyvalues.items()], "metadata_type":metadata_type}
+        return {"keyvalues": [v for k,v in temp_keyvalues.items()], "metadata_type": metadata_type}
     except Exception as e:
         logging.error(e)
         return {"keyvalues": default_keyvalues, "metadata_type":metadata_type}
