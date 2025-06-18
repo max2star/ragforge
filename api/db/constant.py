@@ -2926,6 +2926,17 @@ Glossary=  [
   # }
 ]
 
+# 非大模型从文档内容中提取字段
+exclude_fields = [
+  "唯一标识",
+  "知识所有者",
+  "所属部所",
+  "附件",
+  "密级",
+  "知悉范围",
+  "知识提交者",
+  "提交日期",
+]
 
 keyvalues_mapping = {
     'default':Report,

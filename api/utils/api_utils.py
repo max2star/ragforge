@@ -345,6 +345,43 @@ def dataset_readonly_fields(field_name):
     return field_name in ["chunk_count", "create_date", "create_time", "update_date", "update_time", "created_by", "document_count", "token_num", "status", "tenant_id", "id"]
 
 
+def get_extractor(parser_config, metadata_type="default"):
+    default_keyvalues = [{
+        "name": k["name"], "code": k["code"], "must_exist": k["must_exist"],
+        "description": k["description"], "type": None,
+    } for k in constant.keyvalues_mapping.get(metadata_type, "default")]
+    if not parser_config:
+        return {"keyvalues": default_keyvalues, "metadata_type":metadata_type}
+
+    try:
+        extractor = parser_config["extractor"]
+        keyvalues = extractor["keyvalues"]
+        metadata_type = extractor.get("metadata_type", "default")
+        if metadata_type in constant.keyvalues_mapping.keys() and metadata_type is not "default":
+            default_keyvalues = [{
+                "name": k["name"], "code": k["code"], "must_exist": k["must_exist"],
+                "description": k["description"], "type": None,
+            } for k in constant.keyvalues_mapping.get(metadata_type)]
+        else:
+            metadata_type = "default"
+
+        temp_keyvalues = {}
+        for i in default_keyvalues:
+            temp_keyvalues[i["name"]] = i
+        for k in keyvalues:
+            k.pop("id", None)
+            if k["name"] in temp_keyvalues.keys():
+                temp_keyvalues[k["name"]] = k
+            else:
+                if k["name"] not in constant.exclude_fields:
+                    temp_keyvalues[k["name"]] = k
+
+        return {"keyvalues": [v for k,v in temp_keyvalues.items()], "metadata_type":metadata_type}
+    except Exception as e:
+        logging.error(e)
+        return {"keyvalues": default_keyvalues, "metadata_type":metadata_type}
+
+
 def get_parser_config(chunk_method, parser_config, metadata_type="default"):
     if parser_config:
         return parser_config
@@ -360,10 +397,7 @@ def get_parser_config(chunk_method, parser_config, metadata_type="default"):
         "table": None,
         "paper": { "pages": [[1, 1000000]],
                    "layout_recognize":"MinerU",
-                   "extractor":{
-                       "keyvalues":constant.keyvalues_mapping.get(metadata_type,"default"),
-                       "metadata_type":metadata_type,
-                   },
+                   "extractor": get_extractor(parser_config, metadata_type=metadata_type),
                    "classifier":{}},
         "book": {"raptor": {"use_raptor": False}},
         "laws": {"raptor": {"use_raptor": False}},
