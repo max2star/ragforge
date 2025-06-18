@@ -598,10 +598,12 @@ def get(doc_id):
         #对于MinerU解析的，如果原文件不是PDF，则找到对应转化后的PDF返回
         layout_recognize = None
         parser_config = doc.parser_config
+        logging.info(f"get doc for {doc_id} parser_config is {parser_config}.")
         if parser_config:
             layout_recognize = parser_config.get('layout_recognize',None)
         if layout_recognize and layout_recognize in ['MinerU','minerU']:
             if doc.type != FileType.PDF.value:
+                logging.info(f"get doc for {doc_id} which is not pdf but will return transferred pdf.")
                 name_without_suff = n.split(".")[0]
                 name_for_file = f'minerU/{doc_id}'+'/'+name_without_suff+'.pdf'
                 response = flask.make_response(STORAGE_IMPL.get(b, name_for_file))
