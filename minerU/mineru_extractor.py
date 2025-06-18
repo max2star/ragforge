@@ -6,14 +6,11 @@ import re
 from magic_pdf.data.data_reader_writer import S3DataReader
 from timeit import default_timer as timer
 from minerU.parser.figure_parser import VisionFigureParser
-import fitz
+
 from api.db import LLMType, constant
 from api.db.services.llm_service import LLMBundle
 from rag import settings
-import trio
-from graphrag.utils import (
-    chat_limiter,
-)
+
 
 def format_time(time_field_value):
     time_field_value_format = None
@@ -39,55 +36,6 @@ def format_time(time_field_value):
             logging.error("Failed to parse {} use format {} for Exception {}".format(time_field_value,format_string,time_field_value_format))
             continue
     return time_field_value_format
-
-class ChatWithModel:
-    def __init__(self, llm_model, prompt):
-        self._llm_model = llm_model
-        self._prompt = prompt
-
-    async def _chat(self, system, history, gen_conf):
-        response = await trio.to_thread.run_sync(
-            lambda: self._llm_model.chat(system, history, gen_conf)
-        )
-        logging.info(f"response begin ==>\n{response}")
-        if "</think>" in response:
-            response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
-        if "```json" in response:
-            response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
-        logging.info(f"response clean ==>\n{response}")
-        if response.find("**ERROR**") >= 0:
-            raise Exception(response)
-        return response
-
-
-    async def __call__(self, callback=None):
-        results = None
-        async def classifier():
-            nonlocal results
-            result = None
-
-            async with chat_limiter:
-                result = await self._chat(
-                    "You're a helpful assistant.",
-                    [
-                        {
-                            "role": "user",
-                            "content": self._prompt,
-                        },
-                        {
-                            "role": "system",
-                            "content": self._prompt,
-                        }
-                    ],
-                    {"temperature": 0.3},
-                )
-            results = await result
-        async with trio.open_nursery() as nursery:
-               async with chat_limiter:
-                    nursery.start_soon(classifier)
-
-        return results
-
 
 
 def get_pdf_file_bytes(bucketname, filename, doc_id, pdf_flag=True):
@@ -161,7 +109,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     example = """{"name1": 提取内容a,"name2": 提取内容b,"name3": 提取内容c}"""
     prompt = (
         f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
-        f"请你以JSON格式输出。key使用name字段，格式示例：{example}"
+        f"请你以最紧凑的JSON格式输出文本，可以去掉多余的空格。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
     logging.info(f"======prompt======{prompt}")
@@ -198,23 +146,25 @@ def extract_directory(tenant_id, images, callback=None):
     # 最大识别图片页数
     MAX_IMAGES = 40
     example = """{"目录": [{"章节": "章节1","页码": 1},{"章节": "章节2","页码": 14}]}"""
-    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
+    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}"
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
 
     # 找到目录后又出现空结果则判断目录页结束
     empty_num = 0
+    directory_num = 0
     is_begin = False
     result = []
     for img in images[:MAX_IMAGES]:
         vision_result = vision_parser(tenant_id, [img], prompt=prompt)
         res = [v for k, v in vision_result.items()]
-        if res:
+        if len(res) > 0:
             response = res[0]
             try:
-                if json.loads(response):
+                if "目录" in json.loads(response):
                     is_begin = True
                     empty_num = 0
+                    directory_num += 1
                 elif is_begin:
                     empty_num += 1
             except Exception as e:
@@ -223,6 +173,7 @@ def extract_directory(tenant_id, images, callback=None):
         if empty_num >= 3:
             logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
             break
+        logging.info(f"已找到{directory_num}页目录")
 
     logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
