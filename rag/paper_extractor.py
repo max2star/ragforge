@@ -64,7 +64,7 @@ class PaperExtractor:
             result = None
             logging.info(f"PaperExtractor extract for {key_to_parse}")
             if not key_to_parse:
-                key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
+                key_to_parse = constant.keyvalues_mapping.get(metadata_type)
             # 过滤字段
             keys_to_use_list = []
             for i in key_to_parse:
