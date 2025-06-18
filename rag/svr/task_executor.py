@@ -694,15 +694,20 @@ async def do_handle_task(task):
     file_type = task.get("type", "pdf")
     pdf_article_type = None
 
-    # 获取元数据字段
-    extractor_config = task["parser_config"].get('extractor')
-    prompt = extractor_config.get("prompt", None)
-    metadata_type = extractor_config.get("metadata_type", "default")
-    if extractor_config:
-        keys = extractor_config.get("keyvalues", None)
-    else:
-        keys = constant.keyvalues_mapping['default']
-    key_names = [k['name'] for k in keys]
+    # 从任务内获取元数据配置（默认知识库配置）
+    # extractor_config = task["parser_config"].get('extractor')
+    # prompt = extractor_config.get("prompt", None)
+    # metadata_type = extractor_config.get("metadata_type", "default")
+    # if extractor_config:
+    #     keys = extractor_config.get("keyvalues", None)
+    # else:
+    #     keys = constant.keyvalues_mapping['default']
+    # 从文档内获取元数据配置
+    doc_parser_config = doc.parser_config
+    doc_extractor = doc_parser_config.get("extractor", None)
+    metadata_type = doc_extractor.get("metadata_type", "default")
+    keys = doc_extractor.get("keyvalues")
+    key_names = [k.get('name') for k in keys]
     for kn in key_now:
         if kn not in key_names:
             logging.info(f"新增 key {kn} in extractor config!")
@@ -790,7 +795,8 @@ async def do_handle_task(task):
             )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             content += json.dumps(fields_map)
-            progress_callback(msg="视觉模型提取元数据完成")
+            type_ = f"[{metadata_type}]" if metadata_type != "default" else ""
+            progress_callback(msg=f"{type_}视觉模型提取元数据完成")
         except Exception as e:
             import traceback
             traceback.print_exc()
