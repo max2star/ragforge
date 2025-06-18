@@ -201,8 +201,29 @@ def extract_directory(tenant_id, images, callback=None):
     prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
-    vision_results = vision_parser(tenant_id, images[:MAX_IMAGES], prompt=prompt)
-    result = [v for k,v in vision_results.items()]
+
+    # 找到目录后又出现空结果则判断目录页结束
+    empty_num = 0
+    is_begin = False
+    result = []
+    for img in images[:MAX_IMAGES]:
+        vision_result = vision_parser(tenant_id, [img], prompt=prompt)
+        res = [v for k, v in vision_result.items()]
+        if res:
+            response = res[0]
+            try:
+                if json.loads(response):
+                    is_begin = True
+                    empty_num = 0
+                elif is_begin:
+                    empty_num += 1
+            except Exception as e:
+                logging.error("error {}".format(e))
+            result.append(response)
+        if empty_num >= 3:
+            logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
+            break
+
     logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
     current_page_index = 0

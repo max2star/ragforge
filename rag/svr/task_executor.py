@@ -707,11 +707,11 @@ async def do_handle_task(task):
     doc_extractor = doc_parser_config.get("extractor", None)
     metadata_type = doc_extractor.get("metadata_type", "default")
     keys = doc_extractor.get("keyvalues")
-    key_names = [k.get('name') for k in keys]
-    for kn in key_now:
-        if kn not in key_names:
-            logging.info(f"新增 key {kn} in extractor config!")
-            keys.append({"name": kn, "must_exist": True})
+    # key_names = [k.get('name') for k in keys]
+    # for kn in key_now:
+    #     if kn not in key_names:
+    #         logging.info(f"新增 key {kn} in extractor config!")
+    #         keys.append({"name": kn, "must_exist": True})
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
@@ -795,8 +795,8 @@ async def do_handle_task(task):
             )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             content += json.dumps(fields_map)
-            type_ = f"[{metadata_type}]" if metadata_type != "default" else ""
-            progress_callback(msg=f"{type_}视觉模型提取元数据完成")
+            type_ = f"{metadata_type}" if metadata_type != "default" else ""
+            progress_callback(msg=f"视觉模型提取{type_}元数据完成")
         except Exception as e:
             import traceback
             traceback.print_exc()
