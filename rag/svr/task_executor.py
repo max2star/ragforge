@@ -509,6 +509,17 @@ async def run_raptor(row, chat_mdl, embd_mdl, vector_size, callback=None):
     return res, tk_count
 
 
+async def run_extract_(fields, metadata_type, chat_mdl, content, callback=None):
+    key = fields
+    extractor = PaperExtractor(
+        chat_mdl,
+        None,
+        key
+    )
+    result = await extractor(content,key,metadata_type,callback)
+    return result
+
+
 async def run_extract(row, chat_mdl, content,callback=None):
     extractor_config = row["parser_config"].get('extractor')
     metadata_type = extractor_config.get("metadata_type", "default")
@@ -523,20 +534,6 @@ async def run_extract(row, chat_mdl, content,callback=None):
         key
     )
     result = await extractor(content,key,metadata_type,callback)
-    return result
-
-# todo modify
-async def run_chat(chat_mdl, prompt=None, callback=None):
-    chatter = ChatWithModel(
-        chat_mdl,
-        prompt
-    )
-    try:
-        result = await chatter(callback)
-    except Exception as e:
-        result = {}
-        logging.error(f"run_chat Failed for {e}")
-    logging.info(f"run_chat result {result}")
     return result
 
 
@@ -702,16 +699,12 @@ async def do_handle_task(task):
     #     keys = extractor_config.get("keyvalues", None)
     # else:
     #     keys = constant.keyvalues_mapping['default']
+
     # 从文档内获取元数据配置
     doc_parser_config = doc.parser_config
     doc_extractor = doc_parser_config.get("extractor", None)
     metadata_type = doc_extractor.get("metadata_type", "default")
     keys = doc_extractor.get("keyvalues")
-    # key_names = [k.get('name') for k in keys]
-    # for kn in key_now:
-    #     if kn not in key_names:
-    #         logging.info(f"新增 key {kn} in extractor config!")
-    #         keys.append({"name": kn, "must_exist": True})
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
@@ -809,7 +802,8 @@ async def do_handle_task(task):
                     break
             logging.debug(f"do_handle_task current content {content}")
 
-            fields_map = await run_extract(task, chat_model, content, progress_callback)
+            # fields_map = await run_extract(task, chat_model, content, progress_callback)
+            fields_map = await run_extract_(fields, metadata_type, chat_model, content, progress_callback)
             progress_callback(msg="文本模型提取元数据完成")
 
         # if flag:
@@ -851,8 +845,8 @@ async def do_handle_task(task):
             if c_count >= 10000:
                 break
         logging.debug(f"do_handle_task current content {content}")
-
-        dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+        # dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+        dict_result_add = await run_extract_(fields, metadata_type, chat_model, content, progress_callback)
         progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
