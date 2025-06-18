@@ -327,11 +327,13 @@ def list_docs():
 
     page_number = int(request.args.get("page", 1))
     items_per_page = int(request.args.get("page_size", 15))
+    #过滤解析状态字段
+    run = request.args.get("run", None)
     orderby = request.args.get("orderby", "create_time")
     desc = request.args.get("desc", True)
     try:
         docs, tol = DocumentService.get_by_kb_id(
-            kb_id, page_number, items_per_page, orderby, desc, keywords)
+            kb_id, page_number, items_per_page, orderby, desc, keywords, run)
 
         for doc_item in docs:
             #thumbnail 是一个 ID
@@ -593,16 +595,31 @@ def get(doc_id):
         b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
         response = flask.make_response(STORAGE_IMPL.get(b, n))
 
-        ext = re.search(r"\.([^.]+)$", doc.name)
-        if ext:
-            logging.info(f"get for {doc_id},type {ext.group(1)}")
-            if doc.type == FileType.VISUAL.value:
-                response.headers.set('Content-Type', 'image/%s' % ext.group(1))
-            else:
-                response.headers.set(
-                    'Content-Type',
-                    'application/%s' %
-                    ext.group(1))
+        #对于MinerU解析的，如果原文件不是PDF，则找到对应转化后的PDF返回
+        layout_recognize = None
+        parser_config = doc.parser_config
+        if parser_config:
+            layout_recognize = parser_config.get('layout_recognize',None)
+        if layout_recognize and layout_recognize in ['MinerU','minerU']:
+            if doc.type != FileType.PDF.value:
+                name_without_suff = n.split(".")[0]
+                name_for_file = f'minerU/{doc_id}'+'/'+name_without_suff+'.pdf'
+                response = flask.make_response(STORAGE_IMPL.get(b, name_for_file))
+            response.headers.set(
+                'Content-Type',
+                'application/%s' %
+                'pdf')
+        else:
+            ext = re.search(r"\.([^.]+)$", doc.name)
+            if ext:
+                logging.info(f"get for {doc_id},type {ext.group(1)}")
+                if doc.type == FileType.VISUAL.value:
+                    response.headers.set('Content-Type', 'image/%s' % ext.group(1))
+                else:
+                    response.headers.set(
+                        'Content-Type',
+                        'application/%s' %
+                        ext.group(1))
         return response
     except Exception as e:
         return server_error_response(e)
