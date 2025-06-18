@@ -246,6 +246,7 @@ async def collect():
     task["task_type"] = msg.get("task_type", "")
     task["meta_fields"] = doc.meta_fields
     task["filter_fields"] = doc.filter_fields
+    task["doc_name"] = doc.name
     return redis_msg, task
 
 
