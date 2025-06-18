@@ -28,7 +28,7 @@ from PIL import Image
 from api.utils.log_utils import initRootLogger, get_project_base_directory
 from graphrag.general.index import run_graphrag
 from graphrag.utils import get_llm_cache, set_llm_cache, get_tags_from_cache, set_tags_to_cache
-from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, ChatWithModel, format_time
+from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, format_time
 from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
@@ -692,19 +692,25 @@ async def do_handle_task(task):
     pdf_article_type = None
 
     # 从任务内获取元数据配置（默认知识库配置）
-    # extractor_config = task["parser_config"].get('extractor')
+    extractor_config = task["parser_config"].get('extractor')
     # prompt = extractor_config.get("prompt", None)
     # metadata_type = extractor_config.get("metadata_type", "default")
-    # if extractor_config:
-    #     keys = extractor_config.get("keyvalues", None)
-    # else:
-    #     keys = constant.keyvalues_mapping['default']
 
     # 从文档内获取元数据配置
     doc_parser_config = doc.parser_config
-    doc_extractor = doc_parser_config.get("extractor", None)
+    doc_extractor = doc_parser_config.get("extractor", {})
     metadata_type = doc_extractor.get("metadata_type", "default")
+    if metadata_type == "default" and extractor_config:
+        metadata_type = extractor_config.get("metadata_type", "default")
+
+    if extractor_config:
+        task_keys = extractor_config.get("keyvalues", None)
+    else:
+        task_keys = constant.keyvalues_mapping.get(metadata_type)
+
     keys = doc_extractor.get("keyvalues")
+    if not keys:
+        keys = task_keys
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
