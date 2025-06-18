@@ -146,7 +146,9 @@ def extract_directory(tenant_id, images, callback=None):
     # 最大识别图片页数
     MAX_IMAGES = 40
     example = """{"目录": [{"章节": "章节1","页码": 1},{"章节": "章节2","页码": 14}]}"""
-    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}"
+    prompt = (f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码，"
+              f"如果是大章节带着小节只需提取大章节。"
+              f"请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
 
@@ -173,7 +175,7 @@ def extract_directory(tenant_id, images, callback=None):
         if empty_num >= 3:
             logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
             break
-        logging.info(f"已找到{directory_num}页目录")
+        logging.info(f"已找到{directory_num}页完整目录json")
 
     logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
