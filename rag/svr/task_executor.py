@@ -700,16 +700,20 @@ async def do_handle_task(task):
     doc_parser_config = doc.parser_config
     doc_extractor = doc_parser_config.get("extractor", {})
     metadata_type = doc_extractor.get("metadata_type", "default")
+    logging.info(f"doc {doc.name} metadata type {metadata_type}")
     if metadata_type == "default" and extractor_config:
         metadata_type = extractor_config.get("metadata_type", "default")
+        logging.info(f"task metadata type {metadata_type}")
 
     if extractor_config:
+        logging.info(f"task extractor config {extractor_config}")
         task_keys = extractor_config.get("keyvalues", None)
     else:
         task_keys = constant.keyvalues_mapping.get(metadata_type)
 
     keys = doc_extractor.get("keyvalues")
     if not keys:
+        logging.info(f"task keys")
         keys = task_keys
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
