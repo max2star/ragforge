@@ -1569,3 +1569,73 @@ def retrieval_test(tenant_id):
                 code=settings.RetCode.DATA_ERROR,
             )
         return server_error_response(e)
+
+
+@manager.route("/mv_kb", methods=["POST"])
+@token_required
+def mv_kb(tenant_id):
+    req = request.json
+    src_kb_id = req.get("src_kb_id")
+    dst_kb_id = req.get("dst_kb_id")
+    if not src_kb_id or not dst_kb_id:
+        return get_json_result(
+            data=False, message='Lack of "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+    if src_kb_id==dst_kb_id:
+        return get_json_result(
+            data=False, message='Same src and dst "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+
+    e, src_kb = KnowledgebaseService.get_by_id(src_kb_id)
+    if not e:
+        raise LookupError("Can't find this src knowledgebase!")
+
+    e, dst_kb = KnowledgebaseService.get_by_id(dst_kb_id)
+    if not e:
+        raise LookupError("Can't find this dst knowledgebase!")
+
+    if not KnowledgebaseService.accessible(src_kb_id, tenant_id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization, user {tenant_id} kb {src_kb_id}',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    if not KnowledgebaseService.accessible(dst_kb_id, tenant_id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization, user {tenant_id} kb {dst_kb_id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    #如果源和目的KB的embedding模型一致，则允许复制移动(其他的解析参数可以按文档粒度)；否则不允许移动到目标知识库。
+    if src_kb.embd_id!=dst_kb.embd_id:
+        raise LookupError("Can't move between the knowledgebases using diffrent embedding model id!")
+
+    dst_kb_exist_location = []
+    doc_ids = req["doc_ids"]
+    for doc_id in doc_ids:
+        e, src_d = DocumentService.get_by_id(doc_id)
+        if not e:
+            raise LookupError("Can't find document {} !".format(doc_id))
+        exist, dst_d = DocumentService.get_by_location(dst_kb_id,src_d.location)
+        if exist:
+            logging.info('doc {} name {} dumplicate in dst kb_id {} with doc {}'.format(doc_id,src_d.name,dst_kb_id,dst_d.id))
+            dst_kb_exist_location.append(dst_d.name)
+    if dst_kb_exist_location:
+        raise LookupError("Has same-location/name documents {} in destination kb!".format(dst_kb_exist_location))
+    for doc_id in doc_ids:
+        if not DocumentService.accessible(doc_id, tenant_id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for doc_id {doc_id} for you {tenant_id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+    docs = DocumentService.get_by_ids(doc_ids)
+    for d in docs:
+        if d.kb_id==dst_kb_id:
+            logging.info('doc {} kb_id same with dst kb_id {}'.format(d.id,dst_kb_id))
+            continue
+        #如果是相同的tenant id，直接更新文档的kb_id Mysql数据库里更新+ES更新+Minio更新
+        #否则会做添加和删除操作
+        DocumentService.move_document(d,dst_kb_id,src_kb.tenant_id,dst_kb.tenant_id)
+    docs = DocumentService.get_by_ids(doc_ids)
+    return get_result(data=list(docs.dicts()))
