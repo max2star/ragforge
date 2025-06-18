@@ -440,7 +440,11 @@ class DocumentService(CommonService):
                 if k not in old:
                     old[k] = v
                     continue
+                if k == "pages":
+                    continue
                 if isinstance(v, dict):
+                    logging.info(f"Updating {k} from {old[k]} -> {new[k]}")
+                    logging.info(f"type {k} from {type(old[k])} -> {type(new[k])}")
                     assert isinstance(old[k], dict)
                     dfs_update(old[k], v)
                 else:
