@@ -357,7 +357,7 @@ def get_extractor(parser_config, metadata_type="default"):
         extractor = parser_config["extractor"]
         keyvalues = extractor["keyvalues"]
         metadata_type = extractor.get("metadata_type", "default")
-        if metadata_type in constant.keyvalues_mapping.keys() and metadata_type is not "default":
+        if metadata_type in constant.keyvalues_mapping.keys() and metadata_type != "default":
             default_keyvalues = [{
                 "name": k["name"], "code": k["code"], "must_exist": k["must_exist"],
                 "description": k["description"], "type": None,
