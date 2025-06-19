@@ -32,7 +32,7 @@ from api import settings
 from api.utils.api_utils import get_json_result
 from api.utils.file_utils import filename_type
 from rag.utils.storage_factory import STORAGE_IMPL
-
+import logging
 
 @manager.route('/upload', methods=['POST'])  # noqa: F821
 @login_required
@@ -63,15 +63,14 @@ def upload():
         if not FileService.accessible(pf_id, current_user.id):
             return get_json_result(
                 data=False,
-                message='No authorization.',
+                message=f'No authorization for folder id {pf_id} user {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
-
 
         for file_obj in file_objs:
             MAX_FILE_NUM_PER_USER = int(os.environ.get('MAX_FILE_NUM_PER_USER', 0))
             if MAX_FILE_NUM_PER_USER > 0 and DocumentService.get_doc_count(current_user.id) >= MAX_FILE_NUM_PER_USER:
-                return get_data_error_result( message="Exceed the maximum file number of a free user!")
+                return get_data_error_result( message=f"Exceed the maximum file number {MAX_FILE_NUM_PER_USER} of a user {current_user.id}!")
 
             # split file name path
             if not file_obj.filename:
@@ -81,6 +80,7 @@ def upload():
                 file_obj_names = full_path.split('/')
             file_len = len(file_obj_names)
 
+            logging.info(f"filename is {file_obj.filename},parent foler is is {pf_folder.name},file object names {file_obj_names}")
             # get folder
             file_id_list = FileService.get_id_list_by_id(pf_id, file_obj_names, 1, [pf_id])
             len_id_list = len(file_id_list)
