@@ -33,7 +33,7 @@ from api.utils.api_utils import (
     valid,
     get_parser_config, valid_parser_config, dataset_readonly_fields,check_duplicate_ids
 )
-
+from api.db.services.dialog_service import DialogService, ask, chat
 
 @manager.route("/datasets", methods=["POST"])  # noqa: F821
 @token_required
@@ -189,6 +189,22 @@ def create(tenant_id):
     for key, value in k.to_dict().items():
         new_key = key_mapping.get(key, key)
         renamed_data[new_key] = value
+
+    #TODO:临时方案，将知识库添加到特定智能助手中
+    dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+    e, dia = DialogService.get_by_id(dialog_id)
+    if e:
+        logging.info(f"Dialog {dialog_id} exists,will update it!")
+        dia = dia.to_dict()
+        dia_to_update = {}
+        dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+        if not DialogService.update_by_id(dialog_id, dia_to_update):
+            logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+        else:
+            logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
+    else:
+        logging.error(f"Dialog {dialog_id} Not Exists")
+
     return get_result(data=renamed_data)
 
 

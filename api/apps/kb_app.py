@@ -36,6 +36,9 @@ from api.constants import DATASET_NAME_LIMIT
 from rag.settings import PAGERANK_FLD
 import datetime
 import logging
+
+from api.db.services.dialog_service import DialogService, ask, chat
+
 @manager.route('/create', methods=['post'])  # noqa: F821
 @login_required
 @validate_request("name")
@@ -66,6 +69,22 @@ def create():
         req["embd_id"] = t.embd_id
         if not KnowledgebaseService.save(**req):
             return get_data_error_result()
+
+        #TODO:临时方案，将知识库添加到特定智能助手中
+        dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+        e, dia = DialogService.get_by_id(dialog_id)
+        if e:
+            logging.info(f"Dialog {dialog_id} exists,will update it!")
+            dia = dia.to_dict()
+            dia_to_update = {}
+            dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+            if not DialogService.update_by_id(dialog_id, dia_to_update):
+                logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+            else:
+                logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
+        else:
+            logging.error(f"Dialog {dialog_id} Not Exists")
+
         return get_json_result(data={"kb_id": req["id"]})
     except Exception as e:
         return server_error_response(e)
