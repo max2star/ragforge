@@ -1,12 +1,13 @@
 <div align="center">
 <a href="https://demo.ragflow.io/">
-<img src="web/src/assets/logo-with-text.png" width="350" alt="ragflow logo">
+<img src="web/src/assets/logo-with-text.png" width="350" alt="NewRAGflow logo">
 </a>
 </div>
 
 <p align="center">
   <a href="./README.md">English</a> |
   <a href="./README_zh.md">简体中文</a> |
+  <a href="./README_tzh.md">繁体中文</a> |
   <a href="./README_ja.md">日本語</a> |
   <a href="./README_ko.md">한국어</a> |
   <a href="./README_id.md">Bahasa Indonesia</a> |
@@ -39,9 +40,45 @@
   <a href="https://demo.ragflow.io">Demo</a>
 </h4>
 
-## 💡 RAGFlow 是什麼？
+## 💡 NewRAGflow 是什麼？
 
-[RAGFlow](https://ragflow.io/) 是一款基於深度文件理解所建構的開源 RAG（Retrieval-Augmented Generation）引擎。 RAGFlow 可以為各種規模的企業及個人提供一套精簡的 RAG 工作流程，結合大語言模型（LLM）針對用戶各類不同的複雜格式數據提供可靠的問答以及有理有據的引用。
+NewRAGflow 是基於 RAGFlow 進行功能增強的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGFlow 核心功能的基礎上，新增了多項企業級功能增強，為開發人員提供更強大的 RAG 解決方案。
+
+## 🌟 核心功能
+
+### 🔍 **深度文檔理解**
+- 基於深度文檔理解，從複雜格式的非結構化數據中提取知識
+- 支持 Word、PPT、Excel、PDF、圖片、網頁等多種格式
+
+### 🧠 **智能文本處理**
+- 基於模板的智能文本切片
+- 多路召回與融合重排序
+- 有理有據的答案生成，最大程度降低幻覺
+
+### 🚀 **自動化 RAG 工作流**
+- 完整的 RAG 編排流程
+- 可配置的 LLM 和向量模型
+- 易用的 API 接口
+
+## 📊 版本對比
+
+| 功能特性 | 開源版 | 企業版 |
+|---------|--------|--------|
+| **核心 RAG 功能** | ✅ | ✅ |
+| **深度文檔理解** | ✅ | ✅ |
+| **智能文本處理** | ✅ | ✅ |
+| **自動化 RAG 工作流** | ✅ | ✅ |
+| **MinerU 集成** | ✅ | ✅ |
+| **國產數據庫支持** | ❌ | ✅ |
+| **ARM 架構支持** | ❌ | ✅ |
+| **華為 910B NPU 支持** | ❌ | ✅ |
+
+## 🌈 功能增強-企業版
+
+- **MinerU 集成**：無縫集成 MinerU 功能，提供增強的數據挖掘和分析能力
+- **國產數據庫支持**：新增對達夢數據庫的兼容性支持，為企業級中國數據庫系統提供強大支持
+- **ARM 架構支持**：完整支持基於 ARM 的系統，使其能夠在更廣泛的硬件平台上部署
+- **華為 910B NPU 支持**：優化對華為昇騰 910B NPU 的支持，提供加速的 AI 計算能力
 
 ## 🎮 Demo 試用
 
@@ -60,6 +97,93 @@
 - 2024-12-18 升級了 DeepDoc 的文檔佈局分析模型。
 - 2024-11-01 對解析後的 chunk 加入關鍵字抽取和相關問題產生以提高回想的準確度。
 - 2024-08-22 支援用 RAG 技術實現從自然語言到 SQL 語句的轉換。
+
+## 🎉 關注項目
+
+⭐️ 點擊右上角的 Star 追蹤 RAGFlow，可以取得最新發布的即時通知 !🌟
+
+<div align="center" style="margin-top:20px;margin-bottom:20px;">
+<img src="https://github.com/user-attachments/assets/18c9707e-b8aa-4caf-a154-037089c105ba" width="1200"/>
+</div>
+
+## 🎬 快速開始
+
+### 📋 系統要求
+- CPU >= 4 核
+- RAM >= 16 GB
+- Disk >= 50 GB
+- Docker >= 24.0.0 & Docker Compose >= v2.26.1
+  > 如果你並沒有在本機安裝 Docker（Windows、Mac，或 Linux）, 可以參考文件 [Install Docker Engine](https://docs.docker.com/engine/install/) 自行安裝。
+
+### 🚀 快速部署
+
+1. **克隆項目**
+   ```bash
+   git clone https://github.com/infiniflow/ragflow.git
+   cd ragflow/docker
+   ```
+
+2. **啟動服務**
+   ```bash
+   # CPU 版本
+   docker compose -f docker-compose.yml up -d
+   
+   # GPU 版本（加速 embedding 和 DeepDoc 任務）
+   # docker compose -f docker-compose-gpu.yml up -d
+   ```
+
+3. **驗證啟動**
+   ```bash
+   docker logs -f ragflow-server
+   ```
+
+   _出現以下介面提示說明伺服器啟動成功：_
+
+   ```bash
+        ____   ___    ______ ______ __
+       / __ \ /   |  / ____// ____// /____  _      __
+      / /_/ // /| | / / __ / /_   / // __ \| | /| / /
+     / _, _// ___ |/ /_/ // __/  / // /_/ /| |/ |/ /
+    /_/ |_|/_/  |_|\____//_/    /_/ \____/ |__/|__/
+
+    * Running on all addresses (0.0.0.0)
+   ```
+
+   > 如果您跳過這一步驟系統確認步驟就登入 RAGFlow，你的瀏覽器有可能會提示 `network anormal` 或 `網路異常`，因為 RAGFlow 可能並未完全啟動成功。
+
+4. **訪問系統**
+   - 瀏覽器訪問：`http://YOUR_SERVER_IP`
+   - 配置 LLM API Key：編輯 `service_conf.yaml.template`
+
+### ⚙️ 配置說明
+
+- **.env**：基礎環境變量（端口、密碼等）
+- **service_conf.yaml.template**：後端服務配置
+- **docker-compose.yml**：容器編排配置
+
+## 🔧 開發指南
+
+### 源碼編譯
+```bash
+# 不含 embedding 模型的輕量版本（約 2GB）
+docker build -f Dockerfile -t newragflow:slim .
+
+# 完整版本（約 9GB）
+docker build -f Dockerfile -t newragflow:full .
+```
+
+### ARM 架構支持
+如需在 ARM64 平台運行，請參考[構建指南](https://ragflow.io/docs/dev/build_docker_image)自行編譯鏡像。
+
+## 📚 文檔資源
+
+- [API 文檔](https://ragflow.io/docs/dev/category/api)
+- [配置指南](https://ragflow.io/docs/dev/category/configuration)
+- [部署指南](https://ragflow.io/docs/dev/category/deployment)
+
+## 🤝 商務合作
+
+如有商務合作需求，請聯繫：business@infiniflow.com
 
 ## 🎉 關注項目
 

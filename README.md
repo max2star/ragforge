@@ -1,6 +1,6 @@
 <div align="center">
 <a href="https://demo.ragflow.io/">
-<img src="web/src/assets/logo-with-text.png" width="520" alt="ragflow logo">
+<img src="web/src/assets/logo-with-text.png" width="520" alt="NewRAGflow logo">
 </a>
 </div>
 
@@ -43,10 +43,10 @@
 <details open>
 <summary><b>📕 Table of Contents</b></summary>
 
-- 💡 [What is RAGFlow?](#-what-is-ragflow)
+- 💡 [What is NewRAGflow?](#-what-is-newragflow)
 - 🎮 [Demo](#-demo)
 - 📌 [Latest Updates](#-latest-updates)
-- 🌟 [Key Features](#-key-features)
+- 🌟 [Core Features](#-core-features)
 - 🔎 [System Architecture](#-system-architecture)
 - 🎬 [Get Started](#-get-started)
 - 🔧 [Configurations](#-configurations)
@@ -60,12 +60,9 @@
 
 </details>
 
-## 💡 What is RAGFlow?
+## 💡 What is NewRAGflow?
 
-[RAGFlow](https://ragflow.io/) is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document
-understanding. It offers a streamlined RAG workflow for businesses of any scale, combining LLM (Large Language Models)
-to provide truthful question-answering capabilities, backed by well-founded citations from various complex formatted
-data.
+NewRAGflow is an open-source RAG (Retrieval-Augmented Generation) engine based on RAGFlow with enhanced enterprise features. While maintaining the core functionality of RAGFlow, it adds multiple enterprise-level enhancements to provide developers with a more powerful RAG solution.
 
 ## 🎮 Demo
 
@@ -94,34 +91,41 @@ releases! 🌟
 <img src="https://github.com/user-attachments/assets/18c9707e-b8aa-4caf-a154-037089c105ba" width="1200"/>
 </div>
 
-## 🌟 Key Features
+## 🌟 Core Features
 
-### 🍭 **"Quality in, quality out"**
+### 🔍 **Deep Document Understanding**
+- Based on deep document understanding to extract knowledge from complex unstructured data
+- Supports Word, PPT, Excel, PDF, images, web pages and more formats
 
-- [Deep document understanding](./deepdoc/README.md)-based knowledge extraction from unstructured data with complicated
-  formats.
-- Finds "needle in a data haystack" of literally unlimited tokens.
+### 🧠 **Intelligent Text Processing**
+- Template-based intelligent text chunking
+- Multi-path retrieval with fused re-ranking
+- Grounded answer generation with reduced hallucinations
 
-### 🍱 **Template-based chunking**
+### 🚀 **Automated RAG Workflow**
+- Complete RAG orchestration process
+- Configurable LLM and vector models
+- Easy-to-use API interfaces
 
-- Intelligent and explainable.
-- Plenty of template options to choose from.
+## 📊 Version Comparison
 
-### 🌱 **Grounded citations with reduced hallucinations**
+| Features | Open Source | Enterprise |
+|----------|-------------|------------|
+| **Core RAG Features** | ✅ | ✅ |
+| **Deep Document Understanding** | ✅ | ✅ |
+| **Intelligent Text Processing** | ✅ | ✅ |
+| **Automated RAG Workflow** | ✅ | ✅ |
+| **MinerU Integration** | ✅ | ✅ |
+| **Domestic Database Support** | ❌ | ✅ |
+| **ARM Architecture Support** | ❌ | ✅ |
+| **Huawei 910B NPU Support** | ❌ | ✅ |
 
-- Visualization of text chunking to allow human intervention.
-- Quick view of the key references and traceable citations to support grounded answers.
+## 🌈 Enhanced Features - Enterprise Edition
 
-### 🍔 **Compatibility with heterogeneous data sources**
-
-- Supports Word, slides, excel, txt, images, scanned copies, structured data, web pages, and more.
-
-### 🛀 **Automated and effortless RAG workflow**
-
-- Streamlined RAG orchestration catered to both personal and large businesses.
-- Configurable LLMs as well as embedding models.
-- Multiple recall paired with fused re-ranking.
-- Intuitive APIs for seamless integration with business.
+- **MinerU Integration**: Seamlessly integrated MinerU functionality for enhanced data mining and analysis capabilities
+- **Domestic Database Support**: Added compatibility with DM (达梦) database, providing robust support for enterprise-grade Chinese database systems
+- **ARM Architecture Support**: Full compatibility with ARM-based systems, enabling deployment on a wider range of hardware platforms
+- **Huawei 910B NPU Support**: Optimized performance with Huawei Ascend 910B NPU support, offering accelerated AI computing capabilities
 
 ## 🔎 System Architecture
 
@@ -131,100 +135,43 @@ releases! 🌟
 
 ## 🎬 Get Started
 
-### 📝 Prerequisites
-
+### 📋 System Requirements
 - CPU >= 4 cores
 - RAM >= 16 GB
 - Disk >= 50 GB
 - Docker >= 24.0.0 & Docker Compose >= v2.26.1
-  > If you have not installed Docker on your local machine (Windows, Mac, or Linux),
-  > see [Install Docker Engine](https://docs.docker.com/engine/install/).
 
-### 🚀 Start up the server
+### 🚀 Quick Deployment
 
-1. Ensure `vm.max_map_count` >= 262144:
-
-   > To check the value of `vm.max_map_count`:
-   >
-   > ```bash
-   > $ sysctl vm.max_map_count
-   > ```
-   >
-   > Reset `vm.max_map_count` to a value at least 262144 if it is not.
-   >
-   > ```bash
-   > # In this case, we set it to 262144:
-   > $ sudo sysctl -w vm.max_map_count=262144
-   > ```
-   >
-   > This change will be reset after a system reboot. To ensure your change remains permanent, add or update the
-   > `vm.max_map_count` value in **/etc/sysctl.conf** accordingly:
-   >
-   > ```bash
-   > vm.max_map_count=262144
-   > ```
-
-2. Clone the repo:
-
+1. **Clone the repository**
    ```bash
-   $ git clone https://github.com/infiniflow/ragflow.git
+   git clone https://github.com/infiniflow/ragflow.git
+   cd ragflow/docker
    ```
 
-3. Start up the server using the pre-built Docker images:
-
-> [!CAUTION]
-> All Docker images are built for x86 platforms. We don't currently offer Docker images for ARM64.
-> If you are on an ARM64 platform, follow [this guide](https://ragflow.io/docs/dev/build_docker_image) to build a Docker image compatible with your system.
-
-   > The command below downloads the `v0.18.0-slim` edition of the RAGFlow Docker image. See the following table for descriptions of different RAGFlow editions. To download a RAGFlow edition different from `v0.18.0-slim`, update the `RAGFLOW_IMAGE` variable accordingly in **docker/.env** before using `docker compose` to start the server. For example: set `RAGFLOW_IMAGE=infiniflow/ragflow:v0.18.0` for the full edition `v0.18.0`.
-
+2. **Start the service**
    ```bash
-   $ cd ragflow/docker
-   # Use CPU for embedding and DeepDoc tasks:
-   $ docker compose -f docker-compose.yml up -d
-
-   # To use GPU to accelerate embedding and DeepDoc tasks:
+   # CPU version
+   docker compose -f docker-compose.yml up -d
+   
+   # GPU version (accelerate embedding and DeepDoc tasks)
    # docker compose -f docker-compose-gpu.yml up -d
    ```
 
-   | RAGFlow image tag | Image size (GB) | Has embedding models? | Stable?                  |
-   |-------------------|-----------------|-----------------------|--------------------------|
-   | v0.18.0           | &approx;9       | :heavy_check_mark:    | Stable release           |
-   | v0.18.0-slim      | &approx;2       | ❌                   | Stable release            |
-   | nightly           | &approx;9       | :heavy_check_mark:    | _Unstable_ nightly build |
-   | nightly-slim      | &approx;2       | ❌                   | _Unstable_ nightly build  |
-
-4. Check the server status after having the server up and running:
-
+3. **Verify startup**
    ```bash
-   $ docker logs -f ragflow-server
+   docker logs -f ragflow-server
    ```
 
-   _The following output confirms a successful launch of the system:_
+4. **Access the system**
+   - Browser access: `http://YOUR_SERVER_IP`
+   - Configure LLM API Key: Edit `service_conf.yaml.template`
 
-   ```bash
+### ⚙️ Configuration
 
-         ____   ___    ______ ______ __
-        / __ \ /   |  / ____// ____// /____  _      __
-       / /_/ // /| | / / __ / /_   / // __ \| | /| / /
-      / _, _// ___ |/ /_/ // __/  / // /_/ /| |/ |/ /
-     /_/ |_|/_/  |_|\____//_/    /_/ \____/ |__/|__/
-
-    * Running on all addresses (0.0.0.0)
-   ```
-
-   > If you skip this confirmation step and directly log in to RAGFlow, your browser may prompt a `network anormal`
-   > error because, at that moment, your RAGFlow may not be fully initialized.
-
-5. In your web browser, enter the IP address of your server and log in to RAGFlow.
-   > With the default settings, you only need to enter `http://IP_OF_YOUR_MACHINE` (**sans** port number) as the default
-   > HTTP serving port `80` can be omitted when using the default configurations.
-6. In [service_conf.yaml.template](./docker/service_conf.yaml.template), select the desired LLM factory in `user_default_llm` and update
-   the `API_KEY` field with the corresponding API key.
-
-   > See [llm_api_key_setup](https://ragflow.io/docs/dev/llm_api_key_setup) for more information.
-
-   _The show is on!_
+- **.env**: Basic environment variables (ports, passwords, etc.)
+- **service_conf.yaml.template**: Backend service configuration
+- **docker-compose.yml**: Container orchestration configuration
 
 ## 🔧 Configurations
 
@@ -350,13 +297,9 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 📚 Documentation
 
-- [Quickstart](https://ragflow.io/docs/dev/)
-- [Configuration](https://ragflow.io/docs/dev/configurations)
-- [Release notes](https://ragflow.io/docs/dev/release_notes)
-- [User guides](https://ragflow.io/docs/dev/category/guides)
-- [Developer guides](https://ragflow.io/docs/dev/category/developers)
-- [References](https://ragflow.io/docs/dev/category/references)
-- [FAQs](https://ragflow.io/docs/dev/faq)
+- [API Documentation](https://ragflow.io/docs/dev/category/api)
+- [Configuration Guide](https://ragflow.io/docs/dev/category/configuration)
+- [Deployment Guide](https://ragflow.io/docs/dev/category/deployment)
 
 ## 📜 Roadmap
 
