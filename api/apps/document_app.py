@@ -328,12 +328,14 @@ def list_docs():
     page_number = int(request.args.get("page", 1))
     items_per_page = int(request.args.get("page_size", 15))
     #过滤解析状态字段
+    # 0 未解析，1解析中，2已取消,3解析成功
     run = request.args.get("run", None)
+    id_ = request.args.get("id", None)
     orderby = request.args.get("orderby", "create_time")
     desc = request.args.get("desc", True)
     try:
         docs, tol = DocumentService.get_by_kb_id(
-            kb_id, page_number, items_per_page, orderby, desc, keywords, run)
+            kb_id, page_number, items_per_page, orderby, desc, keywords, run, id_)
 
         for doc_item in docs:
             #thumbnail 是一个 ID

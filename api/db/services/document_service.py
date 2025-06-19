@@ -70,25 +70,15 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_by_kb_id(cls, kb_id, page_number, items_per_page,
-                     orderby, desc, keywords, run=None):
-        if keywords:
-            if run:
-                docs = cls.model.select().where(
-                    (cls.model.kb_id == kb_id),
-                    (cls.model.run == run),
-                    (fn.LOWER(cls.model.name).contains(keywords.lower()))
-                )
-            else:
-                docs = cls.model.select().where(
-                    (cls.model.kb_id == kb_id),
-                    (fn.LOWER(cls.model.name).contains(keywords.lower()))
-                )
-        else:
-            if run:
-                docs = cls.model.select().where(cls.model.kb_id == kb_id,cls.model.run==run)
-            else:
-                docs = cls.model.select().where(cls.model.kb_id == kb_id)
+                     orderby, desc, keywords, run=None, id=None):
 
+        docs= cls.model.select().where(cls.model.kb_id == kb_id)
+        if keywords:
+            docs= docs.where(fn.LOWER(cls.model.name).contains(keywords.lower()))
+        if run:
+            docs= docs.where(cls.model.run == run)
+        if id:
+            docs= docs.where(cls.model.id == id)
         count = docs.count()
         if desc:
             docs = docs.order_by(cls.model.getter_by(orderby).desc())
