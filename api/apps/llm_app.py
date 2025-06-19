@@ -284,9 +284,10 @@ def add_llm():
     if msg:
         return get_data_error_result(message=msg)
 
-    if not TenantLLMService.filter_update(
+    filter_update_result = TenantLLMService.filter_update(
             [TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == factory,
-             TenantLLM.llm_name == llm["llm_name"]], llm):
+             TenantLLM.llm_name == llm["llm_name"]], llm)
+    if not filter_update_result or filter_update_result <= 0:
         TenantLLMService.save(**llm)
 
     return get_json_result(data=True)
