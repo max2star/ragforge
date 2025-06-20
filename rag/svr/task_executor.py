@@ -915,6 +915,7 @@ async def do_handle_task(task):
                 pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
                 if pdf_p_begin:
                     sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
+                    logging.info(f"pdf_p_begin {pdf_p_begin}; pdf_p_end {pdf_p_end }; pages {pages}; sub_paper_dict_result {sub_paper_dict_result}")
                     c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
                     for key, value in sub_paper_dict_result["fields_map_"].items():
                         c_[key] = value
