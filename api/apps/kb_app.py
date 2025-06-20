@@ -142,6 +142,8 @@ def update():
                 pre_configed_1 = kb.parser_config.get('classifier',None)
                 if pre_configed_1:
                     parser_config['classifier'] = pre_configed_1
+            from api.utils.api_utils import get_extractor
+            parser_config['extractor'] = get_extractor(parser_config, metadata_type="default")
 
         if req["name"].lower() != kb.name.lower() \
                 and len(
