@@ -126,8 +126,14 @@ def update():
         if parser_config:
             extractor = parser_config.get('extractor',None)
             classifier= parser_config.get('classifier',None)
+            layout_recognize =  parser_config.get('layout_recognize',"")
+            parser_id  = req.get("parser_id", "")
             import logging
             logging.info('Current parser_config {}'.format(kb.parser_config))
+            if not layout_recognize:
+                if not parser_id or parser_id=='paper':
+                    parser_config['layout_recognize'] = 'MinerU'
+                    req['parser_id'] ='paper'
             if not extractor:
                 pre_configed_0 = kb.parser_config.get('extractor',None)
                 if pre_configed_0:
