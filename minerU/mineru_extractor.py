@@ -121,8 +121,8 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
     callback(msg="正在识别是否存在子论文...")
 
     vision_result = vision_parser(tenant_id, [img], prompt=prompt)
-    if vision_result:
-        logging.info("<vision_result> {}".format(vision_result))
+    if len(vision_result) > 0:
+        logging.info("<vision_result> {}".format(vision_result[0]))
         res = json.loads(vision_result)
         if "结果" in res:
             is_what = res["结果"]
@@ -218,7 +218,7 @@ def extract_directory(tenant_id, images, callback=None):
                             # 判断第一页目录图片是否是论文集或书籍
                             is_what = judge_directory_type(tenant_id=tenant_id, img=img, callback=callback)
                         except Exception as e:
-                            logging.error(e)
+                            logging.error("judge_directory_type error {}".format(e))
                 elif is_begin:
                     empty_num += 1
             except Exception as e:
@@ -227,7 +227,7 @@ def extract_directory(tenant_id, images, callback=None):
         if empty_num >= 3:
             logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
             break
-        logging.info(f"已找到{directory_num}页完整目录json")
+        logging.info(f"idx {idx}, 已找到{directory_num}页完整目录json")
 
     logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
     logging.info(f"the_directory_begins idx: {the_directory_begins}; the_directory_end idx: {the_directory_end} ")
