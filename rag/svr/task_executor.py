@@ -309,7 +309,12 @@ async def build_chunks(task, progress_callback):
     for ck in cks:
         d = copy.deepcopy(doc)
         d.update(ck)
-        d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+        try:
+            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+        except Exception as e:
+            content_to_encode = ck["content_with_weight"] + str(d["doc_id"])
+            logging.error(f"encode error for {content_to_encode},will replace and retry...")
+            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8",errors="replace")).hexdigest()
         d["create_time"] = str(datetime.now()).replace("T", " ")[:19]
         d["create_timestamp_flt"] = datetime.now().timestamp()
         if not d.get("image"):
