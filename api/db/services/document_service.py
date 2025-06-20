@@ -525,7 +525,7 @@ class DocumentService(CommonService):
             try:
                 tsks = Task.query(doc_id=d["id"], order_by=Task.create_time)
                 if not tsks:
-                    logging.warning(f"update_progress not find doc {d['id']}")
+                    logging.warning(f"update_progress not find any task for doc {d['id']}")
                     continue
                 msg = []
                 prg = 0
@@ -553,6 +553,7 @@ class DocumentService(CommonService):
                     prg = -1
                     status = TaskStatus.FAIL.value
                 elif finished:
+                    #所有任务都已经完成，但是如果有raptor和graphrag，还要触发raptor和graphrag
                     if d["parser_config"].get("raptor", {}).get("use_raptor") and not has_raptor:
                         queue_raptor_o_graphrag_tasks(d, "raptor", priority)
                         prg = 0.98 * len(tsks) / (len(tsks) + 1)
@@ -574,6 +575,7 @@ class DocumentService(CommonService):
                     info["progress_msg"] = msg
                 cls.update_by_id(d["id"], info)
             except Exception as e:
+                logging.exception(f"fetch task exception {e}")
                 if str(e).find("'0'") < 0:
                     logging.exception("fetch task exception")
 
