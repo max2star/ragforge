@@ -173,7 +173,11 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                     else:
                         current_value = r_d.get(key, None)
                         if current_value:
-                            fields_map[key] = str(value_now) + '\n' + str(current_value)
+                            try:
+                                fields_map[key] = value_now+ '\n' + current_value
+                            except Exception as e:
+                                logging.error(f"key {key} value_now {value_now},current_value {current_value},exception {e}")
+                                fields_map[key] = str(value_now)+ '\n' + str(current_value)
                 else:
                     current_value = r_d.get(key, None)
                     if current_value is not None:
