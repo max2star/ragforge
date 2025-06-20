@@ -134,6 +134,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
 # 识别提取元数据
 def extract_metadata(tenant_id, images, fields=None, metadata_type="default", callback=None):
     start_ts = timer()
+    fields_map = {}
     # 获取相应元数据字段
     keys_to_use_list = []
     # 过滤字段
@@ -145,9 +146,9 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
             #"description": i["description"] if i.get("description") else "",
             "must_exist": i["must_exist"],
         })
+        fields_map[i["name"]] = None
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
-    fields_map = {}
     example = """{"name1": 提取内容a,"name2": 提取内容b,"name3": 提取内容c}"""
     prompt = (
         f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
@@ -212,7 +213,11 @@ def extract_directory(tenant_id, images, callback=None):
         if len(res) > 0:
             response = res[0]
             try:
-                if "目录" in json.loads(response):
+                response_ = json.loads(response)
+                if "目录" in response_:
+                    if not response_['目录'].get('章节', None) or not response_['目录'].get('页码', None):
+                        empty_num += 1
+                        continue
                     is_begin = True
                     empty_num = 0
                     directory_num += 1
@@ -229,6 +234,8 @@ def extract_directory(tenant_id, images, callback=None):
             except Exception as e:
                 logging.error("error {}".format(e))
             result.append(response)
+        else:
+            empty_num += 1
         if empty_num >= 3:
             logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
             break
