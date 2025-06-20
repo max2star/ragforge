@@ -701,29 +701,25 @@ async def do_handle_task(task):
     pdf_article_type = None
 
     # 从任务内获取元数据配置（默认知识库配置）
-    extractor_config = task["parser_config"].get('extractor')
+    extractor_config = task["parser_config"].get('extractor', {})
+    logging.info(f" task extractor config {extractor_config}")
     # prompt = extractor_config.get("prompt", None)
-    # metadata_type = extractor_config.get("metadata_type", "default")
 
     # 从文档内获取元数据配置
     doc_parser_config = doc.parser_config
     doc_extractor = doc_parser_config.get("extractor", {})
     metadata_type = doc_extractor.get("metadata_type", "default")
-    logging.info(f"doc {doc.name} metadata type {metadata_type}")
-    if metadata_type == "default" and extractor_config:
-        metadata_type = extractor_config.get("metadata_type", "default")
-        logging.info(f"task metadata type {metadata_type}")
+    is_change = doc_extractor.get("is_change", False)
+    logging.info(f"doc {doc.name}; doc is_change {is_change}; metadata type {metadata_type}")
 
-    if extractor_config:
-        logging.info(f"task extractor config {extractor_config}")
-        task_keys = extractor_config.get("keyvalues", None)
-    else:
-        task_keys = constant.keyvalues_mapping.get(metadata_type)
-
-    keys = doc_extractor.get("keyvalues")
-    if not keys:
-        logging.info(f"task keys")
+    task_metadata_type = extractor_config.get("metadata_type", "default")
+    task_keys = extractor_config.get("keyvalues", constant.keyvalues_mapping.get(task_metadata_type))
+    keys = doc_extractor.get("keyvalues", None)
+    if not keys or not is_change:
+        logging.info(f"use task keys {task_keys}; task_metadata_type {task_metadata_type}")
         keys = task_keys
+        metadata_type = task_metadata_type
+
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
     fields = keys
 
@@ -904,14 +900,14 @@ async def do_handle_task(task):
     for c_ in chunks:
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
-        # dict_result["dic_result"] = sub_paper["dic_result"]
-        dict_result['sub_paper'] = sub_paper
         if pdf_article_type != "论文集" or (page_c_[0] < sub_paper["main_content_begin"] and pdf_article_type == "论文集"):
             # 将元数据更新到Chunk
             c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 c_[key] = value
         else:
+            # dict_result["dic_result"] = sub_paper["dic_result"]
+            dict_result['sub_paper'] = sub_paper
             # 保存子论文要素至对应分块
             try:
                 pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
