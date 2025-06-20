@@ -791,7 +791,7 @@ async def do_handle_task(task):
             # 根据目录结果提取元数据：存在目录使用目录前内容；反之取前10页；
             num = max(10,directory_begin - 1)
             flag = directory_begin > 0 and len(result["dic_result"]) >= 1 # 是否存在目录
-
+            logging.info(f"========== <flag> {flag} <is_what> {is_what} ==========")
             if not flag:
                 num = 10
             # 提取元数据
@@ -824,7 +824,7 @@ async def do_handle_task(task):
 
         if flag and is_what in ["论文集"]:
             logging.info(msg="识别到存在子论文")
-            progress_callback(msg="识别到存在子论文，准备解析目录页码进行子论文要素抽取")
+            progress_callback(msg="识别到存在子论文，正在解析目录页码进行子论文要素抽取...")
             pdf_article_type = "论文集"
             # 前往分析子目录对应的文章
             # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
