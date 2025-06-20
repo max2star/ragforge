@@ -118,7 +118,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
         f"请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请直接输出一个空花括号即可;如果是存粹的目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
         f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
-    callback(msg="正在识别是否存在子论文...")
+    callback(msg="正在解析目录...")
 
     vision_result = vision_parser(tenant_id, [img], prompt=prompt)
     if len(vision_result) > 0:
@@ -127,7 +127,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
         if "结果" in res:
             is_what = res["结果"]
 
-    callback(msg=f"识别结果：{is_what}")
+    # callback(msg=f"识别结果：{is_what}")
     return is_what.replace("目录", "")
 
 
