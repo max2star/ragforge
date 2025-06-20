@@ -376,7 +376,7 @@ def get_extractor(parser_config, metadata_type="default"):
                 if k["name"] not in constant.exclude_fields:
                     temp_keyvalues[k["name"]] = k
 
-        return {"keyvalues": [v for k,v in temp_keyvalues.items()], "metadata_type": metadata_type}
+        return {"keyvalues": [v for k,v in temp_keyvalues.items()], "metadata_type": metadata_type, "is_change": parser_config.get("is_change", False)}
     except Exception as e:
         logging.error(e)
         return {"keyvalues": default_keyvalues, "metadata_type":metadata_type}
