@@ -642,7 +642,7 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     kb_id = dia.kb_ids[0]
     e, kb = KnowledgebaseService.get_by_id(kb_id)
     if not e:
-        raise LookupError("Can't find this knowledgebase!")
+        raise LookupError(f"Can't find this knowledgebase {kb_id}!")
 
     if not KnowledgebaseService.accessible(kb_id, user_id):
         raise Exception(f"You don't own the dataset {kb_id}.")
@@ -687,7 +687,12 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
         for ck in th.result():
             d = deepcopy(doc)
             d.update(ck)
-            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+            try:
+                d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+            except Exception as e:
+                content_to_encode = ck["content_with_weight"] + str(d["doc_id"])
+                logging.error(f"doc_upload_and_parse encode error for {content_to_encode},will replace and retry...")
+                d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8",errors="replace")).hexdigest()
             d["create_time"] = str(datetime.now()).replace("T", " ")[:19]
             d["create_timestamp_flt"] = datetime.now().timestamp()
             if not d.get("image"):
