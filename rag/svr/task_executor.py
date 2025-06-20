@@ -34,7 +34,7 @@ from rag.prompts import keyword_extraction, question_proposal, content_tagging
 import logging
 import os
 import bisect
-
+import traceback
 from datetime import datetime
 import json
 import xxhash
@@ -115,6 +115,9 @@ stop_event = threading.Event()
 
 
 def find_interval(arr, n):
+    if len(arr) == 0:
+        return None, None
+
     # 使用 bisect_left 定位 n 的插入位置 (寻找子论文属于哪个分块)
     pos = bisect.bisect_left(arr, n)
 
@@ -724,6 +727,7 @@ async def do_handle_task(task):
     #运行
     c_count = 0
     content = ""
+    CONTENT_MAX_LEN = 6000
 
     sub_paper = {}
     # 获取字节流
@@ -774,8 +778,9 @@ async def do_handle_task(task):
         # 提取目录
         result = None
         directory_begin = 0
+        is_what = None
         try:
-            result = extract_directory(
+            result, is_what = extract_directory(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
                 images=img_results[:MAX_NUM],
                 callback=progress_callback,
@@ -802,9 +807,9 @@ async def do_handle_task(task):
             type_ = f"{metadata_type}" if metadata_type != "default" else ""
             progress_callback(msg=f"视觉模型提取{type_}元数据完成")
         except Exception as e:
-            import traceback
+            # import traceback
             traceback.print_exc()
-            logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            logging.error("Exception {}, Exception info is {}".format(e, traceback.format_exc()))
             logging.error(f"视觉模型提取失败，替换文本模型 error {e}!")
             for c_ in chunks:
                 content = content + "\n" + c_['content_with_weight']
@@ -814,39 +819,43 @@ async def do_handle_task(task):
             logging.debug(f"do_handle_task current content {content}")
 
             # fields_map = await run_extract(task, chat_model, content, progress_callback)
-            fields_map = await run_extract_(fields, metadata_type, chat_model, content, progress_callback)
+            fields_map = await run_extract_(fields, metadata_type, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
             progress_callback(msg="文本模型提取元数据完成")
 
-        # if flag:
-            # prompt = f""
-            # logging.info(msg="判断是否属于论文集")
-            # vision_results = vision_parser(task_tenant_id, img_results[:num], prompt=prompt)
-
+        if flag and is_what in ["论文集"]:
+            logging.info(msg="识别到存在子论文")
+            progress_callback(msg="识别到存在子论文，准备解析目录页码进行子论文要素抽取")
+            pdf_article_type = "论文集"
             # 前往分析子目录对应的文章
-            # if len(result["dic_result"]) >= 1:
-            #     pdf_article_type = "论文集"
-            #     # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
-            #     progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
-            #     main_content_begin = result['main_content_begin']
-            #     sub_paper["main_content_begin"] = main_content_begin
-            #     sub_paper["fields_map"] = {}
-            #     sub_paper["dic_result"] = result
-            #     for i in range(len(result['dic_result']) - 1):
-            #         res = result['dic_result'][i]
-            #         title_ = res['章节']
-            #         page_ = res['页码']
-            #         pdf_page_ = main_content_begin - 1 + page_
-            #         logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
-            #         picture_ = img_results[pdf_page_]
-            #         fields_map_ = extract_metadata(
-            #             task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type,
-            #             callback=progress_callback,
-            #         )
-            #         sub_paper["fields_map"][pdf_page_] = {
-            #             "title_": title_, "page_": page_,
-            #             "fields_map_": fields_map_,
-            #         }
-            #     logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
+            # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+            main_content_begin = result['main_content_begin']
+            sub_paper["dic_result"] = result
+            sub_paper["main_content_begin"] = main_content_begin
+            sub_paper["fields_map"] = {}
+            for i in range(len(result['dic_result'])):
+                res = result['dic_result'][i]
+                title_ = res['章节']
+                page_ = res['页码']
+                pdf_page_ = main_content_begin - 1 + page_
+                logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
+                try:
+                    picture_ = img_results[pdf_page_]
+                    fields_map_ = extract_metadata(
+                        task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type,
+                        callback=progress_callback,
+                    )
+                except Exception as e:
+                    fields_map_ = {}
+                    traceback.print_exc()
+                    logging.error("Exception {}, Exception info is {}".format(e, traceback.format_exc()))
+
+                sub_paper["fields_map"][pdf_page_] = {
+                    "title_": title_, "page_": page_,
+                    "fields_map_": fields_map_,
+                }
+
+            progress_callback(msg="子论文提取元数据完成")
+            logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
 
         dict_result_add = fields_map
     else:
@@ -857,7 +866,7 @@ async def do_handle_task(task):
                 break
         logging.debug(f"do_handle_task current content {content}")
         # dict_result_add = await run_extract(task, chat_model, content, progress_callback)
-        dict_result_add = await run_extract_(fields, metadata_type, chat_model, content, progress_callback)
+        dict_result_add = await run_extract_(fields, metadata_type, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
         progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
@@ -870,7 +879,7 @@ async def do_handle_task(task):
     logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
 
     # 分类标签
-    classification_result = await run_classify(task, chat_model, content[:10000], progress_callback)
+    classification_result = await run_classify(task, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
 
     #抽取失败用空覆盖之前
     classify_result = []
@@ -890,34 +899,32 @@ async def do_handle_task(task):
     for c_ in chunks:
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
-        if pdf_article_type == "论文集":
-            # dict_result["dic_result"] = sub_paper["dic_result"]
-            dict_result['sub_paper'] = sub_paper
+        # dict_result["dic_result"] = sub_paper["dic_result"]
+        dict_result['sub_paper'] = sub_paper
+        if pdf_article_type != "论文集" or (page_c_[0] < sub_paper["main_content_begin"] and pdf_article_type == "论文集"):
+            # 将元数据更新到Chunk
+            c_['meta_fields'] = dict_result
+            for key, value in dict_result.items():
+                c_[key] = value
+        else:
             # 保存子论文要素至对应分块
-            if page_c_[0] >= sub_paper["main_content_begin"]:
-                try:
-                    pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
-                    # 确保子论文与相应的chunk范围能一一对应
-                    pages.sort()
-                    pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
+            try:
+                pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
+                # 确保子论文与相应的chunk范围能一一对应
+                pages.sort()
+                pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
+                if pdf_p_begin:
                     sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
                     c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
                     for key, value in sub_paper_dict_result["fields_map_"].items():
                         c_[key] = value
-                except Exception as e:
-                    logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
-                    c_['meta_fields'] = dict_result
-                    for key, value in dict_result.items():
-                        c_[key] = value
-            else:
+
+            except Exception as e:
+                logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
                 c_['meta_fields'] = dict_result
                 for key, value in dict_result.items():
                     c_[key] = value
-        else:
-            #将元数据更新到Chunk
-            c_['meta_fields'] = dict_result
-            for key,value in dict_result.items():
-                c_[key] = value
+
         c_['filter_fields'] = filter_fields_
         for key,value in filter_fields_.items():
             try:
