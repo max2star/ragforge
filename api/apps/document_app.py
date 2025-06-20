@@ -1051,6 +1051,7 @@ def set_filter_fields():
     知悉范围、级别、期限等字段的过滤
     """
     req = request.json
+    logging.info(f"set_filter_fields <req>: {req}")
     #只有创建者可以设置过滤权限
     if not DocumentService.accessible4deletion(req["doc_id"], current_user.id):
         return get_json_result(
@@ -1078,6 +1079,7 @@ def set_filter_fields():
     range_ = filter_fields.get('limit_range',[])
     level_= filter_fields.get('limit_level',1)
     time_ = filter_fields.get('limit_time',0)
+    logging.info(f"<filter_fields> {filter_fields} range: {range_} level: {level_} time: {time_}")
 
     for user_id_ in range_:
      try:

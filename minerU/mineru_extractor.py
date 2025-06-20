@@ -104,6 +104,32 @@ def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
     return None
 
 
+def judge_directory_type(tenant_id=None, img=None, callback=None):
+    # 判断第一页目录图片是否是论文集或书籍
+    is_what = ""
+    maybe = {
+        "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
+        "书籍目录": "核心特征是 层级化的章节结构（引子、第X章、X.X节）和 页码的连续性。内容是围绕一个或几个核心主题由（通常少量）作者进行的系统性阐述，目录中不出现作者署名。",
+    }
+    example = {"结果":""}
+    prompt = (
+        f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；定义：{maybe}"
+        f"现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是;"
+        f"请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请直接输出一个空花括号即可;如果是存粹的目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
+        f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
+    logging.info(f"======prompt======{prompt}")
+    callback(msg="正在识别是否存在子论文...")
+
+    vision_result = vision_parser(tenant_id, [img], prompt=prompt)
+    if vision_result:
+        logging.info("<vision_result> {}".format(vision_result))
+        res = json.loads(vision_result)
+        if "结果" in res:
+            is_what = res["结果"]
+
+    return is_what.replace("目录", "")
+
+
 # 识别提取元数据
 def extract_metadata(tenant_id, images, fields=None, metadata_type="default", callback=None):
     start_ts = timer()
@@ -146,7 +172,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                     else:
                         current_value = r_d.get(key, None)
                         if current_value:
-                            fields_map[key] = value_now + '\n' + current_value
+                            fields_map[key] = str(value_now) + '\n' + str(current_value)
                 else:
                     current_value = r_d.get(key, None)
                     if current_value is not None:
@@ -167,12 +193,15 @@ def extract_directory(tenant_id, images, callback=None):
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
 
+    is_what = None
     # 找到目录后又出现空结果则判断目录页结束
     empty_num = 0
     directory_num = 0
     is_begin = False
     result = []
-    for img in images[:MAX_IMAGES]:
+    the_directory_end = 0
+    the_directory_begins = 0
+    for idx, img in enumerate(images[:MAX_IMAGES]):
         vision_result = vision_parser(tenant_id, [img], prompt=prompt)
         res = [v for k, v in vision_result.items()]
         if len(res) > 0:
@@ -182,6 +211,14 @@ def extract_directory(tenant_id, images, callback=None):
                     is_begin = True
                     empty_num = 0
                     directory_num += 1
+                    the_directory_end = idx
+                    if not is_what:
+                        the_directory_begins = idx
+                        try:
+                            # 判断第一页目录图片是否是论文集或书籍
+                            is_what = judge_directory_type(tenant_id=tenant_id, img=img, callback=callback)
+                        except Exception as e:
+                            logging.error(e)
                 elif is_begin:
                     empty_num += 1
             except Exception as e:
@@ -193,7 +230,7 @@ def extract_directory(tenant_id, images, callback=None):
         logging.info(f"已找到{directory_num}页完整目录json")
 
     logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
-
+    logging.info(f"the_directory_begins idx: {the_directory_begins}; the_directory_end idx: {the_directory_end} ")
     current_page_index = 0
     page_end = 0
     page_start = 0
@@ -239,8 +276,8 @@ def extract_directory(tenant_id, images, callback=None):
     callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
-        "main_content_begin": page_end + 1,
+        "main_content_begin": the_directory_end + 1,
         "directory_begin": page_start,
         "directory_end": page_end,
         "page_numbers_before_directory": page_numbers,
-    }
+    }, is_what
