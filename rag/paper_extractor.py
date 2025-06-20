@@ -50,6 +50,7 @@ class PaperExtractor:
             response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
         logging.info(f"response clean ==>\n{response}")
         if response.find("**ERROR**") >= 0:
+            logging.error(f"request system is {system},history is {history}")
             raise Exception(response)
         #set_llm_cache(self._llm_model.llm_name, system, response, history, gen_conf)
         return response
