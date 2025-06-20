@@ -119,6 +119,8 @@ releases! 🌟
 | **Domestic Database Support** | ❌ | ✅ |
 | **ARM Architecture Support** | ❌ | ✅ |
 | **Huawei 910B NPU Support** | ❌ | ✅ |
+| **VLM Keyvalue Extractor** | ❌ | ✅ |
+| **ES/Minio/Executor Cluster** | ❌ | ✅ |
 
 ## 🌈 Enhanced Features - Enterprise Edition
 
