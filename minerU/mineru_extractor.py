@@ -123,7 +123,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
     vision_result = vision_parser(tenant_id, [img], prompt=prompt)
     if len(vision_result) > 0:
         logging.info("<vision_result> {}".format(vision_result[0]))
-        res = json.loads(vision_result)
+        res = json.loads(vision_result[0])
         if "结果" in res:
             is_what = res["结果"]
 
