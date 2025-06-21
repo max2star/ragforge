@@ -822,7 +822,6 @@ def change_parser():
                 f"update parser config type {type(req.get('parser_config'))} parser_config {req.get('parser_config')}")
             parser_config = req["parser_config"]
             parser_config["extractor"] = get_extractor(parser_config)
-            parser_config["is_change"] = True
             DocumentService.update_parser_config(doc.id, parser_config)
         if doc.token_num > 0:
             e = DocumentService.increment_chunk_num(doc.id, doc.kb_id, doc.token_num * -1, doc.chunk_num * -1,
