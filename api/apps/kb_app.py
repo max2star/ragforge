@@ -72,6 +72,8 @@ def create():
 
         #TODO:临时方案，将知识库添加到特定智能助手中
         dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+        # 正式环境
+        # dialog_id = "58ce279249c011f0a0c90242ac1400fe"
         e, dia = DialogService.get_by_id(dialog_id)
         if e:
             logging.info(f"Dialog {dialog_id} exists,will update it!")
