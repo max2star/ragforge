@@ -86,6 +86,7 @@ def create(tenant_id):
               type: object
     """
     req = request.json
+    logging.info(f"datasets create req: {req}")
     for k in req.keys():
         if dataset_readonly_fields(k):
             return get_result(code=settings.RetCode.ARGUMENT_ERROR, message=f"'{k}' is readonly.")
@@ -192,6 +193,8 @@ def create(tenant_id):
 
     #TODO:临时方案，将知识库添加到特定智能助手中
     dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+    # 正式环境
+    #dialog_id = "58ce279249c011f0a0c90242ac1400fe"
     e, dia = DialogService.get_by_id(dialog_id)
     if e:
         logging.info(f"Dialog {dialog_id} exists,will update it!")
@@ -245,6 +248,7 @@ def delete(tenant_id):
     errors = []
     success_count = 0
     req = request.json
+    logging.info(f"Delete datasets tenant_id {tenant_id} delete {req}")
     if not req:
         ids = None
     else:
@@ -351,6 +355,7 @@ def update(tenant_id, dataset_id):
     if not KnowledgebaseService.query(id=dataset_id, tenant_id=tenant_id):
         return get_error_data_result(message="You don't own the dataset")
     req = request.json
+    logging.info(f"update dataset {dataset_id} req {req}")
     for k in req.keys():
         if dataset_readonly_fields(k):
             return get_result(code=settings.RetCode.ARGUMENT_ERROR, message=f"'{k}' is readonly.")
