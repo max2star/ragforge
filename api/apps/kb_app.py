@@ -71,21 +71,22 @@ def create():
             return get_data_error_result()
 
         #TODO:临时方案，将知识库添加到特定智能助手中
-        dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+        #dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
         # 正式环境
         # dialog_id = "58ce279249c011f0a0c90242ac1400fe"
-        e, dia = DialogService.get_by_id(dialog_id)
-        if e:
-            logging.info(f"Dialog {dialog_id} exists,will update it!")
-            dia = dia.to_dict()
-            dia_to_update = {}
-            dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
-            if not DialogService.update_by_id(dialog_id, dia_to_update):
-                logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+        for dialog_id in ['8a5fe1c641b211f084720aa9420e5f66','58ce279249c011f0a0c90242ac1400fe']:
+            e, dia = DialogService.get_by_id(dialog_id)
+            if e:
+                logging.info(f"Dialog {dialog_id} exists,will update it!")
+                dia = dia.to_dict()
+                dia_to_update = {}
+                dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+                if not DialogService.update_by_id(dialog_id, dia_to_update):
+                    logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+                else:
+                    logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
             else:
-                logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
-        else:
-            logging.error(f"Dialog {dialog_id} Not Exists")
+                logging.info(f"Dialog {dialog_id} Not Exists")
 
         return get_json_result(data={"kb_id": req["id"]})
     except Exception as e:
