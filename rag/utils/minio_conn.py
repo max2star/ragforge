@@ -53,7 +53,7 @@ class RAGFlowMinio:
                               secret_key=settings.MINIO["password"],
                               secure=True
                               )
-            self.bucket_encryption = settings.MINIO['bucket_encryption']
+            self.bucket_encryption = settings.MINIO.get("bucket_encryption", True)
             if type(settings.MINIO['bucket_encryption']) == str:
                 logging.info(f"settings.MINIO['bucket_encryption'] {settings.MINIO['bucket_encryption']} type {type(settings.MINIO['bucket_encryption'])}")
                 self.bucket_encryption = settings.MINIO['bucket_encryption'].lower() == "true"

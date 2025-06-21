@@ -709,13 +709,12 @@ async def do_handle_task(task):
     doc_parser_config = doc.parser_config
     doc_extractor = doc_parser_config.get("extractor", {})
     metadata_type = doc_extractor.get("metadata_type", "default")
-    is_change = doc_extractor.get("is_change", False)
-    logging.info(f"doc {doc.name}; doc is_change {is_change}; metadata type {metadata_type}")
+    logging.info(f"doc {doc.name}; metadata type {metadata_type}")
 
     task_metadata_type = extractor_config.get("metadata_type", "default")
     task_keys = extractor_config.get("keyvalues", constant.keyvalues_mapping.get(task_metadata_type))
     keys = doc_extractor.get("keyvalues", None)
-    if not keys or not is_change:
+    if not keys:
         logging.info(f"use task keys {task_keys}; task_metadata_type {task_metadata_type}")
         keys = task_keys
         metadata_type = task_metadata_type
