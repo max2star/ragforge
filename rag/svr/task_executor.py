@@ -906,7 +906,7 @@ async def do_handle_task(task):
                 c_[key] = value
         else:
             # dict_result["dic_result"] = sub_paper["dic_result"]
-            dict_result['sub_paper'] = sub_paper
+            dict_result['sub_paper'] = sub_paper["fields_map"]
             # 保存子论文要素至对应分块
             try:
                 pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
