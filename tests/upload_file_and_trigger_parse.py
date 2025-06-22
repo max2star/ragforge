@@ -185,6 +185,10 @@ if __name__ == '__main__':
     NEW_DIRS = {
             "/opt/ragflow/tests/":438
             }
+    global embeddingConfigName
+    global embeddingConfigCode
+    embeddingConfigName = "图书"
+    embeddingConfigCode = 23
     IP = "101.52.216.178"
     PORT = 9090
     for UPLOAD_DIR in NEW_DIRS.keys():
@@ -240,9 +244,11 @@ if __name__ == '__main__':
                 tree_node: 之前构建的目录树节点
                 target_root (str): 目标根目录路径
             """
+            global embeddingConfigCode
+            global embeddingConfigName
             # 递归创建子目录
             for child in tree_node.get('children', []):
-                create_result = create_folder(ip=IP,host=PORT,folderName=child['name'],parentId=start_folderId)
+                create_result = create_folder(ip=IP,host=PORT,folderName=child['name'],parentId=start_folderId,embeddingConfigName=embeddingConfigName,embeddingConfigCode=embeddingConfigCode)
                 guid= create_result['data']
                 list_result = list_docs(ip=IP, host=PORT,folderId=start_folderId)
                 for da_ in list_result.get('data',[]):
