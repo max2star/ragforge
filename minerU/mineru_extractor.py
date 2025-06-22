@@ -106,10 +106,10 @@ def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
 
 def judge_directory_type(tenant_id=None, img=None, callback=None):
     # 判断第一页目录图片是否是论文集或书籍
-    is_what = ""
+    is_what = "其他目录"
     maybe = {
         "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
-        "书籍目录": "核心特征是 层级化的章节结构（引子、第X章、X.X节）和 页码的连续性。内容是围绕一个或几个核心主题由（通常少量）作者进行的系统性阐述，目录中不出现作者署名。",
+        "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。内容是围绕一个或几个核心主题由（通常少量）作者进行的系统性阐述，目录中不出现作者署名。",
     }
     example = {"结果":""}
     prompt = (
@@ -119,14 +119,15 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
         f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在解析目录...")
-
-    vision_result = vision_parser(tenant_id, [img], prompt=prompt)
-    if len(vision_result) > 0:
-        logging.info("<vision_result> {}".format(vision_result[0]))
-        res = json.loads(vision_result[0])
-        if "结果" in res:
-            is_what = res["结果"]
-
+    try:
+        vision_result = vision_parser(tenant_id, [img], prompt=prompt)
+        if len(vision_result) > 0:
+            logging.info("<vision_result> {}".format(vision_result[0]))
+            res = json.loads(vision_result[0])
+            if "结果" in res:
+                is_what = res["结果"]
+    except Exception as e:
+        logging.error(f"Vision model error: {e}")
     # callback(msg=f"识别结果：{is_what}")
     return is_what.replace("目录", "")
 
@@ -284,7 +285,10 @@ def extract_directory(tenant_id, images, callback=None):
     logging.info('\n章节页码结果{}, 从index_id {}开始是正文,{}~{}是目录.将会对{}进行分析'.format(
         dic_result, page_end + 1, page_start, page_end, page_numbers
     ))
-
+    # 目录页面过于连续则判断不属于论文集
+    arr = [int(i["页码"]) for i in dic_result]
+    if any(abs(a - b) <= 1 for a, b in zip(arr, arr[1:])):
+        is_what = ""
     callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
