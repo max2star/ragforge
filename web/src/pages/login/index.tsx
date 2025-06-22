@@ -1,13 +1,12 @@
+import logoWithText from '@/assets/logo-with-text.png';
 import { useLogin, useRegister } from '@/hooks/login-hooks';
 import { useSystemConfig } from '@/hooks/system-hooks';
 import { rsaPsw } from '@/utils';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Form, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Icon, useNavigate } from 'umi';
-import RightPanel from './right-panel';
-
-import { Domain } from '@/constants/common';
+import { useNavigate } from 'umi';
 import styles from './index.less';
 
 const Login = () => {
@@ -19,6 +18,11 @@ const Login = () => {
   const loading = signLoading || registerLoading;
   const { config } = useSystemConfig();
   const registerEnabled = config?.registerEnabled !== 0;
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    form.validateFields(['nickname']);
+  }, [form]);
 
   const changeTitle = () => {
     if (title === 'login' && !registerEnabled) {
@@ -26,18 +30,11 @@ const Login = () => {
     }
     setTitle((title) => (title === 'login' ? 'register' : 'login'));
   };
-  const [form] = Form.useForm();
-
-  useEffect(() => {
-    form.validateFields(['nickname']);
-  }, [form]);
 
   const onCheck = async () => {
     try {
       const params = await form.validateFields();
-
       const rsaPassWord = rsaPsw(params.password) as string;
-
       if (title === 'login') {
         const code = await login({
           email: `${params.email}`.trim(),
@@ -60,55 +57,58 @@ const Login = () => {
       console.log('Failed:', errorInfo);
     }
   };
-  const formItemLayout = {
-    labelCol: { span: 6 },
-    // wrapperCol: { span: 8 },
-  };
-
-  const toGoogle = () => {
-    window.location.href =
-      'https://github.com/login/oauth/authorize?scope=user:email&client_id=302129228f0d96055bee';
-  };
 
   return (
-    <div className={styles.loginPage}>
-      <div className={styles.loginLeft}>
-        <div className={styles.leftContainer}>
-          <div className={styles.loginTitle}>
-            <div>{title === 'login' ? t('login') : t('register')}</div>
-            <span>
-              {title === 'login'
-                ? t('loginDescription')
-                : t('registerDescription')}
-            </span>
+    <div className={styles.loginRoot}>
+      <div className={styles.leftBrand}>
+        <div className={styles.brandContent}>
+          <div className={styles.logoCircle}>
+            <img
+              src={logoWithText}
+              alt="企业知识库LOGO"
+              className={styles.logoImg}
+            />
           </div>
-
+          <h2 className={styles.brandTitle}>欢迎使用 RAGFlow</h2>
+          <p className={styles.brandDesc}>智能知识管理与AI助手平台</p>
+        </div>
+      </div>
+      <div className={styles.rightForm}>
+        <div className={styles.formCard}>
+          <h2 className={styles.formTitle}>
+            {title === 'login' ? t('login') : t('register')}
+          </h2>
           <Form
             form={form}
             layout="vertical"
             name="dynamic_rule"
-            style={{ maxWidth: 600 }}
+            className={styles.loginForm}
           >
             <Form.Item
-              {...formItemLayout}
               name="email"
               label={t('emailLabel')}
               rules={[{ required: true, message: t('emailPlaceholder') }]}
             >
-              <Input size="large" placeholder={t('emailPlaceholder')} />
+              <Input
+                size="large"
+                placeholder={t('emailPlaceholder')}
+                prefix={<UserOutlined />}
+              />
             </Form.Item>
             {title === 'register' && (
               <Form.Item
-                {...formItemLayout}
                 name="nickname"
                 label={t('nicknameLabel')}
                 rules={[{ required: true, message: t('nicknamePlaceholder') }]}
               >
-                <Input size="large" placeholder={t('nicknamePlaceholder')} />
+                <Input
+                  size="large"
+                  placeholder={t('nicknamePlaceholder')}
+                  prefix={<UserOutlined />}
+                />
               </Form.Item>
             )}
             <Form.Item
-              {...formItemLayout}
               name="password"
               label={t('passwordLabel')}
               rules={[{ required: true, message: t('passwordPlaceholder') }]}
@@ -116,6 +116,7 @@ const Login = () => {
               <Input.Password
                 size="large"
                 placeholder={t('passwordPlaceholder')}
+                prefix={<LockOutlined />}
                 onPressEnter={onCheck}
               />
             </Form.Item>
@@ -124,72 +125,36 @@ const Login = () => {
                 <Checkbox> {t('rememberMe')}</Checkbox>
               </Form.Item>
             )}
-            <div>
-              {title === 'login' && registerEnabled && (
-                <div>
-                  {t('signInTip')}
-                  <Button type="link" onClick={changeTitle}>
-                    {t('signUp')}
-                  </Button>
-                </div>
-              )}
-              {title === 'register' && (
-                <div>
-                  {t('signUpTip')}
-                  <Button type="link" onClick={changeTitle}>
-                    {t('login')}
-                  </Button>
-                </div>
-              )}
-            </div>
             <Button
               type="primary"
               block
               size="large"
               onClick={onCheck}
               loading={loading}
+              className={styles.loginButton}
             >
               {title === 'login' ? t('login') : t('continue')}
             </Button>
-            {title === 'login' && (
-              <>
-                {/* <Button
-                  block
-                  size="large"
-                  onClick={toGoogle}
-                  style={{ marginTop: 15 }}
-                >
-                  <div>
-                    <Icon
-                      icon="local:google"
-                      style={{ verticalAlign: 'middle', marginRight: 5 }}
-                    />
-                    Sign in with Google
-                  </div>
-                </Button> */}
-                {location.host === Domain && (
-                  <Button
-                    block
-                    size="large"
-                    onClick={toGoogle}
-                    style={{ marginTop: 15 }}
-                  >
-                    <div className="flex items-center">
-                      <Icon
-                        icon="local:github"
-                        style={{ verticalAlign: 'middle', marginRight: 5 }}
-                      />
-                      Sign in with Github
-                    </div>
+            <div className={styles.switchTip}>
+              {title === 'login' && registerEnabled && (
+                <span>
+                  {t('signInTip')}
+                  <Button type="link" onClick={changeTitle}>
+                    {t('signUp')}
                   </Button>
-                )}
-              </>
-            )}
+                </span>
+              )}
+              {title === 'register' && (
+                <span>
+                  {t('signUpTip')}
+                  <Button type="link" onClick={changeTitle}>
+                    {t('login')}
+                  </Button>
+                </span>
+              )}
+            </div>
           </Form>
         </div>
-      </div>
-      <div className={styles.loginRight}>
-        <RightPanel></RightPanel>
       </div>
     </div>
   );
