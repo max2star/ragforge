@@ -1,12 +1,7 @@
 import { KnowledgeRouteKey } from '@/constants/knowledge';
 import { IKnowledge } from '@/interfaces/database/knowledge';
-import { formatDate } from '@/utils/date';
-import {
-  CalendarOutlined,
-  FileTextOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import { Avatar, Badge, Card, Space } from 'antd';
+import { BookOutlined } from '@ant-design/icons';
+import { Badge, Card, Space } from 'antd';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'umi';
@@ -14,17 +9,22 @@ import { useNavigate } from 'umi';
 import OperateDropdown from '@/components/operate-dropdown';
 import { useTheme } from '@/components/theme-provider';
 import { useDeleteKnowledge } from '@/hooks/knowledge-hooks';
-import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
 import styles from './index.less';
 
 interface IProps {
   item: IKnowledge;
 }
 
+const formatCharCount = (num: number) => {
+  if (num > 1000) {
+    return `${(num / 1000).toFixed(1)}k`;
+  }
+  return num;
+};
+
 const KnowledgeCard = ({ item }: IProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { data: userInfo } = useFetchUserInfo();
   const { theme } = useTheme();
   const { deleteKnowledge } = useDeleteKnowledge();
 
@@ -32,76 +32,55 @@ const KnowledgeCard = ({ item }: IProps) => {
     return deleteKnowledge(item.id);
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (
+      (e.target as HTMLElement).closest('.ant-dropdown-trigger') ||
+      (e.target as HTMLElement).closest('.ant-dropdown-menu-item')
+    ) {
+      return;
+    }
     navigate(`/knowledge/${KnowledgeRouteKey.Dataset}?id=${item.id}`, {
       state: { from: 'list' },
     });
   };
 
   return (
-    <Badge.Ribbon
-      text={item?.nickname}
-      color={userInfo?.nickname === item?.nickname ? '#1677ff' : 'pink'}
-      className={classNames(styles.ribbon, {
-        [styles.hideRibbon]: item.permission !== 'team',
-      })}
-    >
-      <Card className={styles.card} onClick={handleCardClick}>
+    <Badge.Ribbon text={item?.parser_id} className={classNames(styles.ribbon)}>
+      <Card
+        className={styles.card}
+        onClick={handleCardClick}
+        data-theme={theme}
+      >
         <div className={styles.container}>
-          <div className={styles.content}>
-            <Avatar size={34} icon={<UserOutlined />} src={item.avatar} />
-            <OperateDropdown deleteItem={removeKnowledge}></OperateDropdown>
+          <div className={styles.header}>
+            <div className={styles.titleSection}>
+              <BookOutlined className={styles.knowledgeIcon} />
+              <span
+                className={theme === 'dark' ? styles.titledark : styles.title}
+              >
+                {item.name}
+              </span>
+            </div>
           </div>
-          <div className={styles.titleWrapper}>
-            <span
-              className={theme === 'dark' ? styles.titledark : styles.title}
-            >
-              {item.name}
-            </span>
+
+          <div className={styles.body}>
+            <p className={styles.creator}>创建者: {item.nickname}</p>
             <p
               className={
                 theme === 'dark' ? styles.descriptiondark : styles.description
               }
             >
-              {item.description}
+              {item.description || '暂无描述'}
             </p>
           </div>
+
           <div className={styles.footer}>
-            <div className={styles.footerTop}>
-              <div className={styles.bottomLeft}>
-                <FileTextOutlined className={styles.leftIcon} />
-                <span className={styles.rightText}>
-                  <Space>
-                    {item.doc_num}
-                    {t('knowledgeList.doc')}
-                  </Space>
-                </span>
-              </div>
-            </div>
-            <div className={styles.bottom}>
-              <div className={styles.bottomLeft}>
-                <CalendarOutlined className={styles.leftIcon} />
-                <span className={styles.rightText}>
-                  {formatDate(item.update_time)}
-                </span>
-              </div>
-              {/* <Avatar.Group size={25}>
-                <Avatar src="https://api.dicebear.com/7.x/miniavs/svg?seed=1" />
-                <a href="https://ant.design">
-                  <Avatar style={{ backgroundColor: '#f56a00' }}>K</Avatar>
-                </a>
-                <Tooltip title="Ant User" placement="top">
-                  <Avatar
-                    style={{ backgroundColor: '#87d068' }}
-                    icon={<UserOutlined />}
-                  />
-                </Tooltip>
-                <Avatar
-                  style={{ backgroundColor: '#1677ff' }}
-                  icon={<AntDesignOutlined />}
-                />
-              </Avatar.Group> */}
-            </div>
+            <Space className={styles.stats} split={'|'}>
+              <span>{item.doc_num || 0} 文档数</span>
+              <span>{formatCharCount(item.char_num || 0)} 字符</span>
+              <span>0 关联应用</span>
+            </Space>
+            <OperateDropdown deleteItem={removeKnowledge}></OperateDropdown>
           </div>
         </div>
       </Card>
