@@ -216,7 +216,7 @@ def extract_directory(tenant_id, images, callback=None):
             try:
                 response_ = json.loads(response)
                 if "目录" in response_:
-                    if not response_['目录'].get('章节', None) or not response_['目录'].get('页码', None):
+                    if not len(response_['目录']) > 0:
                         empty_num += 1
                         continue
                     is_begin = True
