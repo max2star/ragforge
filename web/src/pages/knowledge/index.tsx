@@ -1,16 +1,7 @@
 import { useInfiniteFetchKnowledgeList } from '@/hooks/knowledge-hooks';
 import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Empty,
-  Flex,
-  Input,
-  Skeleton,
-  Space,
-  Spin,
-} from 'antd';
+import { Card, Empty, Flex, Input, Skeleton, Space, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useSaveKnowledge } from './hooks';
@@ -19,6 +10,21 @@ import KnowledgeCreatingModal from './knowledge-creating-modal';
 
 import { useMemo } from 'react';
 import styles from './index.less';
+
+const CreateKnowledgeCard = ({
+  onClick,
+  className,
+}: {
+  onClick: () => void;
+  className: string;
+}) => {
+  return (
+    <Card className={className} onClick={onClick}>
+      <PlusOutlined style={{ fontSize: 24 }} />
+      <span>创建知识库</span>
+    </Card>
+  );
+};
 
 const KnowledgeList = () => {
   const { data: userInfo } = useFetchUserInfo();
@@ -46,19 +52,15 @@ const KnowledgeList = () => {
   }, [data?.pages]);
 
   const total = useMemo(() => {
-    return data?.pages.at(-1).total ?? 0;
+    return data?.pages.at(-1)?.total ?? 0;
   }, [data?.pages]);
 
   return (
     <Flex className={styles.knowledge} vertical flex={1} id="scrollableDiv">
       <div className={styles.topWrapper}>
-        <div>
-          <span className={styles.title}>
-            {t('welcome')}, {userInfo.nickname}
-          </span>
-          <p className={styles.description}>{t('description')}</p>
-        </div>
-        <Space size={'large'}>
+        <span className={styles.title}>知识库</span>
+
+        <Space size={'large'} className={styles.actionButtons}>
           <Input
             placeholder={t('searchKnowledgePlaceholder')}
             value={searchString}
@@ -67,15 +69,6 @@ const KnowledgeList = () => {
             onChange={handleInputChange}
             prefix={<SearchOutlined />}
           />
-
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={showModal}
-            className={styles.topButton}
-          >
-            {t('createKnowledgeBase')}
-          </Button>
         </Space>
       </div>
       <Spin spinning={loading}>
@@ -84,7 +77,7 @@ const KnowledgeList = () => {
           next={fetchNextPage}
           hasMore={hasNextPage}
           loader={<Skeleton avatar paragraph={{ rows: 1 }} active />}
-          endMessage={!!total && <Divider plain>{t('noMoreData')} 🤐</Divider>}
+          endMessage={null}
           scrollableTarget="scrollableDiv"
         >
           <Flex
@@ -92,19 +85,25 @@ const KnowledgeList = () => {
             wrap="wrap"
             className={styles.knowledgeCardContainer}
           >
-            {nextList?.length > 0 ? (
-              nextList.map((item: any, index: number) => {
-                return (
-                  <KnowledgeCard
-                    item={item}
-                    key={`${item?.name}-${index}`}
-                  ></KnowledgeCard>
-                );
-              })
-            ) : (
-              <Empty className={styles.knowledgeEmpty}></Empty>
-            )}
+            <CreateKnowledgeCard
+              onClick={showModal}
+              className={styles.createCard}
+            />
+            {nextList.map((item: any, index: number) => {
+              return (
+                <KnowledgeCard
+                  item={item}
+                  key={`${item?.name}-${index}`}
+                ></KnowledgeCard>
+              );
+            })}
           </Flex>
+          {!nextList?.length && !searchString && (
+            <Empty
+              className={styles.knowledgeEmpty}
+              description="暂无知识库，快去创建一个吧"
+            ></Empty>
+          )}
         </InfiniteScroll>
       </Spin>
       <KnowledgeCreatingModal
