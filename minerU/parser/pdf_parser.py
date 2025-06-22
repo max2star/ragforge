@@ -404,8 +404,17 @@ class MinerUPdf:
             start = timer()
             pdf_info = pipe_result._pipe_res['pdf_info']
             pdf_bytes = pipe_result._dataset.data_bits()
-            draw_layout_bbox_(pdf_info, pdf_bytes, writer, f"{name_without_suff}_layout.pdf")
-            DocumentService.update_layout_location_fields(doc_id, f"minerU/{doc_id}/{name_without_suff}_layout.pdf")
+            try:
+                draw_layout_bbox_(pdf_info, pdf_bytes, writer, f"{name_without_suff}_layout.pdf")
+                DocumentService.update_layout_location_fields(doc_id, f"minerU/{doc_id}/{name_without_suff}_layout.pdf")
+            except Exception as e:
+                logging.error(f"绘制解析结果错误,{name_without_suff} 的layout文件将采用原始文件")
+                import traceback
+                traceback.print_exc()
+                logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+                DocumentService.update_layout_location_fields(doc_id, f"minerU/{doc_id}/{name_without_suff}.pdf")
+                callback(prog=0.27,
+                         msg="MinerU 布局分析结果绘制错误!!! 采用原文档作为布局文档 ({:.2f}s)".format(timer() - start))
 
             # TODO
             ## get model inference result
