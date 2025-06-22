@@ -181,20 +181,19 @@ def create_folder(ip, host,folderName,parentId,embeddingConfigName="图书",embe
         return None
 
 if __name__ == '__main__':
-    UPLOAD_DIR = [
-        # "D:/App/baidu/下载/1",
-        "/opt/ragflow/tests/",
-    ]
+    #请映射好本地根目录和要上传的根目录ID；程序会按照本地根目录在系统对应根目录下创建子目录和文件
+    NEW_DIRS = {
+            "/opt/ragflow/tests/":438
+            }
     IP = "101.52.216.178"
     PORT = 9090
-    folderId = 438
-    count_ = 0
-    dict_directory_map = {}
-
-    change_name_prefix = "[内部]"
-    #目录下如果有不是以 [内部]/[公开] 作为前缀的文件，则重命名为 change_name_prefix开头
-    for i in UPLOAD_DIR:
-        for root, dirs, files in os.walk(i):
+    for UPLOAD_DIR in NEW_DIRS.keys():
+        folderId = NEW_DIRS[UPLOAD_DIR]
+        count_ = 0
+        dict_directory_map = {}
+        change_name_prefix = "[内部]"
+        #目录下如果有不是以 [内部]/[公开] 作为前缀的文件，则重命名为 change_name_prefix开头
+        for root, dirs, files in os.walk(UPLOAD_DIR):
             for file in files:
                 file_path = os.path.join(root, file)
                 j = file_path
@@ -213,7 +212,6 @@ if __name__ == '__main__':
                     print(f"重命名: {file_path} -> {new_path}")
                 except Exception as e:
                     print(f"无法重命名 {file_path}: {e}")
-    for i in UPLOAD_DIR:
         def build_directory_tree(start_path):
             def _build_tree(current_path):
                 tree = {
@@ -231,56 +229,42 @@ if __name__ == '__main__':
                     pass  # 跳过无权限访问的目录
                 return tree
             return _build_tree(start_path)
-        # 使用示例
-        directory_tree = build_directory_tree(i)
+        directory_tree = build_directory_tree(UPLOAD_DIR)
 
-        #for root, dirs, files in os.walk(i):
-        #    relative_path = os.path.relpath(root, i)
-        #    paths  = relative_path.split('/')
-        #    print(f"当前正在处理的根目录为 {root} 子目录为 {dirs},相对路径为 {relative_path},切分后为 {paths}")
-        #    current_level = 0
-        #    for p in paths:
-        #        current_level = current_level + 1
-        #        if p=='.':
-        #            continue
-        #        current_= dict_directory_map.get(p,None)
-        #        if current:
-        #            continue
-        #        else:
-        #            dict_directory_map[p] = {}
-        #    #create_result = create_folder(ip=IP,host=PORT,folderName=folder,parentId=folderId)
+        print(f"将要创建的目录树为 {directory_tree}")
 
-    print(f"将要创建的目录树为 {directory_tree}")
+        def create_tree_from_structure(tree_node, start_folderId):
+            """
+            基于之前构建的目录树结构创建目录
+            参数:
+                tree_node: 之前构建的目录树节点
+                target_root (str): 目标根目录路径
+            """
+            # 递归创建子目录
+            for child in tree_node.get('children', []):
+                create_result = create_folder(ip=IP,host=PORT,folderName=child['name'],parentId=start_folderId)
+                guid= create_result['data']
+                list_result = list_docs(ip=IP, host=PORT,folderId=start_folderId)
+                for da_ in list_result.get('data',[]):
+                    if da_['guid'] == guid:
+                        start_folderId_= da_['id']
+                        break
+                child['folderId'] = start_folderId_
+                create_tree_from_structure(child,start_folderId_)
+        create_tree_from_structure(directory_tree,folderId)
 
-    def create_tree_from_structure(tree_node, start_folderId):
-        """
-        基于之前构建的目录树结构创建目录
-        参数:
-            tree_node: 之前构建的目录树节点
-            target_root (str): 目标根目录路径
-        """
-        # 递归创建子目录
-        for child in tree_node.get('children', []):
-            create_result = create_folder(ip=IP,host=PORT,folderName=child['name'],parentId=start_folderId)
-            guid= create_result['data']
-            list_result = list_docs(ip=IP, host=PORT,folderId=start_folderId)
-            for da_ in list_result.get('data',[]):
-                if da_['guid'] == guid:
-                    start_folderId_= da_['id']
-                    break
-            child['folderId'] = start_folderId_
-            create_tree_from_structure(child,start_folderId_)
-    create_tree_from_structure(directory_tree,folderId)
-
-    print(f"创建目录树完成,现在上传目录结构下的文件...")
-
-    def upload_and_trigger(tree_node, start_folderId):
-        # 递归创建子目录
-        for child in tree_node.get('children', []):
-            # 遍历目录和子目录
-            for root, dirs, files in os.walk(child['path']):
-                for file in files:
-                    file_path = os.path.join(root, file)
+        print(f"创建目录树完成,现在上传目录结构下的文件,目录结构为 {directory_tree}...")
+        print(f"将根目录下的也添加进去...")
+        directory_tree['children'].append({'folderId':folderId,'path':UPLOAD_DIR})
+        def upload_and_trigger(tree_node, start_folderId):
+            # 递归创建子目录
+            for child in tree_node.get('children', []):
+                print(f"正在处理 {child}...")
+                # 遍历目录和子目录
+                folderId = child['folderId']
+                for file in os.listdir(child['path']):
+                    #for file in files:
+                    file_path = os.path.join(child['path'], file)
                     j = file_path
                     print(f"==========================当前正在处理 {j}")
                     if not (j.endswith('.pdf') or j.endswith('.docx')  or j.endswith('.doc')):
@@ -328,6 +312,6 @@ if __name__ == '__main__':
                         # 写入失败文件
                         with open(f"logs/Failed_{timestamp}.log", 'a') as f:
                             f.write(f"{j}\n")
-            upload_and_trigger(child,child['folderId'])
-    upload_and_trigger(directory_tree,folderId)
+                upload_and_trigger(child,child['folderId'])
+        upload_and_trigger(directory_tree,folderId)
     print(f"总计处理 {count_}个")
