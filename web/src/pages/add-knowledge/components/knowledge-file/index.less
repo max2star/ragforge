@@ -1,21 +1,26 @@
 .datasetWrapper {
-  padding: 30px 30px 0;
-  height: 100%;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.85);
+  }
 }
 
 .documentTable {
-  tbody {
-    // height: calc(100vh - 508px);
+  :global(.ant-table-thead > tr > th) {
+    background-color: #fafafa;
+    font-weight: 500;
+    color: #000;
   }
 }
 
 .filter {
-  height: 32px;
   display: flex;
-  margin: 10px 0;
   justify-content: space-between;
-  padding: 24px 0;
-  align-items: center;
+  margin-bottom: 16px;
 }
 
 .deleteIconWrapper {
@@ -24,10 +29,7 @@
 }
 
 .img {
-  height: 24px;
   width: 24px;
-  display: inline-block;
-  vertical-align: middle;
 }
 
 .column {
@@ -36,6 +38,7 @@
 
 .toChunks {
   cursor: pointer;
+  max-width: 250px;
 }
 
 .pageInputNumber {
