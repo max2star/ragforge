@@ -91,7 +91,7 @@ export default {
       name: '名称',
       namePlaceholder: '请输入名称',
       doc: '文档',
-      datasetDescription: '😉 解析成功后才能问答哦。',
+      datasetDescription: '',
       addFile: '新增文件',
       searchFiles: '搜索文件',
       localFiles: '本地文件',
@@ -234,6 +234,8 @@ export default {
       methodExamplesDescription: '提出以下屏幕截图以促进理解。',
       dialogueExamplesTitle: '对话示例',
       methodEmpty: '这将显示知识库类别的可视化解释',
+      extractor: '提取器',
+      classifier: '分类器',
       book: `<p>支持的文件格式为<b>DOCX</b>、<b>PDF</b>、<b>TXT</b>。</p><p>
       由于一本书很长，并不是所有部分都有用，如果是 PDF，
       请为每本书设置<i>页面范围</i>，以消除负面影响并节省分析计算时间。</p>`,

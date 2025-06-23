@@ -1,11 +1,9 @@
 import { DocumentParserType } from '@/constants/knowledge';
 import { useTranslate } from '@/hooks/common-hooks';
-import { useTranslation } from 'react-i18next';
-import { normFile } from '@/utils/file-util';
-import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Input, Radio, Space, Upload } from 'antd';
+import { Button, Form, Input, Radio, Space } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useFetchKnowledgeConfigurationOnMount,
   useSubmitKnowledgeConfiguration,
@@ -28,8 +26,8 @@ import { TagConfiguration } from './tag';
 
 import styles from '../index.less';
 
-import DOMPurify from 'dompurify';
 import Editor, { loader } from '@monaco-editor/react';
+import DOMPurify from 'dompurify';
 
 loader.config({ paths: { vs: '/vs' } });
 
@@ -132,24 +130,6 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
       <Form.Item name="name" label={t('name')} rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item
-        name="avatar"
-        label={t('photo')}
-        valuePropName="fileList"
-        getValueFromEvent={normFile}
-      >
-        <Upload
-          listType="picture-card"
-          maxCount={1}
-          beforeUpload={() => false}
-          showUploadList={{ showPreviewIcon: false, showRemoveIcon: false }}
-        >
-          <button style={{ border: 0, background: 'none' }} type="button">
-            <PlusOutlined />
-            <div style={{ marginTop: 8 }}>{t('upload')}</div>
-          </button>
-        </Upload>
-      </Form.Item>
       <Form.Item name="description" label={t('description')}>
         <Input />
       </Form.Item>
@@ -168,7 +148,7 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
       <ConfigurationComponent></ConfigurationComponent>
 
       <Form.Item
-        label="extractor"
+        label={t('extractor')}
         // name={'meta'}
         rules={[
           {
@@ -205,7 +185,7 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
       </Form.Item>
 
       <Form.Item
-        label="classifier"
+        label={t('classifier')}
         // name={['parser_config', 'classifier']}
         rules={[{ validator: validateJson }]}
       >
