@@ -32,7 +32,7 @@ import {
 import classNames from 'classnames';
 import DOMPurify from 'dompurify';
 import { isEmpty } from 'lodash';
-import { CircleStop, SendHorizontal } from 'lucide-react';
+import { CircleStop } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import MarkdownContent from '../chat/markdown-content';
@@ -95,7 +95,7 @@ const SearchPage = () => {
     <Search
       value={searchStr}
       onChange={handleSearchStrChange}
-      placeholder={t('header.search')}
+      placeholder={'请输入您需要查找的内容'}
       allowClear
       addonAfter={
         sendingLoading ? (
@@ -103,8 +103,8 @@ const SearchPage = () => {
             <CircleStop />
           </Button>
         ) : (
-          <Button onClick={handleSearch}>
-            <SendHorizontal className="size-5 text-blue-500" />
+          <Button onClick={handleSearch} type="primary">
+            搜索
           </Button>
         )
       }
