@@ -23,7 +23,7 @@ import { message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { has, set } from 'lodash';
 import { useCallback, useMemo, useState } from 'react';
-import { history, useSearchParams } from 'umi';
+import { useSearchParams } from 'umi';
 
 //#region logic
 
@@ -101,18 +101,18 @@ export const useFetchNextDialogList = (pureFetch = false) => {
       console.log('🚀 ~ queryFn: ~ params:', params);
       const { data } = await chatService.listDialog();
 
-      if (data.code === 0) {
-        const list: IDialog[] = data.data;
-        if (!pureFetch) {
-          if (list.length > 0) {
-            if (list.every((x) => x.id !== dialogId)) {
-              handleClickDialog(data.data[0].id);
-            }
-          } else {
-            history.push('/chat');
-          }
-        }
-      }
+      // if (data.code === 0) {
+      //   const list: IDialog[] = data.data;
+      //   if (!pureFetch) {
+      //     if (list.length > 0) {
+      //       if (list.every((x) => x.id !== dialogId)) {
+      //         handleClickDialog(data.data[0].id);
+      //       }
+      //     } else {
+      //       history.push('/chat');
+      //     }
+      //   }
+      // }
 
       return data?.data ?? [];
     },
