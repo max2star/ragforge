@@ -2,23 +2,7 @@ import { LanguageList, LanguageMap } from '@/constants/common';
 import { useTranslate } from '@/hooks/common-hooks';
 import { useChangeLanguage } from '@/hooks/logic-hooks';
 import { useFetchUserInfo, useSaveSetting } from '@/hooks/user-setting-hooks';
-import {
-  getBase64FromUploadFileList,
-  getUploadFileListFromBase64,
-  normFile,
-} from '@/utils/file-util';
-import { PlusOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Form,
-  Input,
-  Select,
-  Space,
-  Spin,
-  Upload,
-  UploadFile,
-} from 'antd';
+import { Button, Divider, Form, Input, Select, Space, Spin } from 'antd';
 import { useEffect } from 'react';
 import SettingTitle from '../components/setting-title';
 import { TimezoneList } from '../constants';
@@ -32,9 +16,7 @@ type FieldType = {
   nickname?: string;
   language?: string;
   email?: string;
-  color_schema?: string;
   timezone?: string;
-  avatar?: string;
 };
 
 const tailLayout = {
@@ -49,8 +31,7 @@ const UserSettingProfile = () => {
   const changeLanguage = useChangeLanguage();
 
   const onFinish = async (values: any) => {
-    const avatar = await getBase64FromUploadFileList(values.avatar);
-    saveSetting({ ...values, avatar });
+    saveSetting(values);
   };
 
   const onFinishFailed = (errorInfo: any) => {
@@ -58,8 +39,7 @@ const UserSettingProfile = () => {
   };
 
   useEffect(() => {
-    const fileList: UploadFile[] = getUploadFileListFromBase64(userInfo.avatar);
-    form.setFieldsValue({ ...userInfo, avatar: fileList });
+    form.setFieldsValue(userInfo);
   }, [form, userInfo]);
 
   return (
@@ -95,46 +75,6 @@ const UserSettingProfile = () => {
             ]}
           >
             <Input />
-          </Form.Item>
-          <Divider />
-          <Form.Item<FieldType>
-            label={
-              <div>
-                <Space>{t('photo')}</Space>
-                <div>{t('photoDescription')}</div>
-              </div>
-            }
-            name="avatar"
-            valuePropName="fileList"
-            getValueFromEvent={normFile}
-          >
-            <Upload
-              listType="picture-card"
-              maxCount={1}
-              accept="image/*"
-              beforeUpload={() => {
-                return false;
-              }}
-              showUploadList={{ showPreviewIcon: false, showRemoveIcon: false }}
-            >
-              <button style={{ border: 0, background: 'none' }} type="button">
-                <PlusOutlined />
-                <div style={{ marginTop: 8 }}>
-                  {t('upload', { keyPrefix: 'common' })}
-                </div>
-              </button>
-            </Upload>
-          </Form.Item>
-          <Divider />
-          <Form.Item<FieldType>
-            label={t('colorSchema')}
-            name="color_schema"
-            rules={[{ required: true, message: t('colorSchemaMessage') }]}
-          >
-            <Select placeholder={t('colorSchemaPlaceholder')}>
-              <Option value="Bright">{t('bright')}</Option>
-              <Option value="Dark">{t('dark')}</Option>
-            </Select>
           </Form.Item>
           <Divider />
           <Form.Item<FieldType>
