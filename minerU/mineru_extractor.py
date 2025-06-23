@@ -36,10 +36,12 @@ def format_time(time_field_value):
         "%Y-%m",
         "%Y-%m-%d %H:%M:%S.%f",
         "%Y年%m月%d日",
+        "%Y年%m月",
         "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%d",
         "%Y.%m.%d",
         "%m/%d/%Y %H:%M",
+        "%m/%Y",
     ]
     for format_string in formats:
         try:
@@ -108,7 +110,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
     # 判断第一页目录图片是否是论文集或书籍
     is_what = "其他目录"
     maybe = {
-        "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
+        "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（一定存在且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
         "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。内容是围绕一个或几个核心主题由（通常少量）作者进行的系统性阐述，目录中不出现作者署名。",
     }
     example = {"结果":""}
@@ -152,7 +154,10 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
     # 通过视觉模型 从目录页前的内容中 提取元数据
     example = """{"name1": 提取内容a,"name2": 提取内容b,"name3": 提取内容c}"""
     prompt = (
-        f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
+        f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。"
+        f"must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。"
+        f"不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
+        f"若存在语种字段，请识别出原文的语言种类；"
         f"请你以最紧凑的JSON格式输出文本，可以去掉多余的空格。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
@@ -287,7 +292,7 @@ def extract_directory(tenant_id, images, callback=None):
     ))
     # 目录页面过于连续则判断不属于论文集
     arr = [int(i["页码"]) for i in dic_result]
-    if any(abs(a - b) <= 1 for a, b in zip(arr, arr[1:])):
+    if any(abs(a - b) <= 2 for a, b in zip(arr, arr[1:])):
         is_what = ""
     callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
