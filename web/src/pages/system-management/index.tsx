@@ -4,6 +4,8 @@ import { useSetModalState, useTranslate } from '@/hooks/common-hooks';
 import { useSelectLlmList } from '@/hooks/llm-hooks';
 import {
   DatabaseOutlined,
+  PictureOutlined,
+  PlusOutlined,
   ScanOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
@@ -24,6 +26,7 @@ import {
   Spin,
   Tag,
   Typography,
+  Upload,
 } from 'antd';
 import { useState } from 'react';
 import SettingTitle from '../user-setting/components/setting-title';
@@ -319,6 +322,126 @@ const OcrSettings = () => {
   );
 };
 
+const InterfaceSettings = () => {
+  const [logoFileList, setLogoFileList] = useState([]);
+  const [faviconFileList, setFaviconFileList] = useState([]);
+  const [loginLogoFileList, setLoginLogoFileList] = useState([]);
+
+  const handleUploadChange =
+    (setter) =>
+    ({ fileList }) => {
+      setter(fileList);
+    };
+
+  const uploadButton = (
+    <div>
+      <PlusOutlined />
+      <div style={{ marginTop: 8 }}>上传</div>
+    </div>
+  );
+
+  return (
+    <Card bordered={false}>
+      <div style={{ maxWidth: 800 }}>
+        <div>
+          <Typography.Title
+            level={4}
+            style={{ color: '#096dd9', marginBottom: '24px' }}
+          >
+            站点标识
+          </Typography.Title>
+          <Row align="middle" style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <Typography.Text strong>LOGO</Typography.Text>
+            </Col>
+            <Col span={18}>
+              <Upload
+                listType="picture-card"
+                fileList={logoFileList}
+                onChange={handleUploadChange(setLogoFileList)}
+                maxCount={1}
+                beforeUpload={() => false}
+              >
+                {logoFileList.length === 0 && uploadButton}
+              </Upload>
+              <Typography.Text type="secondary">
+                建议尺寸 200 * 50
+              </Typography.Text>
+            </Col>
+          </Row>
+          <Row align="middle" style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <Typography.Text strong>浏览器Tab小图标</Typography.Text>
+            </Col>
+            <Col span={18}>
+              <Upload
+                listType="picture-card"
+                fileList={faviconFileList}
+                onChange={handleUploadChange(setFaviconFileList)}
+                maxCount={1}
+                beforeUpload={() => false}
+              >
+                {faviconFileList.length === 0 && uploadButton}
+              </Upload>
+              <Typography.Text type="secondary">
+                建议尺寸 32 * 32, .ico格式
+              </Typography.Text>
+            </Col>
+          </Row>
+        </div>
+
+        <Divider />
+
+        <div>
+          <Typography.Title
+            level={4}
+            style={{ color: '#096dd9', margin: '24px 0' }}
+          >
+            登录页面
+          </Typography.Title>
+          <Row align="middle" style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <Typography.Text strong>登录界面LOGO</Typography.Text>
+            </Col>
+            <Col span={18}>
+              <Upload
+                listType="picture-card"
+                fileList={loginLogoFileList}
+                onChange={handleUploadChange(setLoginLogoFileList)}
+                maxCount={1}
+                beforeUpload={() => false}
+              >
+                {loginLogoFileList.length === 0 && uploadButton}
+              </Upload>
+              <Typography.Text type="secondary">
+                建议尺寸 200 * 200
+              </Typography.Text>
+            </Col>
+          </Row>
+          <Row align="top" style={{ marginBottom: '24px' }}>
+            <Col span={6}>
+              <Typography.Text strong>登录页欢迎词</Typography.Text>
+            </Col>
+            <Col span={18}>
+              <Input.TextArea
+                rows={4}
+                defaultValue={'欢迎使用 RAGFlow\n智能知识管理与AI助手平台'}
+                style={{ maxWidth: 400 }}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <Flex justify="flex-start" style={{ marginTop: 32 }}>
+          <Button type="primary" size="large">
+            保存更改
+          </Button>
+        </Flex>
+      </div>
+    </Card>
+  );
+};
+
 const SystemManagementPage = () => {
   const [selectedKey, setSelectedKey] = useState('database');
 
@@ -328,6 +451,8 @@ const SystemManagementPage = () => {
         return <DatabaseSettings />;
       case 'ocr':
         return <OcrSettings />;
+      case 'interface':
+        return <InterfaceSettings />;
       case 'model':
         return <ModelSettings />;
       default:
@@ -349,6 +474,9 @@ const SystemManagementPage = () => {
           </Menu.Item>
           <Menu.Item key="ocr" icon={<ScanOutlined />}>
             OCR管理
+          </Menu.Item>
+          <Menu.Item key="interface" icon={<PictureOutlined />}>
+            界面管理
           </Menu.Item>
         </Menu>
       </Sider>
