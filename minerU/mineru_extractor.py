@@ -34,6 +34,7 @@ def format_time(time_field_value):
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d %H:%M",
         "%Y-%m",
+        "%Y.%m",
         "%Y-%m-%d %H:%M:%S.%f",
         "%Y年%m月%d日",
         "%Y年%m月",
