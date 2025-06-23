@@ -192,13 +192,17 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
 
     for key,value in fields_map.items():
         try:
+            logging.info(f"old key {key} value ===> {value}")
             if re.search(r'时间|日期', key, re.IGNORECASE):
-                logging.info(f"old key {key} value ===> {value}")
+                logging.info(f"search key {key} value ===> {value}")
                 value = format_time(value)
                 if value:
                     value = value[:19]
                     fields_map[key] = value
                     logging.info(f"new key {key} value ===> {value}")
+                else:
+                    logging.info(f"format_no_value key {key} value ===> {value}")
+                    fields_map[key] = None
         except Exception as e:
             logging.info(f"format_time error {e}")
             fields_map[key] = None
