@@ -1,23 +1,23 @@
-import {
-  ApiIcon,
-  LogOutIcon,
-  ModelProviderIcon,
-  PasswordIcon,
-  ProfileIcon,
-  TeamIcon,
-} from '@/assets/icon/Icon';
 import { LLMFactory } from '@/constants/llm';
 import { UserSettingRouteKey } from '@/constants/setting';
-import { MonitorOutlined } from '@ant-design/icons';
+import {
+  ApartmentOutlined,
+  ApiOutlined,
+  LockOutlined,
+  LogoutOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 
 export const UserSettingIconMap = {
-  [UserSettingRouteKey.Profile]: <ProfileIcon style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.Password]: <PasswordIcon style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.Model]: <ModelProviderIcon style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.System]: <MonitorOutlined style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.Team]: <TeamIcon style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.Logout]: <LogOutIcon style={{ fontSize: 20 }} />,
-  [UserSettingRouteKey.Api]: <ApiIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Profile]: <UserOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.Password]: <LockOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.Model]: <ApartmentOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.System]: <SettingOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.Team]: <TeamOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.Logout]: <LogoutOutlined style={{ fontSize: 16 }} />,
+  [UserSettingRouteKey.Api]: <ApiOutlined style={{ fontSize: 16 }} />,
 };
 
 export * from '@/constants/setting';
