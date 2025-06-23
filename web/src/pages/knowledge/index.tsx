@@ -1,7 +1,7 @@
 import { useInfiniteFetchKnowledgeList } from '@/hooks/knowledge-hooks';
 import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
-import { Card, Empty, Flex, Input, Skeleton, Space, Spin } from 'antd';
+import { Card, Flex, Input, Skeleton, Space, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useSaveKnowledge } from './hooks';
@@ -98,12 +98,6 @@ const KnowledgeList = () => {
               );
             })}
           </Flex>
-          {!nextList?.length && !searchString && (
-            <Empty
-              className={styles.knowledgeEmpty}
-              description="暂无知识库，快去创建一个吧"
-            ></Empty>
-          )}
         </InfiniteScroll>
       </Spin>
       <KnowledgeCreatingModal
