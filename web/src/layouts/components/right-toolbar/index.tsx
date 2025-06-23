@@ -5,12 +5,11 @@ import camelCase from 'lodash/camelCase';
 import React, { useCallback, useMemo } from 'react';
 import User from '../user';
 
-import { useTheme } from '@/components/theme-provider';
 import { LanguageList, LanguageMap } from '@/constants/common';
 import { useChangeLanguage } from '@/hooks/logic-hooks';
 import { useFetchUserInfo, useListTenant } from '@/hooks/user-setting-hooks';
 import { TenantRole } from '@/pages/user-setting/constants';
-import { BellRing, CircleHelp, MoonIcon, SunIcon } from 'lucide-react';
+import { BellRing } from 'lucide-react';
 import { useNavigate } from 'umi';
 import styled from './index.less';
 
@@ -26,14 +25,9 @@ const handleGithubCLick = () => {
   window.open('https://github.com/infiniflow/ragflow', 'target');
 };
 
-const handleDocHelpCLick = () => {
-  window.open('https://ragflow.io/docs/dev/category/guides', 'target');
-};
-
 const RightToolBar = () => {
   const { t } = useTranslate('common');
   const changeLanguage = useChangeLanguage();
-  const { setTheme, theme } = useTheme();
   const navigate = useNavigate();
 
   const {
@@ -57,13 +51,6 @@ const RightToolBar = () => {
     return [...pre!, { type: 'divider' }, cur];
   }, []);
 
-  const onMoonClick = React.useCallback(() => {
-    setTheme('light');
-  }, [setTheme]);
-  const onSunClick = React.useCallback(() => {
-    setTheme('dark');
-  }, [setTheme]);
-
   const handleBellClick = useCallback(() => {
     navigate('/user-setting/team');
   }, [navigate]);
@@ -79,16 +66,6 @@ const RightToolBar = () => {
         </Dropdown>
         <Circle>
           <GithubOutlined onClick={handleGithubCLick} />
-        </Circle>
-        <Circle>
-          <CircleHelp className="size-4" onClick={handleDocHelpCLick} />
-        </Circle>
-        <Circle>
-          {theme === 'dark' ? (
-            <MoonIcon onClick={onMoonClick} size={20} />
-          ) : (
-            <SunIcon onClick={onSunClick} size={20} />
-          )}
         </Circle>
         {showBell && (
           <Circle>
