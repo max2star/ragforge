@@ -28,7 +28,7 @@ from rag import settings
 
 
 def format_time(time_field_value):
-    time_field_value_format = None
+    time_field_value_format = "1970-01-01T00:00:00Z"
 
     formats = [
         "%Y-%m-%d %H:%M:%S",
@@ -48,7 +48,7 @@ def format_time(time_field_value):
         try:
             time_field_value_format = datetime.strptime(time_field_value, format_string)
             logging.info(f"Parsed date {time_field_value}-->{time_field_value_format}")
-            time_field_value_format = "{}".format(time_field_value_format.strftime('%Y-%m-%d %H:%M:%SZ'))
+            time_field_value_format = "{}".format(time_field_value_format.strftime('%Y-%m-%dT%H:%M:%SZ'))
             return time_field_value_format
         except Exception as e:
             logging.error("Failed to parse {} use format {} for Exception {}".format(time_field_value,format_string,time_field_value_format))
@@ -112,13 +112,13 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
     is_what = "其他目录"
     maybe = {
         "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（一定存在且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
-        "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。内容是围绕一个或几个核心主题由（通常少量）作者进行的系统性阐述，目录中不出现作者署名。",
+        "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。目录中不出现作者署名。",
     }
     example = {"结果":""}
     prompt = (
-        f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；定义：{maybe}"
+        f"声明：你的回答不需要有任何旁白，若不包含目录页面，请直接输出一个空花括号即可；定义：{maybe}"
         f"现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是;"
-        f"请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请直接输出一个空花括号即可;如果是存粹的目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
+        f"请根据图片内容判断该图片是不是文档的目录页面，如果不是目录页面，请直接输出一个空花括号即可;如果是目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
         f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在解析目录...")
@@ -158,7 +158,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
         f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。"
         f"must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。"
         f"不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
-        f"若存在语种字段，请识别出原文的语言种类；"
+        f"若存在语种字段，请识别出原文的语言种类；若存在日期、时间等相关字段，请以：%Y-%m-%dT%H:%M:%SZ格式提取为值，无或无法提取默认使用：1970-01-01T00:00:00Z"
         f"请你以最紧凑的JSON格式输出文本，可以去掉多余的空格。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
@@ -192,21 +192,11 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                         fields_map[key] = current_value
 
     for key,value in fields_map.items():
-        try:
-            logging.info(f"old key {key} value ===> {value}")
-            if re.search(r'时间|日期', key, re.IGNORECASE):
-                logging.info(f"search key {key} value ===> {value}")
-                value = format_time(value)
-                if value:
-                    value = value[:19]
-                    fields_map[key] = value
-                    logging.info(f"new key {key} value ===> {value}")
-                else:
-                    logging.info(f"format_no_value key {key} value ===> {value}")
-                    fields_map[key] = None
-        except Exception as e:
-            logging.info(f"format_time error {e}")
-            fields_map[key] = None
+        if re.search(r'时间|日期', key, re.IGNORECASE):
+            logging.info(f"search key {key} value ===> {value}")
+            value = format_time(value)[:19]
+            fields_map[key] = value
+            logging.info(f"new key {key} value ===> {value}")
     return fields_map
 
 # 视觉模型识别提取目录数据
