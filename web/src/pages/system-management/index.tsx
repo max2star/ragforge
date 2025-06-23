@@ -4,10 +4,13 @@ import { useSetModalState, useTranslate } from '@/hooks/common-hooks';
 import { useSelectLlmList } from '@/hooks/llm-hooks';
 import {
   DatabaseOutlined,
+  HddOutlined,
   PictureOutlined,
   PlusOutlined,
+  SafetyCertificateOutlined,
   ScanOutlined,
   SettingOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import {
   Button,
@@ -341,103 +344,146 @@ const InterfaceSettings = () => {
   );
 
   return (
-    <Card bordered={false}>
-      <div style={{ maxWidth: 800 }}>
-        <div>
-          <Typography.Title
-            level={4}
-            style={{ color: '#096dd9', marginBottom: '24px' }}
-          >
-            站点标识
-          </Typography.Title>
-          <Row align="middle" style={{ marginBottom: '24px' }}>
-            <Col span={6}>
-              <Typography.Text strong>LOGO</Typography.Text>
-            </Col>
-            <Col span={18}>
-              <Upload
-                listType="picture-card"
-                fileList={logoFileList}
-                onChange={handleUploadChange(setLogoFileList)}
-                maxCount={1}
-                beforeUpload={() => false}
-              >
-                {logoFileList.length === 0 && uploadButton}
-              </Upload>
-              <Typography.Text type="secondary">
-                建议尺寸 200 * 50
-              </Typography.Text>
-            </Col>
-          </Row>
-          <Row align="middle" style={{ marginBottom: '24px' }}>
-            <Col span={6}>
-              <Typography.Text strong>浏览器Tab小图标</Typography.Text>
-            </Col>
-            <Col span={18}>
-              <Upload
-                listType="picture-card"
-                fileList={faviconFileList}
-                onChange={handleUploadChange(setFaviconFileList)}
-                maxCount={1}
-                beforeUpload={() => false}
-              >
-                {faviconFileList.length === 0 && uploadButton}
-              </Upload>
-              <Typography.Text type="secondary">
-                建议尺寸 32 * 32, .ico格式
-              </Typography.Text>
-            </Col>
-          </Row>
-        </div>
+    <div style={{ maxWidth: 1000 }}>
+      <Card
+        bordered={false}
+        style={{ marginBottom: 24, background: '#fafafa' }}
+      >
+        <Typography.Title
+          level={5}
+          style={{ color: '#096dd9', marginBottom: '24px' }}
+        >
+          站点标识
+        </Typography.Title>
+        <Row align="middle" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>LOGO</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Upload
+              listType="picture-card"
+              fileList={logoFileList}
+              onChange={handleUploadChange(setLogoFileList)}
+              maxCount={1}
+              beforeUpload={() => false}
+            >
+              {logoFileList.length === 0 && uploadButton}
+            </Upload>
+            <Typography.Text type="secondary">
+              建议尺寸 200 * 50
+            </Typography.Text>
+          </Col>
+        </Row>
+        <Row align="middle" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>浏览器Tab小图标</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Upload
+              listType="picture-card"
+              fileList={faviconFileList}
+              onChange={handleUploadChange(setFaviconFileList)}
+              maxCount={1}
+              beforeUpload={() => false}
+            >
+              {faviconFileList.length === 0 && uploadButton}
+            </Upload>
+            <Typography.Text type="secondary">
+              建议尺寸 32 * 32, .ico格式
+            </Typography.Text>
+          </Col>
+        </Row>
+      </Card>
 
-        <Divider />
+      <Card bordered={false} style={{ background: '#fafafa' }}>
+        <Typography.Title
+          level={5}
+          style={{ color: '#096dd9', marginBottom: '24px' }}
+        >
+          登录页面
+        </Typography.Title>
+        <Row align="middle" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>登录界面LOGO</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Upload
+              listType="picture-card"
+              fileList={loginLogoFileList}
+              onChange={handleUploadChange(setLoginLogoFileList)}
+              maxCount={1}
+              beforeUpload={() => false}
+            >
+              {loginLogoFileList.length === 0 && uploadButton}
+            </Upload>
+            <Typography.Text type="secondary">
+              建议尺寸 200 * 200
+            </Typography.Text>
+          </Col>
+        </Row>
+        <Row align="top" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>登录页欢迎词</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Input.TextArea
+              rows={4}
+              defaultValue={'欢迎使用 RAGFlow\n智能知识管理与AI助手平台'}
+              style={{ maxWidth: 400 }}
+            />
+          </Col>
+        </Row>
+      </Card>
 
-        <div>
-          <Typography.Title
-            level={4}
-            style={{ color: '#096dd9', margin: '24px 0' }}
-          >
-            登录页面
-          </Typography.Title>
-          <Row align="middle" style={{ marginBottom: '24px' }}>
-            <Col span={6}>
-              <Typography.Text strong>登录界面LOGO</Typography.Text>
-            </Col>
-            <Col span={18}>
-              <Upload
-                listType="picture-card"
-                fileList={loginLogoFileList}
-                onChange={handleUploadChange(setLoginLogoFileList)}
-                maxCount={1}
-                beforeUpload={() => false}
-              >
-                {loginLogoFileList.length === 0 && uploadButton}
-              </Upload>
-              <Typography.Text type="secondary">
-                建议尺寸 200 * 200
-              </Typography.Text>
-            </Col>
-          </Row>
-          <Row align="top" style={{ marginBottom: '24px' }}>
-            <Col span={6}>
-              <Typography.Text strong>登录页欢迎词</Typography.Text>
-            </Col>
-            <Col span={18}>
-              <Input.TextArea
-                rows={4}
-                defaultValue={'欢迎使用 RAGFlow\n智能知识管理与AI助手平台'}
-                style={{ maxWidth: 400 }}
-              />
-            </Col>
-          </Row>
-        </div>
+      <Flex justify="flex-start" style={{ marginTop: 32 }}>
+        <Button type="primary" size="large">
+          保存更改
+        </Button>
+      </Flex>
+    </div>
+  );
+};
 
-        <Flex justify="flex-start" style={{ marginTop: 32 }}>
-          <Button type="primary" size="large">
-            保存更改
-          </Button>
-        </Flex>
-      </div>
+const StorageSettings = () => {
+  return (
+    <Card title="存储管理">
+      <Form layout="vertical">
+        <Form.Item label="存储加密方式">
+          <Radio.Group>
+            <Radio value="none">不加密</Radio>
+            <Radio value="aes256">AES-256</Radio>
+          </Radio.Group>
+        </Form.Item>
+        <Form.Item label="备份地址">
+          <Input placeholder="请输入备份地址" />
+        </Form.Item>
+        <Form.Item>
+          <Button type="primary">保存</Button>
+        </Form.Item>
+      </Form>
+    </Card>
+  );
+};
+
+const LicenseSettings = () => {
+  return (
+    <Card title="授权管理">
+      <Form layout="vertical">
+        <Form.Item label="系统版本">
+          <Space>
+            <Tag color="blue">社区版</Tag>
+            <Tag color="green">企业版</Tag>
+          </Space>
+        </Form.Item>
+        <Form.Item label="License 信息">
+          <Typography.Text code>LIC-XXXX-XXXX-XXXX-XXXX</Typography.Text>
+        </Form.Item>
+        <Form.Item label="上传授权文件">
+          <Upload>
+            <Button icon={<UploadOutlined />}>上传文件</Button>
+          </Upload>
+        </Form.Item>
+      </Form>
     </Card>
   );
 };
@@ -453,6 +499,10 @@ const SystemManagementPage = () => {
         return <OcrSettings />;
       case 'interface':
         return <InterfaceSettings />;
+      case 'storage':
+        return <StorageSettings />;
+      case 'license':
+        return <LicenseSettings />;
       case 'model':
         return <ModelSettings />;
       default:
@@ -477,6 +527,12 @@ const SystemManagementPage = () => {
           </Menu.Item>
           <Menu.Item key="interface" icon={<PictureOutlined />}>
             界面管理
+          </Menu.Item>
+          <Menu.Item key="storage" icon={<HddOutlined />}>
+            存储管理
+          </Menu.Item>
+          <Menu.Item key="license" icon={<SafetyCertificateOutlined />}>
+            授权管理
           </Menu.Item>
         </Menu>
       </Sider>
