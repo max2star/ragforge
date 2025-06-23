@@ -55,7 +55,7 @@ const RagHeader = () => {
     <Header
       style={{
         padding: '0 16px',
-        background: 'linear-gradient(to right, #e0c3fc, #fef9fb)',
+        background: 'linear-gradient(to right, #5e72e4, #fef9fb)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
