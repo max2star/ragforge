@@ -23,7 +23,7 @@ from api.db.services import duplicate_name
 from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
-from api.db.services.user_service import TenantService, UserTenantService
+from api.db.services.user_service import TenantService, UserTenantService, UserService
 from api.utils.api_utils import server_error_response, get_data_error_result, validate_request, not_allowed_parameters
 from api.utils import get_uuid
 from api.db import StatusEnum, FileSource
@@ -74,19 +74,23 @@ def create():
         #dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
         # 正式环境
         # dialog_id = "58ce279249c011f0a0c90242ac1400fe"
-        for dialog_id in ['8a5fe1c641b211f084720aa9420e5f66','58ce279249c011f0a0c90242ac1400fe','ed1d4f484b3411f091d9cef343bd0a30']:
-            e, dia = DialogService.get_by_id(dialog_id)
-            if e:
-                logging.info(f"Dialog {dialog_id} exists,will update it!")
-                dia = dia.to_dict()
-                dia_to_update = {}
-                dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
-                if not DialogService.update_by_id(dialog_id, dia_to_update):
-                    logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
-                else:
-                    logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
-            else:
-                logging.info(f"Dialog {dialog_id} Not Exists")
+        users = UserService.query(email="M@M.test")
+        if users:
+            userid = users[0].id
+            if current_user.id == userid:
+                for dialog_id in ['8a5fe1c641b211f084720aa9420e5f66','58ce279249c011f0a0c90242ac1400fe','ed1d4f484b3411f091d9cef343bd0a30']:
+                    e, dia = DialogService.get_by_id(dialog_id)
+                    if e:
+                        logging.info(f"Dialog {dialog_id} exists,will update it!")
+                        dia = dia.to_dict()
+                        dia_to_update = {}
+                        dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+                        if not DialogService.update_by_id(dialog_id, dia_to_update):
+                            logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+                        else:
+                            logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
+                    else:
+                        logging.info(f"Dialog {dialog_id} Not Exists")
 
         return get_json_result(data={"kb_id": req["id"]})
     except Exception as e:
