@@ -126,6 +126,10 @@ const routes = [
         component: '@/pages/file-manager',
       },
       {
+        path: '/system-management',
+        component: '@/pages/system-management',
+      },
+      {
         path: '/flow',
         component: '@/pages/flow/list',
       },
