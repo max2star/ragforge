@@ -371,9 +371,14 @@ const UserSettingModel = () => {
         <section className={styles.modelContainer}>
           <SettingTitle
             title={t('model')}
-            description={t('modelDescription')}
-            showRightButton
-            clickButton={showSystemSettingModal}
+            description={`${t(
+              'modelDescription',
+            )} （先"添加模型" -> 再"设置默认模型"）`}
+            extra={
+              <Button type="primary" onClick={showSystemSettingModal}>
+                {t('setDefault')}
+              </Button>
+            }
           ></SettingTitle>
           <Divider></Divider>
           <Collapse defaultActiveKey={['1', '2']} ghost items={items} />
