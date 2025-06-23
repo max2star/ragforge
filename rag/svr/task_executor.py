@@ -895,36 +895,43 @@ async def do_handle_task(task):
             classify_result.append(classify_obj)
     dict_result['分类标签'] =  classify_result
     logging.info(f"do_handle_task doc {task['doc_id']} 合并分类标签后的 meta fields {dict_result}, filter fields {filter_fields_}")
-
+    # dict_result["dic_result"] = sub_paper["dic_result"]
+    if pdf_article_type == "论文集":
+        dict_result['sub_paper'] = sub_paper["fields_map"]
+    pages = [int(i) for i in list(sub_paper.get("fields_map",{}).keys())]
+    pages.sort()
     for c_ in chunks:
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
-        if pdf_article_type != "论文集" or (page_c_[0] < sub_paper["main_content_begin"] and pdf_article_type == "论文集"):
+        if pdf_article_type != "论文集":
             # 将元数据更新到Chunk
             c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 c_[key] = value
+        elif page_c_[0] < sub_paper["main_content_begin"] and pdf_article_type == "论文集":
+            # 将论文集元数据存入目录前的块
+            c_['meta_fields'] = dict_result
+            for key, value in dict_result.items():
+                if key != "sub_paper":
+                    c_[key] = value
         else:
-            # dict_result["dic_result"] = sub_paper["dic_result"]
-            dict_result['sub_paper'] = sub_paper["fields_map"]
             # 保存子论文要素至对应分块
             try:
-                pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
                 # 确保子论文与相应的chunk范围能一一对应
-                pages.sort()
                 pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
                 if pdf_p_begin:
                     sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
                     logging.info(f"pdf_p_begin {pdf_p_begin}; pdf_p_end {pdf_p_end }; pages {pages}; sub_paper_dict_result {sub_paper_dict_result}")
-                    c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
+                    # c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
                     for key, value in sub_paper_dict_result["fields_map_"].items():
                         c_[key] = value
 
             except Exception as e:
                 logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
-                c_['meta_fields'] = dict_result
+                # c_['meta_fields'] = dict_result
                 for key, value in dict_result.items():
-                    c_[key] = value
+                    if key != "sub_paper":
+                        c_[key] = value
 
         c_['filter_fields'] = filter_fields_
         c_['limit_range'] = limit_range
