@@ -72,7 +72,7 @@ class VisionFigureParser:
                     response = re.sub(r"^.*?```json", "", response, flags=re.DOTALL)
                     response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
                 response = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', response)  # 移除控制字符
-                # response = response.encode('utf-8', errors='replace').decode('utf-8')
+                response = response.encode('utf-8', errors='replace').decode('utf-8')
                 response = extract_first_json(response)
                 texts[idx] = response
                 logging.info("视觉模型图像 idx: {} 返回过滤结果: {}".format(figure_num, response[:50]))
