@@ -10,7 +10,8 @@ import {
   useSecondPathName,
 } from '@/hooks/route-hook';
 import { getWidth } from '@/utils';
-import { Avatar, Menu, MenuProps, Space } from 'antd';
+import { BookOutlined } from '@ant-design/icons';
+import { Menu, MenuProps, Space } from 'antd';
 import classNames from 'classnames';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -65,17 +66,17 @@ const KnowledgeSidebar = () => {
       getItem(
         KnowledgeRouteKey.Dataset, // TODO: Change icon color when selected
         KnowledgeRouteKey.Dataset,
-        <DatasetIcon />,
+        <DatasetIcon width={16} height={16} />,
       ),
       getItem(
         KnowledgeRouteKey.Testing,
         KnowledgeRouteKey.Testing,
-        <TestingIcon />,
+        <TestingIcon width={16} height={16} />,
       ),
       getItem(
         KnowledgeRouteKey.Configuration,
         KnowledgeRouteKey.Configuration,
-        <ConfigurationIcon />,
+        <ConfigurationIcon width={16} height={16} />,
       ),
     ];
 
@@ -84,7 +85,7 @@ const KnowledgeSidebar = () => {
         getItem(
           KnowledgeRouteKey.KnowledgeGraph,
           KnowledgeRouteKey.KnowledgeGraph,
-          <GitGraph />,
+          <GitGraph size={16} />,
         ),
       );
     }
@@ -116,8 +117,10 @@ const KnowledgeSidebar = () => {
     <div className={styles.sidebarWrapper}>
       <div className={styles.sidebarTop}>
         <Space size={8} direction="vertical">
-          <Avatar size={64} src={knowledgeDetails.avatar} />
-          <div className={styles.knowledgeTitle}>{knowledgeDetails.name}</div>
+          <div className={styles.knowledgeTitle}>
+            <BookOutlined style={{ marginRight: 8 }} />
+            {knowledgeDetails.name}
+          </div>
         </Space>
         <p className={styles.knowledgeDescription}>
           {knowledgeDetails.description}
