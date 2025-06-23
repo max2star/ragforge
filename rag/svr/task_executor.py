@@ -720,7 +720,7 @@ async def do_handle_task(task):
         metadata_type = task_metadata_type
 
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
-    fields = keys
+    fields = [k for k in keys if k not in constant.exclude_fields]
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -783,12 +783,11 @@ async def do_handle_task(task):
             result, is_what = extract_directory(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
                 images=img_results[:MAX_NUM],
+                metadata_type=metadata_type,
                 callback=progress_callback,
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
             directory_begin = result["directory_begin"]
-            if metadata_type in ["图书"]:
-                is_what = ""
             # 根据目录结果提取元数据：存在目录使用目录前内容；反之取前10页；
             num = max(10,directory_begin - 1)
             flag = directory_begin > 0 and len(result["dic_result"]) >= 1 # 是否存在目录
@@ -823,7 +822,7 @@ async def do_handle_task(task):
             fields_map = await run_extract_(fields, metadata_type, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
             progress_callback(msg="文本模型提取元数据完成")
 
-        if flag and is_what in ["论文集"]:
+        if flag and is_what in ["论文集"] and metadata_type not in ["图书"]:
             logging.info(msg="识别到存在子论文")
             progress_callback(msg="识别到存在子论文，正在解析目录页码进行子论文要素抽取...")
             pdf_article_type = "论文集"
@@ -928,16 +927,6 @@ async def do_handle_task(task):
                     c_[key] = value
 
         c_['filter_fields'] = filter_fields_
-        for key,value in filter_fields_.items():
-            try:
-                if re.search(r'时间|日期', key, re.IGNORECASE):
-                    value = format_time(value)
-                    if value:
-                        value = value[:19]
-            except Exception as e:
-                logging.info(f"fromtimestamp error {e}")
-                continue
-            c_[key] = value
         c_['limit_range'] = limit_range
         c_['limit_level'] = limit_level
         c_['limit_time'] = limit_time
