@@ -787,7 +787,8 @@ async def do_handle_task(task):
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
             directory_begin = result["directory_begin"]
-
+            if metadata_type in ["图书"]:
+                is_what = ""
             # 根据目录结果提取元数据：存在目录使用目录前内容；反之取前10页；
             num = max(10,directory_begin - 1)
             flag = directory_begin > 0 and len(result["dic_result"]) >= 1 # 是否存在目录
@@ -935,6 +936,7 @@ async def do_handle_task(task):
                         value = value[:19]
             except Exception as e:
                 logging.info(f"fromtimestamp error {e}")
+                continue
             c_[key] = value
         c_['limit_range'] = limit_range
         c_['limit_level'] = limit_level
