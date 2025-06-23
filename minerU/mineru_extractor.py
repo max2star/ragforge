@@ -190,10 +190,22 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                     if current_value is not None:
                         fields_map[key] = current_value
 
+    for key,value in fields_map.items():
+        try:
+            if re.search(r'时间|日期', key, re.IGNORECASE):
+                logging.info(f"old key {key} value ===> {value}")
+                value = format_time(value)
+                if value:
+                    value = value[:19]
+                    fields_map[key] = value
+                    logging.info(f"new key {key} value ===> {value}")
+        except Exception as e:
+            logging.info(f"format_time error {e}")
+            fields_map[key] = None
     return fields_map
 
 # 视觉模型识别提取目录数据
-def extract_directory(tenant_id, images, callback=None):
+def extract_directory(tenant_id, images, metadata_type, callback=None):
     start_ts = timer()
 
     # 最大识别图片页数
@@ -228,7 +240,7 @@ def extract_directory(tenant_id, images, callback=None):
                     empty_num = 0
                     directory_num += 1
                     the_directory_end = idx
-                    if not is_what:
+                    if not is_what and metadata_type not in ["图书"]:
                         the_directory_begins = idx
                         try:
                             # 判断第一页目录图片是否是论文集或书籍
