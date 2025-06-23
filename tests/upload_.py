@@ -1,26 +1,54 @@
 import requests
-from  loguru import logger as logging
-# import logging
 import os
 from glob import glob
 import json
 from datetime import datetime
 
-# 生成带时间戳的文件名（精确到秒）
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_dir = "logs"
-os.makedirs(log_dir, exist_ok=True)
-log_file = f"logs/app_{timestamp}.log"
+class Logger:
+    time_format = "%Y-%m-%d %H:%M:%S"
+    timestamp_format = "%Y%m%d%H%M%S"
+    timestamp = datetime.now().strftime(timestamp_format)
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = f"logs/app_{timestamp}.log"
 
-# 配置logging：清除默认设置，添加文件日志
-# logging.remove()  # 移除默认输出
-logging.add(
-    log_file,
-    rotation="1000 MB",   # 日志文件最大10MB
-    # retention="30 days", # 保留最近30天
-    # compression="zip",   # 旧日志自动压缩
-    # level="DEBUG"
-) # 设置日志级别
+    def __init__(self):
+        pass
+
+    def save(self, msg, level="INFO"):
+        if type(msg) == dict:
+            msg = json.dumps(msg, indent=4, ensure_ascii=False, default=str)
+        level = level.upper()
+        time_tmp = datetime.now().strftime(self.time_format)
+        write_in = "[{}] [{}] {}".format(time_tmp, level, msg)
+        try:
+            with open(self.log_file, 'a', encoding='utf-8') as f:
+                f.write(write_in + "\n")
+            if level not in ["DEBUG"]:
+                print(write_in)
+        except UnicodeEncodeError as e:
+            # 处理特殊字符情况
+            write_in = write_in.encode('utf-8', errors='replace').decode('utf-8')
+            with open(self.log_file, 'a', encoding='utf-8', errors='replace') as f:
+                f.write(write_in + "\n" + str(e) + "\n")
+            print(write_in + "\n" + str(e))
+        except Exception as e:
+            print(write_in + "\n" + str(e))
+            raise
+
+    def info(self, msg):
+        self.save(msg)
+
+    def error(self, msg):
+        self.save(msg, level="ERROR")
+
+    def debug(self, msg):
+        self.save(msg, level="DEBUG")
+
+
+logging = Logger()
+timestamp = logging.timestamp
+
 
 
 def upload(ip="101.52.216.178", host=9090, file_path=None):
@@ -54,14 +82,17 @@ def upload(ip="101.52.216.178", host=9090, file_path=None):
         return None
 
 
-def confirm_up(ip="101.52.216.178", host=9090, res=None):
+def confirm_up(ip="101.52.216.178", host=9090, res=None, folderId=None, level=1):
     if res is None:
+        return None
+    if folderId is None:
+        logging.error(f"folderId is None")
         return None
     url = f"http://{ip}:{host}/op-api/api/v1/km/saveFileSpecial"
     # url = f"http://{ip}:{host}/op-api/api/v1/km/saveFile"
 
     payload = {
-        "folderId": 438,
+        "folderId": folderId,
         "fileList": [{
             "id": None,
             "guid": res["data"]["guid"],
@@ -71,7 +102,7 @@ def confirm_up(ip="101.52.216.178", host=9090, res=None):
             "fileType": res["data"]["suffix"],
             "embeddingConfigName": "",
             "embeddingConfigCode": "",
-            "level": "1",
+            "level": str(level),
             "scopeRule": "ONLY_ME"
         }]
     }
@@ -105,7 +136,9 @@ if __name__ == '__main__':
         # "D:/App/baidu/下载/1",
         "D:/App/baidu/报告",
     ]
-
+    folderId = 6782
+    IP = "101.52.216.178"
+    PORT = 9090
     for i in UPLOAD_DIR:
         file_paths = glob(os.path.join(i, '*pdf'))
         # 过滤掉目录
@@ -114,23 +147,31 @@ if __name__ == '__main__':
             logging.info("⚠️ 没有找到可上传的文件")
             continue
 
+        num = 0
         for j in file_paths:
             logging.info(j)
             success = False
-            res_dict = upload(ip="101.52.216.178", host=9090,file_path=j)
+            res_dict = None
+            try:
+                res_dict = upload(ip=IP, host=PORT,file_path=j)
+            except Exception as e:
+                logging.error(f"upload {j} error {e}")
             if res_dict is not None:
-                res = confirm_up(ip="101.52.216.178", host=9090,res=res_dict)
-                if res is not None:
-                    success = True
+                try:
+                    res = confirm_up(ip=IP, host=PORT,res=res_dict, folderId=folderId)
+                    if res is not None:
+                        success = True
+                except Exception as e:
+                    logging.error(f"confirm_up {j} error {e}")
             if success:
                 logging.info(f"Success\t{j}")
                 # 写入成功文件
-                with open(f"logs/Success_{timestamp}.log", 'a') as f:
+                with open(f"logs/Success_{timestamp}.log", 'a', encoding='utf-8') as f:
                     f.write(f"{j}\n")
             else:
                 logging.error(f"Failed\t{j}")
                 # 写入失败文件
-                with open(f"logs/Failed_{timestamp}.log", 'a') as f:
+                with open(f"logs/Failed_{timestamp}.log", 'a', encoding='utf-8') as f:
                     f.write(f"{j}\n")
 
 
