@@ -56,7 +56,7 @@ class DocumentService(CommonService):
             )
         if keywords:
             docs = docs.where(
-                fn.LOWER(cls.model.name).contains(keywords.lower())
+                (fn.LOWER(cls.model.name).contains(keywords.lower())) | (fn.LOWER(cls.model.id).contains(keywords.lower()))
             )
         if desc:
             docs = docs.order_by(cls.model.getter_by(orderby).desc())
@@ -74,7 +74,7 @@ class DocumentService(CommonService):
 
         docs= cls.model.select().where(cls.model.kb_id == kb_id)
         if keywords:
-            docs= docs.where(fn.LOWER(cls.model.name).contains(keywords.lower()))
+            docs= docs.where( (fn.LOWER(cls.model.name).contains(keywords.lower())) | (fn.LOWER(cls.model.id).contains(keywords.lower())))
         if run:
             docs= docs.where(cls.model.run == run)
         if id:
