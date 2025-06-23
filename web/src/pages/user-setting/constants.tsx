@@ -11,13 +11,13 @@ import { UserSettingRouteKey } from '@/constants/setting';
 import { MonitorOutlined } from '@ant-design/icons';
 
 export const UserSettingIconMap = {
-  [UserSettingRouteKey.Profile]: <ProfileIcon />,
-  [UserSettingRouteKey.Password]: <PasswordIcon />,
-  [UserSettingRouteKey.Model]: <ModelProviderIcon />,
-  [UserSettingRouteKey.System]: <MonitorOutlined style={{ fontSize: 24 }} />,
-  [UserSettingRouteKey.Team]: <TeamIcon />,
-  [UserSettingRouteKey.Logout]: <LogOutIcon />,
-  [UserSettingRouteKey.Api]: <ApiIcon />,
+  [UserSettingRouteKey.Profile]: <ProfileIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Password]: <PasswordIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Model]: <ModelProviderIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.System]: <MonitorOutlined style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Team]: <TeamIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Logout]: <LogOutIcon style={{ fontSize: 20 }} />,
+  [UserSettingRouteKey.Api]: <ApiIcon style={{ fontSize: 20 }} />,
 };
 
 export * from '@/constants/setting';
