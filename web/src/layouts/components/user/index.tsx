@@ -1,9 +1,7 @@
 import { useFetchUserInfo } from '@/hooks/user-setting-hooks';
-import { Avatar } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import React from 'react';
 import { history } from 'umi';
-
-import styles from '../../index.less';
 
 const App: React.FC = () => {
   const { data: userInfo } = useFetchUserInfo();
@@ -13,15 +11,21 @@ const App: React.FC = () => {
   };
 
   return (
-    <Avatar
-      size={32}
+    <div
       onClick={toSetting}
-      className={styles.clickAvailable}
-      src={
-        userInfo.avatar ??
-        'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png'
-      }
-    />
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        borderRadius: '50%',
+        backgroundColor: '#e6f7ff',
+        cursor: 'pointer',
+      }}
+    >
+      <UserOutlined style={{ color: '#1890ff', fontSize: 18 }} />
+    </div>
   );
 };
 
