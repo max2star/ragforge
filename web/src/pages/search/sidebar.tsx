@@ -1,7 +1,7 @@
 import { useFetchKnowledgeList } from '@/hooks/knowledge-hooks';
-import { UserOutlined } from '@ant-design/icons';
+import { FolderOutlined } from '@ant-design/icons';
 import type { TreeDataNode, TreeProps } from 'antd';
-import { Avatar, Layout, Space, Spin, Tree, Typography } from 'antd';
+import { Layout, Space, Spin, Tree, Typography } from 'antd';
 import classNames from 'classnames';
 import {
   Dispatch,
@@ -31,7 +31,7 @@ const SearchSidebar = ({
 
   const groupedList = useMemo(() => {
     return list.reduce((pre: TreeDataNode[], cur) => {
-      const parentItem = pre.find((x) => x.key === cur.embd_id);
+      const parentItem = pre.find((x) => x.key === 'knowledge-base-group');
       const childItem: TreeDataNode = {
         title: cur.name,
         key: cur.id,
@@ -41,8 +41,8 @@ const SearchSidebar = ({
         parentItem.children?.push(childItem);
       } else {
         pre.push({
-          title: cur.embd_id,
-          key: cur.embd_id,
+          title: '知识库列表',
+          key: 'knowledge-base-group',
           isLeaf: false,
           children: [childItem],
         });
@@ -104,25 +104,21 @@ const SearchSidebar = ({
     setSelectedKeys(selectedKeysValue);
   };
 
-  const renderTitle = useCallback(
-    (node: TreeDataNode) => {
-      const item = list.find((x) => x.id === node.key);
-      return (
-        <Space>
-          {node.isLeaf && (
-            <Avatar size={24} icon={<UserOutlined />} src={item?.avatar} />
-          )}
-          <Typography.Text
-            ellipsis={{ tooltip: node.title as string }}
-            className={node.isLeaf ? styles.knowledgeName : styles.embeddingId}
-          >
-            {node.title as string}
-          </Typography.Text>
-        </Space>
-      );
-    },
-    [list],
-  );
+  const renderTitle = useCallback((node: TreeDataNode) => {
+    return (
+      <Space>
+        {node.isLeaf && (
+          <FolderOutlined style={{ fontSize: 15, color: '#1677ff' }} />
+        )}
+        <Typography.Text
+          ellipsis={{ tooltip: node.title as string }}
+          className={node.isLeaf ? styles.knowledgeName : styles.embeddingId}
+        >
+          {node.title as string}
+        </Typography.Text>
+      </Space>
+    );
+  }, []);
 
   useEffect(() => {
     const firstGroup = groupedList[0]?.children?.map((x) => x.key as string);
