@@ -1,6 +1,6 @@
 import { DocumentParserType } from '@/constants/knowledge';
 import { useTranslate } from '@/hooks/common-hooks';
-import { Button, Form, Input, Radio, Space } from 'antd';
+import { Form, Input, Radio } from 'antd';
 import { FormInstance } from 'antd/lib';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,8 +23,6 @@ import { QAConfiguration } from './qa';
 import { ResumeConfiguration } from './resume';
 import { TableConfiguration } from './table';
 import { TagConfiguration } from './tag';
-
-import styles from '../index.less';
 
 import Editor, { loader } from '@monaco-editor/react';
 import DOMPurify from 'dompurify';
@@ -53,7 +51,16 @@ function EmptyComponent() {
   return <div></div>;
 }
 
-export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
+export const ConfigurationForm = ({
+  form,
+  onEditorValuesChange,
+}: {
+  form: FormInstance;
+  onEditorValuesChange?: (
+    editorValue: string,
+    editorClassifierValue: string,
+  ) => void;
+}) => {
   const { submitKnowledgeConfiguration, submitLoading, navigateToDataset } =
     useSubmitKnowledgeConfiguration(form);
   const { t } = useTranslate('knowledgeConfiguration');
@@ -115,6 +122,11 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
       ]);
     }
   }, [form]);
+
+  // Notify parent component when editor values change
+  useEffect(() => {
+    onEditorValuesChange?.(editorValue, editorClassifierValue);
+  }, [editorValue, editorClassifierValue, onEditorValuesChange]);
 
   const validateJson = (_: any, value: string) => {
     try {
@@ -196,29 +208,6 @@ export const ConfigurationForm = ({ form }: { form: FormInstance }) => {
           value={editorClassifierValue}
           onChange={(value) => setEditorClassifierValue(value || '{}')}
         />
-      </Form.Item>
-
-      <Form.Item>
-        <div className={styles.buttonWrapper}>
-          <Space>
-            <Button size={'middle'} onClick={navigateToDataset}>
-              {t('cancel')}
-            </Button>
-            <Button
-              type="primary"
-              size={'middle'}
-              loading={submitLoading}
-              onClick={() => {
-                submitKnowledgeConfiguration(
-                  editorValue,
-                  editorClassifierValue,
-                );
-              }}
-            >
-              {t('save')}
-            </Button>
-          </Space>
-        </div>
       </Form.Item>
     </Form>
   );

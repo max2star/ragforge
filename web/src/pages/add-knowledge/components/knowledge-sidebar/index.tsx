@@ -9,26 +9,24 @@ import {
   useGetKnowledgeSearchParams,
   useSecondPathName,
 } from '@/hooks/route-hook';
-import { getWidth } from '@/utils';
 import { BookOutlined } from '@ant-design/icons';
-import { Menu, MenuProps, Space } from 'antd';
-import classNames from 'classnames';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Layout, Menu, MenuProps, Space, Typography } from 'antd';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'umi';
 import { KnowledgeRouteKey } from '../../constant';
 
 import { isEmpty } from 'lodash';
 import { GitGraph } from 'lucide-react';
-import styles from './index.less';
+
+const { Sider } = Layout;
+const { Text } = Typography;
 
 const KnowledgeSidebar = () => {
   let navigate = useNavigate();
   const activeKey = useSecondPathName();
   const { knowledgeId } = useGetKnowledgeSearchParams();
 
-  const [windowWidth, setWindowWidth] = useState(getWidth());
-  const [collapsed, setCollapsed] = useState(false);
   const { t } = useTranslation();
   const { data: knowledgeDetails } = useFetchKnowledgeBaseConfiguration();
 
@@ -64,7 +62,7 @@ const KnowledgeSidebar = () => {
   const items: MenuItem[] = useMemo(() => {
     const list = [
       getItem(
-        KnowledgeRouteKey.Dataset, // TODO: Change icon color when selected
+        KnowledgeRouteKey.Dataset,
         KnowledgeRouteKey.Dataset,
         <DatasetIcon width={16} height={16} />,
       ),
@@ -93,54 +91,34 @@ const KnowledgeSidebar = () => {
     return list;
   }, [data, getItem]);
 
-  useEffect(() => {
-    if (windowWidth.width > 957) {
-      setCollapsed(false);
-    } else {
-      setCollapsed(true);
-    }
-  }, [windowWidth.width]);
-
-  useEffect(() => {
-    const widthSize = () => {
-      const width = getWidth();
-
-      setWindowWidth(width);
-    };
-    window.addEventListener('resize', widthSize);
-    return () => {
-      window.removeEventListener('resize', widthSize);
-    };
-  }, []);
-
   return (
-    <div className={styles.sidebarWrapper}>
-      <div className={styles.sidebarTop}>
-        <Space size={8} direction="vertical">
-          <div className={styles.knowledgeTitle}>
-            <BookOutlined style={{ marginRight: 8 }} />
-            {knowledgeDetails.name}
+    <Sider width={200} style={{ background: '#fff' }}>
+      <div style={{ padding: '24px 16px 16px 16px' }}>
+        <Space size={8} direction="vertical" style={{ width: '100%' }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}
+          >
+            <BookOutlined style={{ marginRight: 8, fontSize: 16 }} />
+            <Text strong style={{ fontSize: 14, lineHeight: '22px' }}>
+              {knowledgeDetails.name}
+            </Text>
           </div>
         </Space>
-        <p className={styles.knowledgeDescription}>
+        <Text type="secondary" style={{ fontSize: 12, lineHeight: '16px' }}>
           {knowledgeDetails.description}
-        </p>
+        </Text>
       </div>
-      <div className={styles.divider}></div>
-      <div className={styles.menuWrapper}>
-        <Menu
-          selectedKeys={[activeKey]}
-          // mode="inline"
-          className={classNames(styles.menu, {
-            [styles.defaultWidth]: windowWidth.width > 957,
-            [styles.minWidth]: windowWidth.width <= 957,
-          })}
-          // inlineCollapsed={collapsed}
-          items={items}
-          onSelect={handleSelect}
-        />
-      </div>
-    </div>
+      <div
+        style={{ height: 1, background: '#f0f0f0', margin: '0 16px 16px 16px' }}
+      ></div>
+      <Menu
+        mode="inline"
+        selectedKeys={[activeKey]}
+        items={items}
+        onSelect={handleSelect}
+        style={{ height: 'calc(100% - 120px)', borderRight: 0 }}
+      />
+    </Sider>
   );
 };
 
