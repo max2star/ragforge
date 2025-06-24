@@ -63,15 +63,7 @@ const FlowCard = ({ item }: IProps) => {
                 {item.name}
               </span>
             </div>
-            <OperateDropdown
-              deleteItem={removeFlow}
-              items={[
-                {
-                  key: '1',
-                  label: 'run',
-                },
-              ]}
-            >
+            <OperateDropdown deleteItem={removeFlow} items={[]}>
               <EllipsisOutlined className={styles.ellipsis} />
             </OperateDropdown>
           </div>
