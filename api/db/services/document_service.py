@@ -443,6 +443,7 @@ class DocumentService(CommonService):
                     continue
                 if k == "pages":
                     new[k] = old[k]
+                    continue
                 if isinstance(v, dict):
                     logging.info(f"Updating {k} from {old[k]} -> {new[k]}")
                     logging.info(f"type {k} from {type(old[k])} -> {type(new[k])}")
