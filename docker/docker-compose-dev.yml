@@ -1,0 +1,171 @@
+services:
+  # 单机模式 Elasticsearch
+  elasticsearch:
+    container_name: ragflow-es-dev
+    image: elasticsearch:${STACK_VERSION:-8.11.0}
+    hostname: elasticsearch
+    privileged: true
+    volumes:
+      - esdata_dev:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT:-9200}:9200
+    env_file: .env
+    environment:
+      - node.name=es-dev
+      - cluster.name=docker-cluster
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - discovery.type=single-node
+      - network.host=0.0.0.0
+      - bootstrap.memory_lock=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - indices.query.bool.max_clause_count=10240
+      - search.max_buckets=50000000
+      - xpack.security.enabled=false
+      - cluster.routing.allocation.disk.watermark.low=5gb
+      - cluster.routing.allocation.disk.watermark.high=3gb
+      - cluster.routing.allocation.disk.watermark.flood_stage=2gb
+      - TZ=${TIMEZONE:-Asia/Shanghai}
+    mem_limit: ${MEM_LIMIT:-1g}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      - ragflow
+    restart: on-failure
+
+  # MySQL 数据库
+  mysql-ragflow:
+    image: mysql:8.0.39
+    container_name: ragflow-mysql-dev
+    env_file: .env
+    privileged: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-ragflow123}
+      - TZ=${TIMEZONE:-Asia/Shanghai}
+    command:
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --tls_version="TLSv1.2,TLSv1.3"
+      --init-file /data/application/init.sql
+      --binlog_expire_logs_seconds=604800
+    ports:
+      - ${MYSQL_PORT:-3306}:3306
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+      - ./init.sql:/data/application/init.sql
+    networks:
+      - ragflow
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${MYSQL_PASSWORD:-ragflow123}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    restart: on-failure
+
+  # MinIO 对象存储
+  minio-ragflow:
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+    container_name: ragflow-minio-dev
+    command: server --console-address ":9001" /data
+    privileged: true
+    ports:
+      - ${MINIO_PORT:-9000}:9000
+      - ${MINIO_CONSOLE_PORT:-9001}:9001
+    env_file: .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD:-minioadmin}
+      - TZ=${TIMEZONE:-Asia/Shanghai}
+    volumes:
+      - minio_data_dev:/data
+    networks:
+      - ragflow
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9001 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  # Redis 缓存
+  redis-ragflow:
+    image: valkey/valkey:8
+    privileged: true
+    container_name: ragflow-redis-dev
+    command: redis-server --requirepass ${REDIS_PASSWORD:-ragflow123} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    env_file: .env
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    volumes:
+      - redis_data_dev:/data
+    networks:
+      - ragflow
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
+    healthcheck:
+      test: ["CMD", "redis-cli" ,"ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    restart: on-failure
+
+  # Infinity 向量数据库 (ARM64 兼容版本)
+  infinity:
+    container_name: ragflow-infinity-dev
+    image: infiniflow/infinity:v0.6.0-dev3
+    platform: linux/amd64  # 强制使用 AMD64 平台，通过 Rosetta 2 运行
+    privileged: true
+    volumes:
+      - infinity_data_dev:/var/infinity
+      - ./infinity_conf.toml:/infinity_conf.toml
+    command: ["-f", "/infinity_conf.toml"]
+    ports:
+      - ${INFINITY_THRIFT_PORT:-23817}:23817
+      - ${INFINITY_HTTP_PORT:-23820}:23820
+      - ${INFINITY_PSQL_PORT:-5432}:5432
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE:-Asia/Shanghai}
+    mem_limit: ${MEM_LIMIT:-1g}
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
+    networks:
+      - ragflow
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:23820/admin/node/current"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: on-failure
+
+volumes:
+  esdata_dev:
+    driver: local
+  mysql_data_dev:
+    driver: local
+  minio_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+  infinity_data_dev:
+    driver: local
+
+networks:
+  ragflow:
+    driver: bridge
+    ipam:
+       config:
+       - subnet: 172.20.0.0/16 
