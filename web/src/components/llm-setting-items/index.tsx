@@ -61,11 +61,13 @@ const LlmSettingItems = ({ prefix, formItemLayout = {} }: IProps) => {
         />
       </Form.Item>
       <div className="border rounded-md">
-        <div className="flex justify-between bg-slate-100 p-2 mb-2">
-          <div className="space-x-1 items-center">
-            <span className="text-lg font-semibold">{t('freedom')}</span>
+        <div className="flex justify-between bg-slate-100 p-4 mb-4">
+          <div className="space-x-2 items-center flex">
+            <span className="text-base font-semibold text-gray-800">
+              {t('freedom')}
+            </span>
             <Tooltip title={t('freedomTip')}>
-              <QuestionCircleOutlined></QuestionCircleOutlined>
+              <QuestionCircleOutlined className="text-gray-500" />
             </Tooltip>
           </div>
           <div className="w-1/4 min-w-32">
@@ -86,7 +88,7 @@ const LlmSettingItems = ({ prefix, formItemLayout = {} }: IProps) => {
           </div>
         </div>
 
-        <div className="pr-2">
+        <div className={`px-6 pb-4 ${styles.freedomSection}`}>
           <Form.Item
             label={t('temperature')}
             tooltip={t('temperatureTip')}
