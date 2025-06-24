@@ -870,14 +870,19 @@ async def do_handle_task(task):
         progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
-    for key,value in dict_result_add.items():
-        if key in key_now and dict_result.get(key,None):
-            logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
-            dict_result[key] = value
-        else:
-            dict_result[key] = value
-    logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
-
+    # is_merge = True
+    is_merge = False
+    if is_merge:
+        for key,value in dict_result_add.items():
+            if key in key_now and dict_result.get(key,None):
+                logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+                dict_result[key] = value
+            else:
+                dict_result[key] = value
+        logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
+    else:
+        # 不合并只取新抽取的内容
+        dict_result = dict_result_add
     # 分类标签
     classification_result = await run_classify(task, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
 
@@ -908,7 +913,7 @@ async def do_handle_task(task):
             c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 c_[key] = value
-        elif page_c_[0] < sub_paper["main_content_begin"] and pdf_article_type == "论文集":
+        elif page_c_[0] < sub_paper["main_content_begin"]:
             # 将论文集元数据存入目录前的块
             c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
