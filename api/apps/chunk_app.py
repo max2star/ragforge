@@ -90,8 +90,9 @@ def list_chunk():
             res["chunks"].append(d)
         return get_json_result(data=res)
     except Exception as e:
-        if str(e).find("not_found") > 0:
-            return get_json_result(data=False, message='No chunk found!',
+        if str(e).find("not_found") > 0 or str(e).find("index_not_found_exception") > 0:
+            return get_json_result(data={"total": 0, "chunks": [], "doc": doc.to_dict() if 'doc' in locals() else {}}, 
+                                   message='No chunk found!',
                                    code=settings.RetCode.DATA_ERROR)
         return server_error_response(e)
 

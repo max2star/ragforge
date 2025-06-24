@@ -14,7 +14,9 @@
 #  limitations under the License.
 #
 import os
-os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
+# Only set SSL_CERT_FILE if the certificate file exists (for production environment)
+if os.path.exists('/etc/nginx/public.crt'):
+    os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
 import logging
 import time
 from minio import Minio
@@ -48,10 +50,16 @@ class RAGFlowMinio:
 
         try:
             logging.info("cluster {},backup clutser {}".format(settings.MINIO,settings.MINIO_BACKUP))
+            
+            # Use HTTP for localhost/development environment, HTTPS for production
+            is_localhost = settings.MINIO["host"].startswith("localhost") or settings.MINIO["host"].startswith("127.0.0.1")
+            secure_connection = not is_localhost
+            self.secure = secure_connection  # Update the instance variable
+            
             self.conn = Minio(settings.MINIO["host"],
                               access_key=settings.MINIO["user"],
                               secret_key=settings.MINIO["password"],
-                              secure=True
+                              secure=secure_connection
                               )
             self.bucket_encryption = settings.MINIO.get("bucket_encryption", True)
             if type(settings.MINIO['bucket_encryption']) == str:
@@ -60,10 +68,12 @@ class RAGFlowMinio:
             logging.info(f"self.bucket_encryption {self.bucket_encryption} type {type(self.bucket_encryption)}")
             if settings.MINIO_BACKUP.get("host",None):
                 logging.info(f"enable minio backup cluster")
+                backup_is_localhost = settings.MINIO_BACKUP["host"].startswith("localhost") or settings.MINIO_BACKUP["host"].startswith("127.0.0.1")
+                backup_secure = not backup_is_localhost
                 self.remote_conn =  Minio(settings.MINIO_BACKUP["host"],
                                   access_key=settings.MINIO_BACKUP["user"],
                                   secret_key=settings.MINIO_BACKUP["password"],
-                                  secure=True
+                                  secure=backup_secure
                                   )
                 self.remote_flag = True
                 self.config_alias(src_cluster_alias=None,dest_cluster_alias=None)
