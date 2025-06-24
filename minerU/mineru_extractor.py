@@ -31,17 +31,17 @@ def format_time(time_field_value):
     time_field_value_format = "1970-01-01T00:00:00Z"
 
     formats = [
+        "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S.%f",
         "%Y-%m-%d %H:%M",
+        "%m/%d/%Y %H:%M",
+        "%Y年%m月%d日",
         "%Y-%m",
         "%Y.%m",
-        "%Y-%m-%d %H:%M:%S.%f",
-        "%Y年%m月%d日",
         "%Y年%m月",
-        "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%d",
         "%Y.%m.%d",
-        "%m/%d/%Y %H:%M",
         "%m/%Y",
     ]
     for format_string in formats:
