@@ -1,39 +1,44 @@
 ragflow:
   host: 0.0.0.0
   http_port: 9380
+
 mysql:
   name: 'rag_flow'
   user: 'root'
-  password: 'infini_rag_flow'
+  password: 'ragflow123'
   host: 'localhost'
-  port: 5455
+  port: 3306
   max_connections: 100
   stale_timeout: 30
+
 # 添加达梦数据库配置
-dm:
-  name: 'rag_flow'
-  user: 'SYSDBA'
-  password: 'Sysdba@123'
-  host: '118.193.126.254'
-  port: 5236
-  max_connections: 100
-  stale_timeout: 300
+# dm:
+#   name: 'rag_flow'
+#   user: 'SYSDBA'
+#   password: 'Sysdba@123'
+#   host: '118.193.126.254'
+#   port: 5236
+#   max_connections: 100
+#   stale_timeout: 300
+
 minio:
-  user: 'rag_flow'
-  password: 'infini_rag_flow'
+  user: 'minioadmin'
+  password: 'minioadmin'
   host: 'localhost:9000'
   bucket_encryption: false
+
 es:
-  hosts: 'https://localhost:1200'
+  hosts: 'http://localhost:9200'
   username: 'elastic'
-  password: 'EPPso10r8Ja'
-  ca_path: '/ragflow/ca.crt'
+  password: 'changeme'
+
 infinity:
   uri: 'localhost:23817'
   db_name: 'default_db'
+
 redis:
   db: 1
-  password: 'infini_rag_flow'
+  password: 'ragflow123'
   host: 'localhost:6379'
 
 user_default_llm:
@@ -56,13 +61,14 @@ user_default_llm:
     image2text_model: 'http://118.193.126.254:3525/v1'
 
 minio_backup:
-  user: '${MINIO_USER_:-rag_flow}'
-  password: '${MINIO_PASSWORD_BACKUP:-infini_rag_flow}'
-  host: '${MINIO_HOST_BACKUP:-minio}:9000'
+  user: 'minioadmin'
+  password: 'minioadmin'
+  host: 'localhost:9000'
+
 s3:
-  access_key: '${MINIO_USER:-rag_flow}'
-  secret_key: '${MINIO_PASSWORD:-infini_rag_flow}'
-  endpoint_url: 'https://${MINIO_HOST:-minio}:9000'
+  access_key: 'minioadmin'
+  secret_key: 'minioadmin'
+  endpoint_url: 'http://localhost:9000'
 
 # postgres:
 #   name: 'rag_flow'
@@ -118,4 +124,4 @@ s3:
 # permission:
 #   switch: false
 #   component: false
-#   dataset: false
+#   dataset: false 
