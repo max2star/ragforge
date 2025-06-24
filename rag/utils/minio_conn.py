@@ -96,15 +96,22 @@ class RAGFlowMinio:
             '--insecure'
         ]
 
-        process = subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_alias {cmd1} excuted,result {process.returncode}")
+        try:
+            process = subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_alias {cmd1} excuted,result {process.returncode}")
 
-        process = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_alias {cmd2} excuted,result {process.returncode}")
+            process = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_alias {cmd2} excuted,result {process.returncode}")
+        except FileNotFoundError:
+            logging.warning("MinIO client (mc) not found. Skipping alias configuration. This is normal for development environments.")
+        except Exception as e:
+            logging.warning(f"Failed to configure MinIO aliases: {str(e)}")
 
     def config_backup_policy(self,src_cluster_alias,source_bucket, dest_cluster_alias,dest_bucket):
         if not self.remote_flag:
@@ -124,10 +131,16 @@ class RAGFlowMinio:
             f"{src_cluster_alias}/{source_bucket}"
         ]
         logging.info(f"config_backup_policy {cmd}")
-        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_backup_policy {cmd} excuted,result {process.returncode}")
+        try:
+            process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_backup_policy {cmd} excuted,result {process.returncode}")
+        except FileNotFoundError:
+            logging.warning("MinIO client (mc) not found. Skipping backup policy configuration. This is normal for development environments.")
+        except Exception as e:
+            logging.warning(f"Failed to configure backup policy: {str(e)}")
 
     def __close__(self):
         del self.conn
