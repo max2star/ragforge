@@ -158,7 +158,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
         f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。"
         f"must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。"
         f"不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
-        f"若存在语种字段，请识别出原文的语言种类；若存在日期、时间等相关字段，请以：%Y-%m-%dT%H:%M:%SZ格式提取为值，无或无法提取默认使用：1970-01-01T00:00:00Z"
+        f"若存在语种字段，请识别出原文的语言种类；若存在日期、时间等相关字段，请以：%Y-%m-%dT%H:%M:%SZ格式提取为值，无或无法提取默认使用空双引号；"
         f"请你以最紧凑的JSON格式输出文本，可以去掉多余的空格。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
@@ -176,16 +176,15 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
             for key in [v["name"] for v in keys_to_use_list]:
                 value_now = fields_map.get(key, None)
                 if value_now:
-                    if key not in ['摘要', '正文', '前言']:
+                    current_value = r_d.get(key, None)
+                    if not current_value:
                         continue
-                    else:
-                        current_value = r_d.get(key, None)
-                        if current_value:
-                            try:
-                                fields_map[key] = value_now+ '\n' + current_value
-                            except Exception as e:
-                                logging.error(f"key {key} value_now {value_now},current_value {current_value},exception {e}")
-                                fields_map[key] = str(value_now)+ '\n' + str(current_value)
+                    if key in ['摘要', '正文', '前言']:
+                        try:
+                            fields_map[key] = value_now+ '\n' + current_value
+                        except Exception as e:
+                            logging.error(f"key {key} value_now {value_now},current_value {current_value},exception {e}")
+                            fields_map[key] = str(value_now)+ '\n' + str(current_value)
                 else:
                     current_value = r_d.get(key, None)
                     if current_value is not None:
