@@ -143,7 +143,7 @@ export default {
         '使用視覺模型進行 PDF 布局分析，以更好地識別文檔結構，找到標題、文字塊、圖像和表格的位置。若選擇 Naive 選項，則只能取得 PDF 的純文字。請注意此功能僅適用於 PDF 文檔，對其他文檔不生效。',
       taskPageSize: '任務頁面大小',
       taskPageSizeMessage: '請輸入您的任務頁面大小！',
-      taskPageSizeTip: `如果使用佈局識別，PDF 文件將被分成連續的組。佈局分析將在組之間並行執行，以提高處理速度。“任務頁面大小”決定組的大小。頁面大小越大，將頁面之間的連續文本分割成不同塊的機會就越低。`,
+      taskPageSizeTip: `如果使用佈局識別，PDF 文件將被分成連續的組。佈局分析將在組之間並行執行，以提高處理速度。"任務頁面大小"決定組的大小。頁面大小越大，將頁面之間的連續文本分割成不同塊的機會就越低。`,
       addPage: '新增頁面',
       greaterThan: '當前值必須大於起始值！',
       greaterThanPrevious: '當前值必須大於之前的值！',
@@ -212,7 +212,7 @@ export default {
       chunkTokenNumberMessage: '塊Token數是必填項',
       embeddingModelTip:
         '用於嵌入塊的嵌入模型。一旦知識庫有了塊，它就無法更改。如果你想改變它，你需要刪除所有的塊。',
-      permissionsTip: '如果權限是“團隊”，則所有團隊成員都可以操作知識庫。',
+      permissionsTip: '如果權限是"團隊"，則所有團隊成員都可以操作知識庫。',
       chunkTokenNumberTip:
         '建議的生成文本塊的 token 數閾值。如果切分得到的小文本段 token 數達不到這一閾值，系統就會不斷與之後的文本段合併，直至再合併下一個文本段會超過這一閾值為止，此時產生一個最終文本塊。如果系統在切分文本段時始終沒有遇到文本分段標識符，即便文本段 token 數已經超過這一閾值，系統也不會生成新文本塊。',
       chunkMethod: '切片方法',
@@ -247,13 +247,13 @@ export default {
         <p>此方法將簡單的方法應用於塊文件：</p>
         <p>
         <li>系統將使用視覺檢測模型將連續文本分割成多個片段。</li>
-        <li>接下來，這些連續的片段被合併成Token數不超過“Token數”的塊。</li></p>`,
+        <li>接下來，這些連續的片段被合併成Token數不超過"Token數"的塊。</li></p>`,
       paper: `<p>僅支持<b>PDF</b>文件。</p><p>
         如果我們的模型運行良好，論文將按其部分進行切片，例如<i>摘要、1.1、1.2</i>等。</p><p>
         這樣做的好處是LLM可以更好的概括論文中相關章節的內容，
         產生更全面的答案，幫助讀者更好地理解論文。
         缺點是它增加了 LLM 對話的背景並增加了計算成本，
-        所以在對話過程中，你可以考慮減少‘<b>topN</b>’的設置。</p>`,
+        所以在對話過程中，你可以考慮減少'<b>topN</b>'的設置。</p>`,
       presentation: `<p>支持的文件格式為<b>PDF</b>、<b>PPTX</b>。</p><p>
         每個頁面都將被視為一個塊。並且每個頁面的縮略圖都會被存儲。</p><p>
         <i>您上傳的所有PPT文件都會使用此方法自動分塊，無需為每個PPT文件進行設置。</i></p>`,
@@ -283,7 +283,7 @@ export default {
         您只需與<i>'ragflow'</i>交談即可列出所有符合資格的候選人。
         </p>
           `,
-      table: `支持<p><b>XLSX</b>和<b>csv/txt</b>格式文件。</p><p>以下是一些提示： <ul> <li>对于Csv或Txt文件，列之间的分隔符为 <em><b>tab</b></em>。</li> <li>第一行必须是列标题。</li> <li>列标题必须是有意义的术语，以便我们的大語言模型能够理解。列举一些同义词时最好使用斜杠<i>'/'</i>来分隔，甚至更好使用方括号枚举值，例如 <i>“性別/性別（男性，女性）”</i>.<p>以下是标题的一些示例：<ol> <li>供应商/供货商<b>'tab'</b>顏色（黃色、紅色、棕色）<b>'tab'</b>性別（男、女）<b>'tab'</B>尺码（m、l、xl、xxl）</li> <li>姓名/名字<b>'tab'</b>電話/手機/微信<b>'tab'</b>最高学历（高中，职高，硕士，本科，博士，初中，中技，中专，专科，专升本，mpa，mba，emba）</li> </ol> </p> </li> <li>表中的每一行都将被视为一个块。</li> </ul>`,
+      table: `支持<p><b>XLSX</b>和<b>csv/txt</b>格式文件。</p><p>以下是一些提示： <ul> <li>对于Csv或Txt文件，列之间的分隔符为 <em><b>tab</b></em>。</li> <li>第一行必须是列标题。</li> <li>列标题必须是有意义的术语，以便我们的大語言模型能够理解。列举一些同义词时最好使用斜杠<i>'/'</i>来分隔，甚至更好使用方括号枚举值，例如 <i>"性別/性別（男性，女性）"</i>.<p>以下是标题的一些示例：<ol> <li>供应商/供货商<b>'tab'</b>顏色（黃色、紅色、棕色）<b>'tab'</b>性別（男、女）<b>'tab'</B>尺码（m、l、xl、xxl）</li> <li>姓名/名字<b>'tab'</b>電話/手機/微信<b>'tab'</b>最高学历（高中，职高，硕士，本科，博士，初中，中技，中专，专科，专升本，mpa，mba，emba）</li> </ol> </p> </li> <li>表中的每一行都将被视为一个块。</li> </ul>`,
       picture: `
        <p>支持圖像文件。視頻即將推出。</p><p>
         如果圖片中有文字，則應用 OCR 提取文字作為其文字描述。
@@ -362,7 +362,7 @@ export default {
       useGraphRagTip:
         '基於知識庫內所有切好的文本塊構建知識圖譜，用以提升多跳和複雜問題回答的正確率。請注意：構建知識圖譜將消耗大量 token 和時間。詳見 https://ragflow.io/docs/dev/construct_knowledge_graph。',
       graphRagMethod: '方法',
-      graphRagMethodTip: `Light：實體和關係提取提示來自 GitHub - HKUDS/LightRAG：“LightRAG：簡單快速的檢索增強生成”<br>
+      graphRagMethodTip: `Light：實體和關係提取提示來自 GitHub - HKUDS/LightRAG："LightRAG：簡單快速的檢索增強生成"<br>
  一般：實體和關係擷取提示來自 GitHub - microsoft/graphrag：基於模組化圖形的檢索增強生成 (RAG) 系統，`,
       resolution: '實體歸一化',
       resolutionTip: `解析過程會將具有相同意義的實體合併在一起，使知識圖譜更簡潔、更準確。應合併以下實體：川普總統、唐納德·川普、唐納德·J·川普、唐納德·約翰·川普`,
@@ -402,7 +402,7 @@ export default {
       send: '發送',
       sendPlaceholder: '給助理髮送消息...',
       chatConfiguration: '聊天配置',
-      chatConfigurationDescription: '為你的知識庫配置專屬聊天助手！💕',
+      chatConfigurationDescription: '',
       assistantName: '助理姓名',
       assistantNameMessage: '助理姓名是必填項',
       namePlaceholder: '例如 賈維斯簡歷',
@@ -410,7 +410,7 @@ export default {
       language: '語言',
       emptyResponse: '空回复',
       emptyResponseTip: `如果在知識庫中沒有檢索到用戶的問題，它將使用它作為答案。如果您希望 LLM 在未檢索到任何內容時提出自己的意見，請將此留空。`,
-      emptyResponseMessage: `當知識庫中沒有檢索到任何相關內容時，將觸發空響應。由於未選擇任何知識庫，因此刪除“空響應”。`,
+      emptyResponseMessage: `當知識庫中沒有檢索到任何相關內容時，將觸發空響應。由於未選擇任何知識庫，因此刪除"空響應"。`,
       setAnOpener: '設置開場白',
       setAnOpenerInitial: `你好！我是你的助理，有什麼可以幫到你的嗎？`,
       setAnOpenerTip: '您想如何歡迎您的客戶？',
@@ -418,7 +418,7 @@ export default {
       knowledgeBasesMessage: '請選擇',
       knowledgeBasesTip: '選擇關聯的知識庫。',
       system: '系統提示词',
-      systemInitialValue: `你是一個智能助手，請總結知識庫的內容來回答問題，請列舉知識庫中的數據詳細回答。當所有知識庫內容都與問題無關時，你的回答必須包括“知識庫中未找到您要的答案！”這句話。回答需要考慮聊天歷史。
+      systemInitialValue: `你是一個智能助手，請總結知識庫的內容來回答問題，請列舉知識庫中的數據詳細回答。當所有知識庫內容都與問題無關時，你的回答必須包括"知識庫中未找到您要的答案！"這句話。回答需要考慮聊天歷史。
       以下是知識庫：
       {knowledge}
       以上是知識庫。`,
@@ -426,7 +426,7 @@ export default {
       systemTip:
         '當LLM回答問題時，你需要LLM遵循的說明，比如角色設計、答案長度和答案語言等。',
       topN: 'Top N',
-      topNTip: `並非所有相似度得分高於“相似度閾值”的塊都會被提供給法學碩士。LLM 只能看到這些“Top N”塊。`,
+      topNTip: `並非所有相似度得分高於"相似度閾值"的塊都會被提供給法學碩士。LLM 只能看到這些"Top N"塊。`,
       variable: '變量',
       variableTip: `你可以透過對話 API，並配合變數設定來動態調整大模型的系統提示詞。
       {knowledge}為系統預留變數，代表從指定知識庫召回的文本塊。
@@ -442,7 +442,7 @@ export default {
       improvise: '即興創作',
       precise: '精確',
       balance: '平衡',
-      freedomTip: `“精確”意味著法學碩士會保守並謹慎地回答你的問題。“即興發揮”意味著你希望法學碩士能夠自由地暢所欲言。“平衡”是謹慎與自由之間的平衡。`,
+      freedomTip: `"精確"意味著法學碩士會保守並謹慎地回答你的問題。"即興發揮"意味著你希望法學碩士能夠自由地暢所欲言。"平衡"是謹慎與自由之間的平衡。`,
       temperature: '溫度',
       temperatureMessage: '溫度是必填項',
       temperatureTip:
@@ -450,7 +450,7 @@ export default {
       topP: '頂級P',
       topPMessage: 'Top P 是必填項',
       topPTip:
-        '該參數也稱為“核心採樣”，它設置一個閾值來選擇較小的單詞集進行採樣。它專注於最可能的單詞，剔除不太可能的單詞。',
+        '該參數也稱為"核心採樣"，它設置一個閾值來選擇較小的單詞集進行採樣。它專注於最可能的單詞，剔除不太可能的單詞。',
       presencePenalty: '存在處罰',
       presencePenaltyMessage: '存在處罰是必填項',
       presencePenaltyTip:
@@ -1152,7 +1152,7 @@ export default {
         '系統提示為大型模型提供任務描述、規定回覆方式，以及設定其他各種要求。系統提示通常與 key（變數）合用，透過變數設定大型模型的輸入資料。你可以透過斜線或 (x) 按鈕顯示可用的 key。',
     },
     footer: {
-      profile: '“保留所有權利 @ react”',
+      profile: '"保留所有權利 @ react"',
     },
     layout: {
       file: '文件',
