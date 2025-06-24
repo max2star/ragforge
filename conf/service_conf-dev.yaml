@@ -1,0 +1,127 @@
+ragflow:
+  host: 0.0.0.0
+  http_port: 9380
+
+mysql:
+  name: 'rag_flow'
+  user: 'root'
+  password: 'ragflow123'
+  host: 'localhost'
+  port: 3306
+  max_connections: 100
+  stale_timeout: 30
+
+# 添加达梦数据库配置
+# dm:
+#   name: 'rag_flow'
+#   user: 'SYSDBA'
+#   password: 'Sysdba@123'
+#   host: '118.193.126.254'
+#   port: 5236
+#   max_connections: 100
+#   stale_timeout: 300
+
+minio:
+  user: 'minioadmin'
+  password: 'minioadmin'
+  host: 'localhost:9000'
+  bucket_encryption: false
+
+es:
+  hosts: 'http://localhost:9200'
+  username: 'elastic'
+  password: 'changeme'
+
+infinity:
+  uri: 'localhost:23817'
+  db_name: 'default_db'
+
+redis:
+  db: 1
+  password: 'ragflow123'
+  host: 'localhost:6379'
+
+user_default_llm:
+  factory: 'OpenAI-API-Compatible'
+  api_key: 'gpustack_9ee4961bc8fbe141_317180d1e53cb4eee68633d301adfd15'
+  #同样是GPUStack，使用OpenAI-API-Compatible时要带着v1，直接使用GPUStack不需要带v1
+  base_url: 'http://101.52.216.178:890/v1'
+  #base_url: 'http://101.52.216.178:890'
+  default_models:
+    chat_model: 'qwen_large' #'deepseek-r1-70B-Q8'
+    embedding_model: 'embed'
+    rerank_model: 'rerank'
+    asr_model: ''
+    image2text_model: 'qwen2.5-vl-32b-instruct'
+  default_models_config:
+    chat_model: 'http://118.193.126.254:1025/v1'
+    embedding_model: 'http://118.193.126.254:8080/'
+    rerank_model: 'http://118.193.126.254:1111/rerank'
+    asr_model: 'http://118.193.126.254:1111/v1'
+    image2text_model: 'http://118.193.126.254:3525/v1'
+
+minio_backup:
+  user: 'minioadmin'
+  password: 'minioadmin'
+  host: 'localhost:9000'
+
+s3:
+  access_key: 'minioadmin'
+  secret_key: 'minioadmin'
+  endpoint_url: 'http://localhost:9000'
+
+# postgres:
+#   name: 'rag_flow'
+#   user: 'rag_flow'
+#   password: 'infini_rag_flow'
+#   host: 'postgres'
+#   port: 5432
+#   max_connections: 100
+#   stale_timeout: 30
+# s3:
+#   access_key: 'access_key'
+#   secret_key: 'secret_key'
+#   region: 'region'
+# oss:
+#   access_key: 'access_key'
+#   secret_key: 'secret_key'
+#   endpoint_url: 'http://oss-cn-hangzhou.aliyuncs.com'
+#   region: 'cn-hangzhou'
+#   bucket: 'bucket_name'
+# azure:
+#   auth_type: 'sas'
+#   container_url: 'container_url'
+#   sas_token: 'sas_token'
+# azure:
+#   auth_type: 'spn'
+#   account_url: 'account_url'
+#   client_id: 'client_id'
+#   secret: 'secret'
+#   tenant_id: 'tenant_id'
+#   container_name: 'container_name'
+# user_default_llm:
+#   factory: 'Tongyi-Qianwen'
+#   api_key: 'sk-xxxxxxxxxxxxx'
+#   base_url: ''
+# oauth:
+#   github:
+#     client_id: xxxxxxxxxxxxxxxxxxxxxxxxx
+#     secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#     url: https://github.com/login/oauth/access_token
+#   feishu:
+#     app_id: cli_xxxxxxxxxxxxxxxxxxx
+#     app_secret: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#     app_access_token_url: https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal
+#     user_access_token_url: https://open.feishu.cn/open-apis/authen/v1/oidc/access_token
+#     grant_type: 'authorization_code'
+# authentication:
+#   client:
+#     switch: false
+#     http_app_key:
+#     http_secret_key:
+#   site:
+#     switch: false
+# permission:
+#   switch: false
+#   component: false
+#   dataset: false 
