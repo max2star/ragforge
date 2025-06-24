@@ -62,24 +62,26 @@ curl -H "Accept: application/json" -H "Content-type: application/json"  -X POST 
 }' http://118.193.126.254:1025/v1/chat/completions
 
 echo "\n"
-echo "32B测试脚本"
-curl -H "Accept: application/json" -H "Content-type: application/json"  -X POST -d '{
-    "model": "DeepSeek-R1-Distill-Qwen-32B",
-    "messages": [
-        {"role": /"system", "content": "你是一个导游"},
-        {"role": "user", "content": "你好，我最近想去四川旅游，有什么地方推荐吗"}
-    ],
-    "stream": false,
-    "max_tokens": 1024,
-    "presence_penalty": 1.03,
-    "frequency_penalty": 1.0,
-    "repetition_penalty": 1.0,
-    "temperature": 0.5,
-    "top_p": 0.95,10
-    "top_k": 10,
-    "seed": null,
-    "stop": ["stop1", "stop2"],
-    "include_stop_str_in_output": false,
-    "skip_special_tokens": true,min
-    "ignore_eos": false
-}' http://118.193.126.254:1025/v1/chat/completions
+#本环境不使用 32B Deepseek
+#echo "32B测试脚本"
+#curl -H "Accept: application/json" -H "Content-type: application/json"  -X POST -d '{
+#    "model": "DeepSeek-R1-Distill-Qwen-32B",
+#    "messages": [
+#        {"role": /"system", "content": "你是一个导游"},
+#        {"role": "user", "content": "你好，我最近想去四川旅游，有什么地方推荐吗"}
+#    ],
+#    "stream": false,
+#    "max_tokens": 1024,
+#    "presence_penalty": 1.03,
+#    "frequency_penalty": 1.0,
+#    "repetition_penalty": 1.0,
+#    "temperature": 0.5,
+#    "top_p": 0.95,10
+#    "top_k": 10,
+#    "seed": null,
+#    "stop": ["stop1", "stop2"],
+#    "include_stop_str_in_output": false,
+#    "skip_special_tokens": true,min
+#    "ignore_eos": false
+#}' http://118.193.126.254:1025/v1/chat/completions
+#echo "\n"
