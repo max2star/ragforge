@@ -370,7 +370,7 @@ const UserSettingModel = () => {
       <Spin spinning={loading}>
         <section className={styles.modelContainer}>
           <SettingTitle
-            title={t('model')}
+            title={t('modelProviders')}
             description={`${t(
               'modelDescription',
             )} （先"添加模型" -> 再"设置默认模型"）`}
