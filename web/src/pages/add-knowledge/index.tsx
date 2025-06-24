@@ -4,14 +4,15 @@ import {
   useSecondPathName,
   useThirdPathName,
 } from '@/hooks/route-hook';
-import { Breadcrumb } from 'antd';
+import { Breadcrumb, Layout } from 'antd';
 import { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet } from 'umi';
 import Siderbar from './components/knowledge-sidebar';
 import { KnowledgeDatasetRouteKey, KnowledgeRouteKey } from './constant';
-import styles from './index.less';
+
+const { Content } = Layout;
 
 const KnowledgeAdding = () => {
   const knowledgeBaseId = useKnowledgeBaseId();
@@ -57,17 +58,15 @@ const KnowledgeAdding = () => {
   }, [activeKey, datasetActiveKey, gotoList, knowledgeBaseId, t]);
 
   return (
-    <>
-      <div className={styles.container}>
-        <Siderbar></Siderbar>
-        <div className={styles.contentWrapper}>
-          <Breadcrumb items={breadcrumbItems} />
-          <div className={styles.content}>
-            <Outlet></Outlet>
-          </div>
+    <Layout style={{ width: '100%', background: '#f0f2f5' }}>
+      <Siderbar />
+      <Content style={{ padding: '24px', minHeight: 280 }}>
+        <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
+        <div style={{ background: '#fff', padding: 24, borderRadius: 6 }}>
+          <Outlet />
         </div>
-      </div>
-    </>
+      </Content>
+    </Layout>
   );
 };
 
