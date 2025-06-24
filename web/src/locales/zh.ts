@@ -423,7 +423,7 @@ General：实体和关系提取提示来自 GitHub - microsoft/graphrag：基于
       send: '发送',
       sendPlaceholder: '给助理发送消息...',
       chatConfiguration: '聊天配置',
-      chatConfigurationDescription: '为你的知识库配置专属聊天助手！ 💕',
+      chatConfigurationDescription: '',
       assistantName: '助理姓名',
       assistantNameMessage: '助理姓名是必填项',
       namePlaceholder: '例如 贾维斯简历',

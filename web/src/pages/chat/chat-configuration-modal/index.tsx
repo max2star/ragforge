@@ -1,4 +1,3 @@
-import { ReactComponent as ChatConfigurationAtom } from '@/assets/svg/chat-configuration-atom.svg';
 import { IModalManagerChildrenProps } from '@/components/modal-manager';
 import {
   ModelVariableType,
@@ -9,7 +8,7 @@ import { useFetchModelId } from '@/hooks/logic-hooks';
 import { IDialog } from '@/interfaces/database/chat';
 import { getBase64FromUploadFileList } from '@/utils/file-util';
 import { removeUselessFieldsFromValues } from '@/utils/form';
-import { Divider, Flex, Form, Modal, Segmented, UploadFile } from 'antd';
+import { Drawer, Flex, Form, Segmented, UploadFile } from 'antd';
 import { SegmentedValue } from 'antd/es/segmented';
 import camelCase from 'lodash/camelCase';
 import { useEffect, useRef, useState } from 'react';
@@ -21,8 +20,8 @@ import PromptEngine from './prompt-engine';
 import styles from './index.less';
 
 const layout = {
-  labelCol: { span: 9 },
-  wrapperCol: { span: 15 },
+  labelCol: { span: 24 },
+  wrapperCol: { span: 24 },
 };
 
 const validateMessages = {
@@ -110,14 +109,18 @@ const ChatConfigurationModal = ({
   };
 
   const title = (
-    <Flex gap={16}>
-      <ChatConfigurationAtom></ChatConfigurationAtom>
-      <div>
-        <b>{t('chatConfiguration')}</b>
-        <div className={styles.chatConfigurationDescription}>
-          {t('chatConfigurationDescription')}
-        </div>
-      </div>
+    <Flex align="center" gap={10} style={{ height: 40 }}>
+      <span
+        style={{
+          fontSize: 18,
+          fontWeight: 600,
+          lineHeight: 1,
+          color: '#222',
+          display: 'block',
+        }}
+      >
+        {t('chatConfiguration')}
+      </span>
     </Flex>
   );
 
@@ -143,51 +146,110 @@ const ChatConfigurationModal = ({
   }, [initialDialog, form, visible, modelId]);
 
   return (
-    <Modal
+    <Drawer
       title={title}
       width={688}
       open={visible}
-      onOk={handleOk}
-      onCancel={hideModal}
-      confirmLoading={loading}
+      onClose={hideModal}
+      placement="right"
       destroyOnClose
-      afterClose={handleModalAfterClose}
+      afterOpenChange={(open) => {
+        if (!open) {
+          handleModalAfterClose();
+        }
+      }}
+      styles={{
+        body: {
+          padding: 0,
+          overflowY: 'hidden',
+        },
+      }}
+      className={styles.flatModal}
+      footer={
+        <Flex justify="end" gap={8}>
+          <button
+            onClick={hideModal}
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #d9d9d9',
+              borderRadius: '6px',
+              background: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+            }}
+          >
+            取消
+          </button>
+          <button
+            onClick={handleOk}
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              background: '#1677ff',
+              color: '#fff',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              opacity: loading ? 0.6 : 1,
+            }}
+          >
+            {loading ? '保存中...' : '保存'}
+          </button>
+        </Flex>
+      }
     >
-      <Segmented
-        size={'large'}
-        value={value}
-        onChange={handleSegmentedChange}
-        options={Object.values(ConfigurationSegmented).map((x) => ({
-          label: t(camelCase(x)),
-          value: x,
-        }))}
-        block
-      />
-      <Divider></Divider>
-      <Form
-        {...layout}
-        name="nest-messages"
-        form={form}
-        style={{ maxWidth: 600 }}
-        validateMessages={validateMessages}
-        colon={false}
+      <div
+        style={{
+          height: 'calc(100vh - 200px)',
+          overflowY: 'auto',
+          padding: '24px',
+        }}
       >
-        {Object.entries(segmentedMap).map(([key, Element]) => (
-          <Element
-            key={key}
-            show={key === value}
-            form={form}
-            setHasError={setHasError}
-            {...(key === ConfigurationSegmented.ModelSetting
-              ? { initialLlmSetting: initialDialog.llm_setting, visible }
-              : {})}
-            {...(key === ConfigurationSegmented.PromptEngine
-              ? { ref: promptEngineRef }
-              : {})}
-          ></Element>
-        ))}
-      </Form>
-    </Modal>
+        <div style={{ marginBottom: 24 }}>
+          <Segmented
+            size={'middle'}
+            value={value}
+            onChange={handleSegmentedChange}
+            options={Object.values(ConfigurationSegmented).map((x) => ({
+              label: t(camelCase(x)),
+              value: x,
+            }))}
+            block
+            style={{
+              borderRadius: 8,
+              backgroundColor: '#f5f5f5',
+            }}
+          />
+        </div>
+        <Form
+          {...layout}
+          name="nest-messages"
+          form={form}
+          style={{ maxWidth: '100%' }}
+          validateMessages={validateMessages}
+          colon={false}
+          layout="vertical"
+        >
+          {(() => {
+            const Element = segmentedMap[value];
+            return (
+              <Element
+                show={true}
+                form={form}
+                setHasError={setHasError}
+                {...(value === ConfigurationSegmented.ModelSetting
+                  ? { initialLlmSetting: initialDialog.llm_setting, visible }
+                  : {})}
+                {...(value === ConfigurationSegmented.PromptEngine
+                  ? { ref: promptEngineRef }
+                  : {})}
+              />
+            );
+          })()}
+        </Form>
+      </div>
+    </Drawer>
   );
 };
 

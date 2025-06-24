@@ -2,11 +2,9 @@ import SimilaritySlider from '@/components/similarity-slider';
 import { DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import {
   Button,
-  Col,
   Divider,
   Form,
   Input,
-  Row,
   Switch,
   Table,
   TableProps,
@@ -88,21 +86,18 @@ const PromptEngine = (
     setDataSource(newData);
   };
 
-  useImperativeHandle(
-    ref,
-    () => {
-      return dataSource
-        .filter((x) => x.variable.trim() !== '')
-        .map((x) => ({ key: x.variable, optional: x.optional }));
-    },
-    [dataSource],
-  );
+  useImperativeHandle(ref, () => {
+    return dataSource
+      .filter((x) => x.variable.trim() !== '')
+      .map((x) => ({ key: x.variable, optional: x.optional }));
+  }, [dataSource]);
 
   const columns: TableProps<DataType>['columns'] = [
     {
       title: t('key'),
       dataIndex: 'variable',
       key: 'variable',
+      width: 120,
       onCell: (record: DataType) => ({
         record,
         editable: true,
@@ -115,7 +110,7 @@ const PromptEngine = (
       title: t('optional'),
       dataIndex: 'optional',
       key: 'optional',
-      width: 40,
+      width: 80,
       align: 'center',
       render(text, record) {
         return (
@@ -130,7 +125,7 @@ const PromptEngine = (
     {
       title: t('operation'),
       dataIndex: 'operation',
-      width: 30,
+      width: 80,
       key: 'operation',
       align: 'center',
       render(_, record) {
@@ -182,35 +177,42 @@ const PromptEngine = (
       </Form.Item>
       <Rerank></Rerank>
       <section className={classNames(styles.variableContainer)}>
-        <Row align={'middle'} justify="end">
-          <Col span={9} className={styles.variableAlign}>
-            <label className={styles.variableLabel}>
-              {t('variable')}
-              <Tooltip title={t('variableTip')}>
-                <QuestionCircleOutlined className={styles.variableIcon} />
-              </Tooltip>
-            </label>
-          </Col>
-          <Col span={15} className={styles.variableAlign}>
-            <Button size="small" onClick={handleAdd}>
-              {t('add')}
-            </Button>
-          </Col>
-        </Row>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 600,
+              fontSize: 15,
+              textAlign: 'left',
+              paddingLeft: 0,
+            }}
+          >
+            {t('variable')}
+            <Tooltip title={t('variableTip')}>
+              <QuestionCircleOutlined className={styles.variableIcon} />
+            </Tooltip>
+          </div>
+          <Button size="small" onClick={handleAdd}>
+            {t('add')}
+          </Button>
+        </div>
         {dataSource.length > 0 && (
-          <Row>
-            <Col span={7}> </Col>
-            <Col span={17}>
-              <Table
-                dataSource={dataSource}
-                columns={columns}
-                rowKey={'key'}
-                className={styles.variableTable}
-                components={components}
-                rowClassName={() => styles.editableRow}
-              />
-            </Col>
-          </Row>
+          <Table
+            dataSource={dataSource}
+            columns={columns}
+            rowKey={'key'}
+            className={styles.variableTable}
+            components={components}
+            rowClassName={() => styles.editableRow}
+            pagination={false}
+            style={{ tableLayout: 'auto' }}
+          />
         )}
       </section>
     </section>
