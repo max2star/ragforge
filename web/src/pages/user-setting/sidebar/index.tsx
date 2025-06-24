@@ -53,7 +53,11 @@ const SideBar = () => {
   }
 
   const items: MenuItem[] = Object.values(UserSettingRouteKey).map((value) =>
-    getItem(value, value, UserSettingIconMap[value]),
+    getItem(
+      value === 'model' ? 'modelProviders' : value,
+      value,
+      UserSettingIconMap[value],
+    ),
   );
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {

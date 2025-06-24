@@ -551,6 +551,7 @@ General：实体和关系提取提示来自 GitHub - microsoft/graphrag：基于
       profileDescription: '在此处更新您的照片和个人详细信息。',
       password: '密码',
       passwordDescription: '请输入您当前的密码以更改您的密码。',
+      modelProviders: '模型提供商',
       modelPermission: '模型权限',
       modelPermissionDescription: '设置可用的 LLM 和限制。',
       modelThirdParty: '模型提供商',
@@ -708,6 +709,7 @@ General：实体和关系提取提示来自 GitHub - microsoft/graphrag：基于
       view: '查看',
       modelsToBeAddedTooltip:
         '如果你的模型供应商在这里没有列出，但是宣称 OpenAI-compatible，可以通过选择卡片 OpenAI-API-compatible 设置相关模型。',
+      modelDescription: '在此设置模型参数和 API KEY。',
     },
     message: {
       registered: '注册成功',
