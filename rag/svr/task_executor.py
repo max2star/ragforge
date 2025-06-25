@@ -910,12 +910,12 @@ async def do_handle_task(task):
         page_c_ = list(set(c_['page_num_int']))
         if pdf_article_type != "论文集":
             # 将元数据更新到Chunk
-            c_['meta_fields'] = dict_result
+            # c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 c_[key] = value
         elif page_c_[0] < sub_paper["main_content_begin"]:
             # 将论文集元数据存入目录前的块
-            c_['meta_fields'] = dict_result
+            # c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 if key != "sub_paper":
                     c_[key] = value
