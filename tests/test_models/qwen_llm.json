@@ -1,6 +1,5 @@
 {
   "model": "qwen_large",
-  "max_tokens": 1000,
   "stream": false,
   "messages": [
     {
