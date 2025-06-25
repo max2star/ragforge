@@ -64,7 +64,7 @@ def generate_prompt(image_path, max_width_size=600):
             }
         ],
         "do_sample": True,
-        "repetition_penalty": 1.0,
+        "repetition_penalty": 1.5,
         "temperature": 0.01,
         "top_p": 0.001,
         "top_k": 1
