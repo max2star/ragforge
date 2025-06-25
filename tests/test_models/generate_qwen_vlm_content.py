@@ -31,7 +31,7 @@ def create_json():
         }],
         #"max_tokens": 512,
         "do_sample": True,
-        "repetition_penalty": 1.00,
+        "repetition_penalty": 1.5,
         "temperature": 0.01,
         "top_p": 0.001,
         "top_k": 1

@@ -13,7 +13,7 @@
   "stream": false,
   "presence_penalty": 1.03,
   "frequency_penalty": 1.0,
-  "repetition_penalty": 1.0,
+  "repetition_penalty": 1.5,
   "temperature": 0.5,
   "top_p": 0.95,
   "top_k": 10,
