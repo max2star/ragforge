@@ -111,7 +111,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
     # 判断第一页目录图片是否是论文集或书籍
     is_what = "其他目录"
     maybe = {
-        "论文集目录": "核心特征是 每篇独立的文章标题后都跟随着该文作者的姓名（一定存在且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
+        "论文集目录": "核心特征是 由多篇独立的论文组成，论文标题后都跟随着该文作者的姓名（一定存在且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
         "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。目录中不出现作者署名。",
     }
     example = {"结果":""}
@@ -119,7 +119,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
         f"声明：你的回答不需要有任何旁白，若不包含目录页面，请直接输出一个空花括号即可；定义：{maybe}"
         f"现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是;"
         f"请根据图片内容判断该图片是不是文档的目录页面，如果不是目录页面，请直接输出一个空花括号即可;如果是目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
-        f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
+        f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；若都不符合则以其他目录四字为值；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在解析目录...")
     try:
@@ -131,7 +131,7 @@ def judge_directory_type(tenant_id=None, img=None, callback=None):
                 is_what = res["结果"]
     except Exception as e:
         logging.error(f"Vision model error: {e}")
-    # callback(msg=f"识别结果：{is_what}")
+    logging.info(f"目录识别结果：{is_what}")
     return is_what.replace("目录", "")
 
 
@@ -297,9 +297,9 @@ def extract_directory(tenant_id, images, metadata_type, callback=None):
         dic_result, page_end + 1, page_start, page_end, page_numbers
     ))
     # 目录页面过于连续则判断不属于论文集
-    arr = [int(i["页码"]) for i in dic_result]
-    if any(abs(a - b) <= 2 for a, b in zip(arr, arr[1:])):
-        is_what = ""
+    # arr = [int(i["页码"]) for i in dic_result]
+    # if any(abs(a - b) <= 2 for a, b in zip(arr, arr[1:])):
+    #     is_what = ""
     callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
