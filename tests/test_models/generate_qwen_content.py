@@ -106,7 +106,7 @@ def create_json_with_chinese_content(text_length=32768):
     # 构建 JSON 结构
     json_data = {
     "model": "qwen_large",
-    "max_tokens": 1000,
+    #"max_tokens": 1000,
     "stream": False,
     "messages": [{"role": "user","content": "请翻译以下内容为英文："+chinese_text}]
     }

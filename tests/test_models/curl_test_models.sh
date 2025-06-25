@@ -7,7 +7,9 @@ curl http://118.193.126.254:8080/embed -X POST -d '@./embedding.json' -H 'Conten
 echo "\n"
 
 echo '现在测试VL 32B视觉大模型'
+date
 curl -X POST -H 'Content-Type: application/json' http://118.193.126.254:3525/v1/chat/completions -d '@./qwen_vlm.json'
+date
 echo "\n"
 
 echo "现在测试Rerank模型"
