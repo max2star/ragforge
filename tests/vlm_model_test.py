@@ -35,7 +35,9 @@ def generate_prompt(image_path, max_width_size=600):
     supported_formats = ['jpeg', 'jpg', 'png', 'gif', 'bmp', 'webp']
     format = ext if ext in supported_formats else 'jpeg'
 
-    img.save(img_bytes, format=format, quality=95 if format == 'jpeg' else None)
+    img.save(img_bytes, format=format)
+    path = os.path.join("%s_%d.png" % (os.path.splitext(image_path)[0], max_width_size))
+    Image.open(img_bytes).save(path)
     img_bytes.seek(0)
 
     # 转换为Base64并获取MIME类型
@@ -112,10 +114,10 @@ def run_model(api_url="http://118.193.126.254:3525/v1/chat/completions"):
 # 使用示例
 if __name__ == "__main__":
     # 替换为实际图片路径
-    image_path = "FPGA抗辐射加固技术_03.png"
+    image_path = "test_models/FPGA抗辐射加固技术_04.png"
 
     # 生成请求数据
-    request_data, info = generate_prompt(image_path, max_width_size=1130)
+    request_data, info = generate_prompt(image_path, max_width_size=600)
 
     # 输出处理信息
     print(f"原始图片: {image_path}")
