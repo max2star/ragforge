@@ -8,19 +8,18 @@ from io import BytesIO
 
 
 def resize_image(image_path, max_width_size=600):
-    """调整图片大小，确保不超过指定宽度"""
+    """调整图片大小至指定宽度"""
     with Image.open(image_path) as img:
-        # 检查是否需要调整大小
-        width, height = img.size
+        width, height = img.width, img.height
+        img = img.copy()
 
-        if width <= max_width_size:
-            return img,
+        # 执行缩放操作
+        ratio = max_width_size / img.width
+        new_height = int(img.height * ratio)
+        img = img.resize((max_width_size, new_height), Image.LANCZOS)
 
-        size = max_width_size
-        target_size = (size, int(size * height / width))  # 调整大小
-
-        # 调整大小并转换格式
-        return img.resize(target_size, Image.LANCZOS), width, height
+        # 返回图像副本和尺寸（文件指针不再相关）
+        return img, width, height
 
 
 def generate_prompt(image_path, max_width_size=600):
@@ -59,7 +58,7 @@ def generate_prompt(image_path, max_width_size=600):
                     },
                     {
                         "type": "text",
-                        "text": "提取图中的：['标题','作者','发布时间','资料来源','摘要']，请你以最紧凑的JSON格式输出，不要有旁白"
+                        "text": "提取图中的：['标题','作者','其他作者','发布时间','资料来源','摘要']，请你以最紧凑的JSON格式输出，不需要多余的空格与换行，不要有任何旁白"
                     }
                 ]
             }
@@ -74,7 +73,7 @@ def generate_prompt(image_path, max_width_size=600):
     # 添加处理信息
     image_info = {
         "original_size": (width, height),
-        "processed_size": img.size if hasattr(img, 'width') else "No resize",
+        "processed_size": img.size,
         "format": format
     }
 
@@ -114,10 +113,10 @@ def run_model(api_url="http://118.193.126.254:3525/v1/chat/completions"):
 # 使用示例
 if __name__ == "__main__":
     # 替换为实际图片路径
-    image_path = "test_models/FPGA抗辐射加固技术_04.png"
+    image_path = "test_models/FPGA抗辐射加固技术_01.png"
 
     # 生成请求数据
-    request_data, info = generate_prompt(image_path, max_width_size=600)
+    request_data, info = generate_prompt(image_path, max_width_size=1500)
 
     # 输出处理信息
     print(f"原始图片: {image_path}")
