@@ -14,3 +14,4 @@ cat /proc/sys/kernel/core_pattern
 echo 'int main(){int *p=0;*p=1;}' > test.c
 gcc test.c -o test
 ./test
+gdb /path/to/executable /path/to/corefile
