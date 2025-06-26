@@ -388,7 +388,7 @@ def docinfos():
             )
     docs = DocumentService.get_by_ids(doc_ids)
     docs_result = list(docs.dicts())
-    logging.info(f"Get documents {doc_ids} infos return length {len(docs_result)}")
+    logging.info(f"Get documents {doc_ids} infos return length {len(docs_result)},result {docs_result}")
     return get_json_result(data=docs_result)
 
 
