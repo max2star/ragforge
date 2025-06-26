@@ -1577,6 +1577,8 @@ def retrieval_test(tenant_id):
         if len(ranks["chunks"])>top:
             ranks["chunks"] = ranks["chunks"][:top]
         logging.info(f"retrieval sdk {top},page {page},size {size},result length {len(ranks['chunks'])}")
+        if len(ranks["chunks"])>0:
+            logging.info(f"retrieval sdk {top},page {page},size {size},result one examples {ranks['chunks'][:1]}")
         return get_result(data=ranks)
     except Exception as e:
         logging.error(f"retrieval exeception {e}")
