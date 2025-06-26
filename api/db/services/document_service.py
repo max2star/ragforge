@@ -403,6 +403,8 @@ class DocumentService(CommonService):
         configs = configs.dicts()
         if not configs:
             return None
+        else:
+            logging.info(f"get_chunking_config {configs[0]}")
         return configs[0]
 
     @classmethod
