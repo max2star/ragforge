@@ -700,7 +700,7 @@ async def do_handle_task(task):
     file_type = task.get("type", "pdf")
     pdf_article_type = None
 
-    # 从任务内获取元数据配置（默认知识库配置）
+    # 从任务内获取元数据配置
     extractor_config = task["parser_config"].get('extractor', {})
     logging.info(f" task extractor config {extractor_config}")
     # prompt = extractor_config.get("prompt", None)
@@ -720,7 +720,8 @@ async def do_handle_task(task):
         metadata_type = task_metadata_type
 
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
-    fields = [k for k in keys if k not in constant.exclude_fields]
+    fields = [k for k in keys if k['name'] not in constant.exclude_fields]
+    logging.info(f"========= keys {metadata_type} ========= \n{fields}")
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
@@ -762,7 +763,7 @@ async def do_handle_task(task):
                 img_bytes = pix.tobytes()
                 img = Image.open(BytesIO(img_bytes))
                 width, height = img.size
-                size = 600
+                size = 2000
                 target_size = (size,  int(size*height/width))  # 调整大小
                 img = img.resize(target_size, Image.LANCZOS)
                 img_results.append(img)
@@ -870,8 +871,8 @@ async def do_handle_task(task):
         progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
-    # is_merge = True
-    is_merge = False
+    is_merge = True
+    #is_merge = False
     if is_merge:
         for key,value in dict_result_add.items():
             if key in key_now and dict_result.get(key,None):
@@ -910,12 +911,12 @@ async def do_handle_task(task):
         page_c_ = list(set(c_['page_num_int']))
         if pdf_article_type != "论文集":
             # 将元数据更新到Chunk
-            c_['meta_fields'] = dict_result
+            # c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 c_[key] = value
         elif page_c_[0] < sub_paper["main_content_begin"]:
             # 将论文集元数据存入目录前的块
-            c_['meta_fields'] = dict_result
+            # c_['meta_fields'] = dict_result
             for key, value in dict_result.items():
                 if key != "sub_paper":
                     c_[key] = value

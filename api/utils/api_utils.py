@@ -347,7 +347,7 @@ def dataset_readonly_fields(field_name):
 
 def get_extractor(parser_config, metadata_type="default"):
     default_keyvalues = [{
-        "name": k["name"], "code": k["code"], "must_exist": k["must_exist"],
+        "name": k["name"], "code": k["code"], "must_exist": k.get("must_exist",True),
         "description": k["description"], "type": None,
     } for k in constant.keyvalues_mapping.get(metadata_type)]
     if not parser_config:
