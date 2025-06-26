@@ -93,11 +93,17 @@ def completion(tenant_id, chat_id, question, name="New session", session_id=None
 
     if not session_id:
         session_id = get_uuid()
+        
+        # 安全获取 prologue，如果没有则使用默认值
+        prologue = "您好，我是您的助手，有什么可以帮助您的吗？"
+        if hasattr(dia[0], 'prompt_config') and isinstance(dia[0].prompt_config, dict):
+            prologue = dia[0].prompt_config.get("prologue", prologue)
+        
         conv = {
             "id": session_id,
             "dialog_id": chat_id,
             "name": name,
-            "message": [{"role": "assistant", "content": dia[0].prompt_config.get("prologue"), "created_at": time.time()}],
+            "message": [{"role": "assistant", "content": prologue, "created_at": time.time()}],
             "user_id": kwargs.get("user_id", "")
         }
         ConversationService.save(**conv)
@@ -165,11 +171,17 @@ def iframe_completion(dialog_id, question, session_id=None, stream=True, **kwarg
     assert e, "Dialog not found"
     if not session_id:
         session_id = get_uuid()
+        
+        # 安全获取 prologue，如果没有则使用默认值
+        prologue = "您好，我是您的助手，有什么可以帮助您的吗？"
+        if hasattr(dia, 'prompt_config') and isinstance(dia.prompt_config, dict):
+            prologue = dia.prompt_config.get("prologue", prologue)
+        
         conv = {
             "id": session_id,
             "dialog_id": dialog_id,
             "user_id": kwargs.get("user_id", ""),
-            "message": [{"role": "assistant", "content": dia.prompt_config["prologue"], "created_at": time.time()}]
+            "message": [{"role": "assistant", "content": prologue, "created_at": time.time()}]
         }
         API4ConversationService.save(**conv)
         yield "data:" + json.dumps({"code": 0, "message": "",
