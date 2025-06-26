@@ -1769,6 +1769,14 @@ def migrate_db():
     except Exception:
         pass
     try:
+        migrate(migrator.add_column("dialog", "vector_similarity_weight", FloatField(default=0.3)))
+    except Exception:
+        pass
+    try:
+        migrate(migrator.add_column("dialog", "similarity_threshold", FloatField(default=0.2)))
+    except Exception:
+        pass
+    try:
         migrate(migrator.alter_column_type("tenant_llm", "api_key", CharField(max_length=2048, null=True, help_text="API KEY", index=True)))
     except Exception:
         pass
