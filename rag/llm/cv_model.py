@@ -191,6 +191,8 @@ class GptV4(Base):
         res = self.client.chat.completions.create(
             model=self.model_name,
             messages=vision_prompt,
+            frequency_penalty=1.0, # 重点调节此参数减少重复
+            presence_penalty=1.5,  # 辅助减少重复
         )
         return res.choices[0].message.content.strip(), res.usage.total_tokens
 
