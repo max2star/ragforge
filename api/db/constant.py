@@ -1494,30 +1494,30 @@ Standard = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  # {
-  #   "id": 8,
-  #   "name": "发布日期",
-  #   "code": "issue_date",
-  #   "description": "标准发布日期",
-  #   "must_exist": True,
-  #   "外键": ""
-  # },
-  # {
-  #   "id": 9,
-  #   "name": "实施日期",
-  #   "code": "effective_date",
-  #   "description": "标准生效日期",
-  #   "must_exist": False,
-  #   "外键": ""
-  # },
-  # {
-  #   "id": 10,
-  #   "name": "废止日期",
-  #   "code": "abolition_date",
-  #   "description": "标准废止日期",
-  #   "must_exist": False,
-  #   "外键": ""
-  # },
+  {
+    "id": 8,
+    "name": "发布日期",
+    "code": "issue_date",
+    "description": "标准发布日期",
+    "must_exist": True,
+    "外键": ""
+  },
+  {
+    "id": 9,
+    "name": "实施日期",
+    "code": "effective_date",
+    "description": "标准生效日期",
+    "must_exist": False,
+    "外键": ""
+  },
+  #{
+  #  "id": 10,
+  #  "name": "废止日期",
+  #  "code": "abolition_date",
+  #  "description": "标准废止日期",
+  #  "must_exist": False,
+  #  "外键": ""
+  #},
   {
     "id": 11,
     "name": "主题",
@@ -1678,7 +1678,35 @@ Standard = [
   #   "must_exist": True,
   #   "外键": ""
   # }
-    ]
+  {
+    "id": 31,
+    "name": "起草单位",
+    "code": "31",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 32,
+    "name": "起草人",
+    "code": "32",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 33,
+    "name": "前言",
+    "code": "33",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 34,
+    "name": "归口单位",
+    "code": "34",
+    "must_exist": False,
+    "description": "",
+  },
+]
 
 # 专利元数据
 Patent = [
