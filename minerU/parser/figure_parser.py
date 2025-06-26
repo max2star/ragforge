@@ -75,5 +75,5 @@ class VisionFigureParser:
                 response = response.encode('utf-8', errors='replace').decode('utf-8')
                 response = extract_first_json(response)
                 texts[idx] = response
-                logging.info("视觉模型图像 idx: {} 返回过滤结果: {}".format(figure_num, response[:50]))
+                logging.info("视觉模型图像 idx: {} 返回过滤结果: {}".format(figure_num, response))
         return texts 
