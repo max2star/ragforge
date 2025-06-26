@@ -1448,6 +1448,7 @@ def retrieval_test(tenant_id):
     req['limit_range'] = tenant_id
     req['limit_time'] = str(datetime.datetime.now()).replace("T", " ")[:19]
     req['limit_level']= req.get('limit_level',1)
+    logging.info(f"retrieval req:{req}")
     kb_ids = req["dataset_ids"]
     if not isinstance(kb_ids, list):
         return get_error_data_result("`dataset_ids` should be a list")
@@ -1459,12 +1460,13 @@ def retrieval_test(tenant_id):
     for kb in kbs:
         logging.info(f"retrieval sdk kb=={kb} kb.embd_id=={kb.embd_id}\n")
     if len(embd_nms) != 1:
+        logging.error(f"retrieval sdk {top},page {page},size {size},embedding not same.")
         return get_result(
             message=f'Datasets {kb_ids} use different embedding models {embd_nms}."',
             code=settings.RetCode.DATA_ERROR,
         )
     if "question" not in req:
-        logging.info(f"retrieval sdk question None")
+        logging.error(f"retrieval sdk question None")
         return get_error_data_result("`question` is required.")
     page = int(req.get("page", 1))
     size = int(req.get("page_size", 30))
@@ -1472,11 +1474,13 @@ def retrieval_test(tenant_id):
     doc_ids = req.get("document_ids", [])
     use_kg = req.get("use_kg", False)
     if not isinstance(doc_ids, list):
+        logging.error(f"retrieval sdk {top},page {page},size {size},docs id {doc_ids} not list")
         return get_error_data_result("`documents` should be a list")
     not_accessible_docs = []
     doc_ids_list = KnowledgebaseService.list_documents_by_ids(kb_ids)
     for doc_id in doc_ids:
         if doc_id not in doc_ids_list:
+            logging.error(f"retrieval sdk {top},page {page},size {size},doc {doc_id} not belong to {kb_ids}")
             return get_error_data_result(
                 f"The datasets don't own the document {doc_id}"
             )
@@ -1484,6 +1488,7 @@ def retrieval_test(tenant_id):
             not_accessible_docs.append(doc_id)
     not_accessible_docs = list(set(not_accessible_docs))
     if not_accessible_docs:
+        logging.error(f"retrieval sdk {top},page {page},size {size},docs not accessible {not_accessible_docs}")
         return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
 
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
@@ -1498,6 +1503,7 @@ def retrieval_test(tenant_id):
     try:
         e, kb = KnowledgebaseService.get_by_id(kb_ids[0])
         if not e:
+            logging.error(f"retrieval sdk {top},page {page},size {size},datasets {kb_ids[0]} not found")
             return get_error_data_result(message="Dataset not found!")
         embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING, llm_name=kb.embd_id)
 
