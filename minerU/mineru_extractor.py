@@ -179,7 +179,7 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
                     current_value = r_d.get(key, None)
                     if not current_value:
                         continue
-                    if key in ['摘要', '正文', '前言']:
+                    if key in ['正文', '前言']:
                         try:
                             fields_map[key] = value_now+ '\n' + current_value
                         except Exception as e:
