@@ -2952,6 +2952,7 @@ exclude_fields = [
   "知识提交者",
   "提交日期",
   "其他语种",
+  "主题",
 ]
 
 keyvalues_mapping = {
