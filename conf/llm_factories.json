@@ -382,14 +382,14 @@
                 {
                     "llm_name": "qwen_large",
                     "tags": "LLM,CHAT,",
-                    "max_tokens": 128000,
+                    "max_tokens": 16384,
                     "model_type": "chat",
                     "is_tools": true
                 },
                 {
                     "llm_name": "deepseek-70b",
                     "tags": "LLM,CHAT,",
-                    "max_tokens": 128000,
+                    "max_tokens": 16384,
                     "model_type": "chat",
                     "is_tools": true
                 },
@@ -402,7 +402,7 @@
                 {
                     "llm_name": "qwen2.5-vl-32b-instruct",
                     "tags": "LLM,IMAGE2TEXT,32k",
-                    "max_tokens": 32768,
+                    "max_tokens": 131072,
                     "model_type": "image2text"
                 },
                 {

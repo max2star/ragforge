@@ -370,7 +370,7 @@ Book = [
     "id": 19,
     "name": "版次",
     "code": "version_number",
-    "description": "图书出版的版次说明",
+    "description": "版次",
     "must_exist": False,
     "外键": ""
   },
@@ -453,7 +453,70 @@ Book = [
   #   "description": "本条知识的提交时间",
   #   "must_exist": True,
   #   "外键": ""
-  # }
+  # },
+  {
+    "id": 30,
+    "name": "出版日期",
+    "code": "",
+    "description": "出版日期",
+    "must_exist": False,
+  },
+  {
+    "id": 31,
+    "name": "主编",
+    "code": "",
+    "description": "主编",
+    "must_exist": False,
+  },
+  {
+    "id": 32,
+    "name": "副主编",
+    "code": "",
+    "description": "副主编",
+    "must_exist": False,
+  },
+  {
+    "id": 33,
+    "name": "编委",
+    "code": "",
+    "description": "编委",
+    "must_exist": False,
+  },
+  {
+    "id": 34,
+    "name": "印次",
+    "code": "",
+    "description": "印次",
+    "must_exist": False,
+  },
+  {
+    "id": 35,
+    "name": "常务编委",
+    "code": "",
+    "description": "常务编委",
+    "must_exist": False,
+  },
+  {
+    "id": 36,
+    "name": "编著",
+    "code": "",
+    "description": "编著",
+    "must_exist": False,
+  },
+  {
+    "id": 37,
+    "name": "策划编辑",
+    "code": "",
+    "description": "策划编辑",
+    "must_exist": False,
+  },
+  {
+    "id": 38,
+    "name": "责任编辑",
+    "code": "",
+    "description": "责任编辑",
+    "must_exist": False,
+  },
 ]
 
 # 期刊元数据
@@ -1494,30 +1557,30 @@ Standard = [
     "must_exist": False,
     "外键": "机构表 identify"
   },
-  # {
-  #   "id": 8,
-  #   "name": "发布日期",
-  #   "code": "issue_date",
-  #   "description": "标准发布日期",
-  #   "must_exist": True,
-  #   "外键": ""
-  # },
-  # {
-  #   "id": 9,
-  #   "name": "实施日期",
-  #   "code": "effective_date",
-  #   "description": "标准生效日期",
-  #   "must_exist": False,
-  #   "外键": ""
-  # },
-  # {
-  #   "id": 10,
-  #   "name": "废止日期",
-  #   "code": "abolition_date",
-  #   "description": "标准废止日期",
-  #   "must_exist": False,
-  #   "外键": ""
-  # },
+  {
+    "id": 8,
+    "name": "发布日期",
+    "code": "issue_date",
+    "description": "标准发布日期",
+    "must_exist": True,
+    "外键": ""
+  },
+  {
+    "id": 9,
+    "name": "实施日期",
+    "code": "effective_date",
+    "description": "标准生效日期",
+    "must_exist": False,
+    "外键": ""
+  },
+  #{
+  #  "id": 10,
+  #  "name": "废止日期",
+  #  "code": "abolition_date",
+  #  "description": "标准废止日期",
+  #  "must_exist": False,
+  #  "外键": ""
+  #},
   {
     "id": 11,
     "name": "主题",
@@ -1678,7 +1741,35 @@ Standard = [
   #   "must_exist": True,
   #   "外键": ""
   # }
-    ]
+  {
+    "id": 31,
+    "name": "起草单位",
+    "code": "31",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 32,
+    "name": "起草人",
+    "code": "32",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 33,
+    "name": "前言",
+    "code": "33",
+    "must_exist": False,
+    "description": "",
+  },
+  {
+    "id": 34,
+    "name": "归口单位",
+    "code": "34",
+    "must_exist": False,
+    "description": "",
+  },
+]
 
 # 专利元数据
 Patent = [
@@ -2952,6 +3043,7 @@ exclude_fields = [
   "知识提交者",
   "提交日期",
   "其他语种",
+  "主题",
 ]
 
 keyvalues_mapping = {
