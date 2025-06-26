@@ -168,7 +168,7 @@ class KnowledgebaseService(CommonService):
                                                                 TenantPermission.TEAM.value)) | (
                     cls.model.tenant_id == user_id))
                 & (cls.model.status == StatusEnum.VALID.value),
-                (fn.LOWER(cls.model.name).contains(keywords.lower()))
+                ((fn.LOWER(cls.model.name).contains(keywords.lower())) | (fn.LOWER(cls.model.id).contains(keywords.lower())))
             )
         else:
             kbs = cls.model.select(*fields).join(User, on=(cls.model.tenant_id == User.id)).where(
