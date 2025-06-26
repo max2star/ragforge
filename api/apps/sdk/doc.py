@@ -1476,6 +1476,17 @@ def retrieval_test(tenant_id):
     if not isinstance(doc_ids, list):
         logging.error(f"retrieval sdk {top},page {page},size {size},docs id {doc_ids} not list")
         return get_error_data_result("`documents` should be a list")
+    doc_not_exists = []
+    for doc_id in doc_ids:
+        e, src_d = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.error(f"retrieval sdk {top},page {page},size {size},doc_id {doc_id} not exists")
+            doc_not_exists.append(doc_id)
+    if doc_not_exists:
+        logging.error(f"retrieval sdk {top},page {page},size {size},doc_ids {doc_not_exists} not exists")
+        return get_error_data_result(
+            f"The docs {doc_not_exists} not exists."
+        )
     not_accessible_docs = []
     doc_ids_list = KnowledgebaseService.list_documents_by_ids(kb_ids)
     for doc_id in doc_ids:
