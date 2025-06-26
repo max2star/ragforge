@@ -355,6 +355,8 @@ def list_docs():
 def docinfos():
     req = request.json
     doc_ids = req["doc_ids"]
+    logging.debug(f"Get documents infos for {doc_ids}")
+    not_exists = []
     for doc_id in doc_ids:
         try:
             uuid.UUID(str(doc_id))
@@ -364,14 +366,30 @@ def docinfos():
                 message=f'Parameter {doc_id} not uuid.',
                 code=settings.RetCode.ARGUMENT_ERROR
             )
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.error(f"Document {doc_id} not exists.")
+            not_exists.append(doc_id)
+
+    if not_exists:
+        logging.error(f"Documents {not_exists} not exists.")
+        return get_json_result(
+            data=list(not_exists),
+            message=f'Documents {not_exists} not exists.',
+            code=settings.RetCode.NOT_FOUND
+        )
+
+    for doc_id in doc_ids:
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message=f'No authorization,maybe doc {doc_id} not accessible for you {current_user.id}.',
+                message=f'No authorization,doc {doc_id} not accessible for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
     docs = DocumentService.get_by_ids(doc_ids)
-    return get_json_result(data=list(docs.dicts()))
+    docs_result = list(docs.dicts())
+    logging.info(f"Get documents {doc_ids} infos return length {len(docs_result)},result {docs_result}")
+    return get_json_result(data=docs_result)
 
 
 @manager.route('/thumbnails', methods=['GET'])  # noqa: F821
@@ -863,7 +881,7 @@ def get_image(image_id):
         return server_error_response(e)
 
 
-#TODO 干啥的
+#在会话中直接上传文件的场景下进行调用
 @manager.route('/upload_and_parse', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("conversation_id")
