@@ -3,6 +3,11 @@ import { useTheme } from '@/components/theme-provider';
 import { useSetModalState, useTranslate } from '@/hooks/common-hooks';
 import { useSelectLlmList } from '@/hooks/llm-hooks';
 import {
+  useInterfaceConfig,
+  useSaveInterfaceConfig,
+  useUploadInterfaceFile,
+} from '@/hooks/system-hooks';
+import {
   DatabaseOutlined,
   HddOutlined,
   PictureOutlined,
@@ -31,7 +36,7 @@ import {
   Typography,
   Upload,
 } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SettingTitle from '../user-setting/components/setting-title';
 
 const { Content, Sider } = Layout;
@@ -326,15 +331,112 @@ const OcrSettings = () => {
 };
 
 const InterfaceSettings = () => {
+  const { config: interfaceConfig } = useInterfaceConfig();
+  const { saveInterfaceConfig, loading: saveLoading } =
+    useSaveInterfaceConfig();
+  const { uploadInterfaceFile, loading: uploadLoading } =
+    useUploadInterfaceFile();
+
   const [logoFileList, setLogoFileList] = useState([]);
   const [faviconFileList, setFaviconFileList] = useState([]);
   const [loginLogoFileList, setLoginLogoFileList] = useState([]);
+  const [welcomeText, setWelcomeText] = useState('');
+  const [appName, setAppName] = useState('');
+  const [loginTitle, setLoginTitle] = useState('');
+
+  useEffect(() => {
+    if (interfaceConfig) {
+      setLogoFileList(
+        interfaceConfig.logo
+          ? [
+              {
+                uid: '-1',
+                name: 'logo.png',
+                status: 'done',
+                url: interfaceConfig.logo,
+              },
+            ]
+          : [],
+      );
+      setFaviconFileList(
+        interfaceConfig.favicon
+          ? [
+              {
+                uid: '-1',
+                name: 'favicon.ico',
+                status: 'done',
+                url: interfaceConfig.favicon,
+              },
+            ]
+          : [],
+      );
+      setLoginLogoFileList(
+        interfaceConfig.login_logo
+          ? [
+              {
+                uid: '-1',
+                name: 'login-logo.png',
+                status: 'done',
+                url: interfaceConfig.login_logo,
+              },
+            ]
+          : [],
+      );
+      setWelcomeText(
+        interfaceConfig.login_welcome_text ||
+          '欢迎使用 RAGFlow\n智能知识管理与AI助手平台',
+      );
+      setAppName(interfaceConfig.app_name || 'RAGFlow');
+      setLoginTitle(interfaceConfig.login_title || '欢迎使用 RAGFlow');
+    }
+  }, [interfaceConfig]);
 
   const handleUploadChange =
-    (setter) =>
+    (setter, type) =>
     ({ fileList }) => {
       setter(fileList);
+
+      // 如果有新文件上传，自动上传到服务器
+      if (fileList.length > 0 && fileList[0].originFileObj) {
+        const file = fileList[0].originFileObj;
+        uploadInterfaceFile({ file, type }).then((result) => {
+          if (result.code === 0) {
+            // 更新文件列表为服务器返回的数据
+            setter([
+              {
+                uid: '-1',
+                name: file.name,
+                status: 'done',
+                url: result.data.url,
+              },
+            ]);
+          }
+        });
+      }
     };
+
+  const handleSave = async () => {
+    try {
+      const configData = {
+        logo: logoFileList.length > 0 ? logoFileList[0].url : '',
+        favicon: faviconFileList.length > 0 ? faviconFileList[0].url : '',
+        login_logo:
+          loginLogoFileList.length > 0 ? loginLogoFileList[0].url : '',
+        login_welcome_text: welcomeText,
+        app_name: appName,
+        login_title: loginTitle,
+      };
+
+      await saveInterfaceConfig(configData);
+
+      // 保存成功后，刷新页面以应用新配置
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error('保存失败:', error);
+    }
+  };
 
   const uploadButton = (
     <div>
@@ -342,6 +444,10 @@ const InterfaceSettings = () => {
       <div style={{ marginTop: 8 }}>上传</div>
     </div>
   );
+
+  if (saveLoading || uploadLoading) {
+    return <Spin size="large" />;
+  }
 
   return (
     <div style={{ maxWidth: 1000 }}>
@@ -363,9 +469,10 @@ const InterfaceSettings = () => {
             <Upload
               listType="picture-card"
               fileList={logoFileList}
-              onChange={handleUploadChange(setLogoFileList)}
+              onChange={handleUploadChange(setLogoFileList, 'logo')}
               maxCount={1}
               beforeUpload={() => false}
+              accept="image/*"
             >
               {logoFileList.length === 0 && uploadButton}
             </Upload>
@@ -382,14 +489,31 @@ const InterfaceSettings = () => {
             <Upload
               listType="picture-card"
               fileList={faviconFileList}
-              onChange={handleUploadChange(setFaviconFileList)}
+              onChange={handleUploadChange(setFaviconFileList, 'favicon')}
               maxCount={1}
               beforeUpload={() => false}
+              accept=".ico,image/*"
             >
               {faviconFileList.length === 0 && uploadButton}
             </Upload>
             <Typography.Text type="secondary">
               建议尺寸 32 * 32, .ico格式
+            </Typography.Text>
+          </Col>
+        </Row>
+        <Row align="middle" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>应用名称</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Input
+              value={appName}
+              onChange={(e) => setAppName(e.target.value)}
+              style={{ maxWidth: 400 }}
+              placeholder="RAGFlow"
+            />
+            <Typography.Text type="secondary">
+              显示在页面头部和浏览器标题中的应用名称
             </Typography.Text>
           </Col>
         </Row>
@@ -410,9 +534,10 @@ const InterfaceSettings = () => {
             <Upload
               listType="picture-card"
               fileList={loginLogoFileList}
-              onChange={handleUploadChange(setLoginLogoFileList)}
+              onChange={handleUploadChange(setLoginLogoFileList, 'login_logo')}
               maxCount={1}
               beforeUpload={() => false}
+              accept="image/*"
             >
               {loginLogoFileList.length === 0 && uploadButton}
             </Upload>
@@ -428,15 +553,38 @@ const InterfaceSettings = () => {
           <Col span={18}>
             <Input.TextArea
               rows={4}
-              defaultValue={'欢迎使用 RAGFlow\n智能知识管理与AI助手平台'}
+              value={welcomeText}
+              onChange={(e) => setWelcomeText(e.target.value)}
               style={{ maxWidth: 400 }}
+              placeholder="欢迎使用 RAGFlow\n智能知识管理与AI助手平台"
             />
+          </Col>
+        </Row>
+        <Row align="middle" style={{ padding: '12px 0' }}>
+          <Col span={6}>
+            <Typography.Text strong>登录页主标题</Typography.Text>
+          </Col>
+          <Col span={18}>
+            <Input
+              value={loginTitle}
+              onChange={(e) => setLoginTitle(e.target.value)}
+              style={{ maxWidth: 400 }}
+              placeholder="欢迎使用 RAGFlow"
+            />
+            <Typography.Text type="secondary">
+              登录页面显示的主要标题
+            </Typography.Text>
           </Col>
         </Row>
       </Card>
 
       <Flex justify="flex-start" style={{ marginTop: 32 }}>
-        <Button type="primary" size="large">
+        <Button
+          type="primary"
+          size="large"
+          onClick={handleSave}
+          loading={saveLoading || uploadLoading}
+        >
           保存更改
         </Button>
       </Flex>

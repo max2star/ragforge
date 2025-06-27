@@ -14,9 +14,11 @@
 #  limitations under the License
 #
 import logging
+import os
 from datetime import datetime
 import json
 
+from flask import request
 from flask_login import login_required, current_user
 
 from api.db.db_models import APIToken
@@ -320,3 +322,225 @@ def get_config():
     return get_json_result(data={
         "registerEnabled": settings.REGISTER_ENABLED
     })
+
+
+@manager.route('/interface/config', methods=['GET'])  # noqa: F821
+#@login_required
+def get_interface_config():
+    """
+    Get interface configuration including logos and login page settings.
+    ---
+    tags:
+        - System
+    responses:
+        200:
+            description: Return interface configuration
+            schema:
+                type: object
+                properties:
+                    logo:
+                        type: string
+                        description: Base64 encoded logo image
+                    favicon:
+                        type: string
+                        description: Base64 encoded favicon image
+                    login_logo:
+                        type: string
+                        description: Base64 encoded login page logo
+                    login_welcome_text:
+                        type: string
+                        description: Welcome text for login page
+                    app_name:
+                        type: string
+                        description: Application name displayed in header
+                    login_title:
+                        type: string
+                        description: Main title for login page
+    """
+    try:
+        # 从存储中获取界面配置
+        config = {}
+        
+        # 尝试从存储中读取配置
+        try:
+            if STORAGE_IMPL.obj_exist("system", "interface_config.json"):
+                config_data = STORAGE_IMPL.get("system", "interface_config.json")
+                config = json.loads(config_data.decode('utf-8'))
+        except Exception as e:
+            logging.warning(f"Failed to load interface config from storage: {e}")
+        
+        # 返回默认配置或已保存的配置
+        return get_json_result(data={
+            "logo": config.get("logo", ""),
+            "favicon": config.get("favicon", ""),
+            "login_logo": config.get("login_logo", ""),
+            "login_welcome_text": config.get("login_welcome_text", "欢迎使用 RAGFlow\n智能知识管理与AI助手平台"),
+            "app_name": config.get("app_name", "RAGFlow"),
+            "login_title": config.get("login_title", "欢迎使用 RAGFlow")
+        })
+    except Exception as e:
+        return server_error_response(e)
+
+
+@manager.route('/interface/config', methods=['POST'])  # noqa: F821
+@login_required
+def save_interface_config():
+    """
+    Save interface configuration including logos and login page settings.
+    ---
+    tags:
+        - System
+    security:
+        - ApiKeyAuth: []
+    parameters:
+        - in: body
+          name: body
+          description: Interface configuration to save
+          required: true
+          schema:
+            type: object
+            properties:
+              logo:
+                type: string
+                description: Base64 encoded logo image
+              favicon:
+                type: string
+                description: Base64 encoded favicon image
+              login_logo:
+                type: string
+                description: Base64 encoded login page logo
+              login_welcome_text:
+                type: string
+                description: Welcome text for login page
+              app_name:
+                type: string
+                description: Application name displayed in header
+              login_title:
+                type: string
+                description: Main title for login page
+    responses:
+        200:
+            description: Configuration saved successfully
+    """
+    try:
+        request_data = request.json
+        
+        # 验证输入数据
+        config = {
+            "logo": request_data.get("logo", ""),
+            "favicon": request_data.get("favicon", ""),
+            "login_logo": request_data.get("login_logo", ""),
+            "login_welcome_text": request_data.get("login_welcome_text", "欢迎使用 RAGFlow\n智能知识管理与AI助手平台"),
+            "app_name": request_data.get("app_name", "RAGFlow"),
+            "login_title": request_data.get("login_title", "欢迎使用 RAGFlow")
+        }
+        
+        # 保存配置到存储
+        config_json = json.dumps(config, ensure_ascii=False)
+        STORAGE_IMPL.put("system", "interface_config.json", config_json.encode('utf-8'))
+        
+        # 如果上传了新的logo，保存到静态文件目录
+        if config["logo"]:
+            try:
+                import base64
+                logo_data = base64.b64decode(config["logo"].split(',')[1] if ',' in config["logo"] else config["logo"])
+                logo_path = os.path.join(settings.STATIC_FOLDER, "logo.png")
+                with open(logo_path, 'wb') as f:
+                    f.write(logo_data)
+            except Exception as e:
+                logging.warning(f"Failed to save logo file: {e}")
+        
+        # 如果上传了新的favicon，保存到静态文件目录
+        if config["favicon"]:
+            try:
+                import base64
+                favicon_data = base64.b64decode(config["favicon"].split(',')[1] if ',' in config["favicon"] else config["favicon"])
+                favicon_path = os.path.join(settings.STATIC_FOLDER, "favicon.ico")
+                with open(favicon_path, 'wb') as f:
+                    f.write(favicon_data)
+            except Exception as e:
+                logging.warning(f"Failed to save favicon file: {e}")
+        
+        # 如果上传了新的登录logo，保存到静态文件目录
+        if config["login_logo"]:
+            try:
+                import base64
+                login_logo_data = base64.b64decode(config["login_logo"].split(',')[1] if ',' in config["login_logo"] else config["login_logo"])
+                login_logo_path = os.path.join(settings.STATIC_FOLDER, "login-logo.png")
+                with open(login_logo_path, 'wb') as f:
+                    f.write(login_logo_data)
+            except Exception as e:
+                logging.warning(f"Failed to save login logo file: {e}")
+        
+        return get_json_result(data=True, message="界面配置保存成功")
+    except Exception as e:
+        return server_error_response(e)
+
+
+@manager.route('/interface/upload', methods=['POST'])  # noqa: F821
+@login_required
+def upload_interface_file():
+    """
+    Upload interface files (logos, favicons, etc.)
+    ---
+    tags:
+        - System
+    security:
+        - ApiKeyAuth: []
+    parameters:
+        - in: formData
+          name: file
+          type: file
+          description: File to upload
+          required: true
+        - in: formData
+          name: type
+          type: string
+          description: File type (logo, favicon, login_logo)
+          required: true
+    responses:
+        200:
+            description: File uploaded successfully
+    """
+    try:
+        if 'file' not in request.files:
+            return get_json_result(
+                data=False, message='No file part!', code=settings.RetCode.ARGUMENT_ERROR)
+        
+        file_obj = request.files['file']
+        file_type = request.form.get('type', 'logo')
+        
+        if file_obj.filename == '':
+            return get_json_result(
+                data=False, message='No file selected!', code=settings.RetCode.ARGUMENT_ERROR)
+        
+        # 读取文件内容
+        file_content = file_obj.read()
+        
+        # 根据文件类型保存到不同位置
+        if file_type == 'logo':
+            file_path = os.path.join(settings.STATIC_FOLDER, "logo.png")
+        elif file_type == 'favicon':
+            file_path = os.path.join(settings.STATIC_FOLDER, "favicon.ico")
+        elif file_type == 'login_logo':
+            file_path = os.path.join(settings.STATIC_FOLDER, "login-logo.png")
+        else:
+            return get_json_result(
+                data=False, message='Invalid file type!', code=settings.RetCode.ARGUMENT_ERROR)
+        
+        # 保存文件
+        with open(file_path, 'wb') as f:
+            f.write(file_content)
+        
+        # 转换为base64返回
+        import base64
+        base64_data = base64.b64encode(file_content).decode('utf-8')
+        mime_type = "image/png" if file_type in ['logo', 'login_logo'] else "image/x-icon"
+        data_url = f"data:{mime_type};base64,{base64_data}"
+        
+        return get_json_result(data={
+            "url": data_url,
+            "filename": file_obj.filename
+        })
+    except Exception as e:
+        return server_error_response(e)
