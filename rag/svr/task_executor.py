@@ -766,6 +766,7 @@ async def do_handle_task(task):
                 size = 2000
                 target_size = (size,  int(size*height/width))  # 调整大小
                 img = img.resize(target_size, Image.LANCZOS)
+                #img = img.resize(target_size)
                 img_results.append(img)
                 if not flag:
                     flag = True
@@ -884,6 +885,18 @@ async def do_handle_task(task):
     else:
         # 不合并只取新抽取的内容
         dict_result = dict_result_add
+    
+    convert_result = {}
+    for key,value in dict_result_add.items():
+        #对于json数据结构，转化为字符串
+        if isinstance(value, dict):
+            convert_result[key] = json.dumps(value,ensure_ascii=False)
+        elif isinstance(value, list):
+            convert_result[key] = json.dumps(value,ensure_ascii=False)
+        else:
+            convert_result[key] = value
+    logging.info(f"doc {task['doc_id']} 将抽取/合并的结果转化为字符串 {dict_result}==>{convert_result}")
+    dict_result = convert_result
     # 分类标签
     classification_result = await run_classify(task, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
 
