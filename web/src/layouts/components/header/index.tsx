@@ -4,6 +4,7 @@ import { ReactComponent as KnowledgeBaseIcon } from '@/assets/svg/knowledge-base
 import { useTranslate } from '@/hooks/common-hooks';
 import { useFetchAppConf } from '@/hooks/logic-hooks';
 import { useNavigateWithFromState } from '@/hooks/route-hook';
+import { useInterfaceConfig } from '@/hooks/system-hooks';
 import {
   MessageOutlined,
   SearchOutlined,
@@ -25,6 +26,8 @@ const RagHeader = () => {
   const { t } = useTranslate('header');
   const appConf = useFetchAppConf();
   const { theme: themeRag } = useTheme();
+  const { config: interfaceConfig } = useInterfaceConfig();
+
   const tagsData = useMemo(
     () => [
       { path: '/knowledge', name: t('knowledgeBase'), icon: KnowledgeBaseIcon },
@@ -56,6 +59,14 @@ const RagHeader = () => {
     navigate('/');
   }, [navigate]);
 
+  // 动态logo URL
+  const logoUrl = useMemo(() => {
+    if (interfaceConfig?.logo) {
+      return interfaceConfig.logo;
+    }
+    return '/logo.svg';
+  }, [interfaceConfig?.logo]);
+
   return (
     <Header
       style={{
@@ -74,8 +85,10 @@ const RagHeader = () => {
             onClick={handleLogoClick}
             className={styles.logoWrapper}
           >
-            <img src="/logo.svg" alt="" className={styles.appIcon} />
-            <span className={styles.appName}>{appConf.appName}</span>
+            <img src={logoUrl} alt="" className={styles.appIcon} />
+            <span className={styles.appName}>
+              {interfaceConfig?.app_name || appConf.appName}
+            </span>
           </Space>
         </a>
         <Space size={[0, 8]} wrap>

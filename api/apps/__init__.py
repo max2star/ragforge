@@ -142,6 +142,25 @@ client_urls_prefix = [
 
 @login_manager.request_loader
 def load_user(web_request):
+    # 白名单：未登录也能访问的接口
+    public_paths = [
+        "/v1/system/config",
+        "/v1/user/login",
+        "/v1/user/register",
+        "/health",
+        "/debug",
+    ]
+    
+    # 特殊处理：GET 请求的 interface/config 可以公开访问
+    if web_request.path == "/v1/system/interface/config" and web_request.method == "GET":
+        logging.debug(f"Allowing public GET access to: {web_request.path}")
+        return None
+    
+    # 检查是否是公开路径
+    if web_request.path in public_paths:
+        logging.debug(f"Allowing public access to: {web_request.path}")
+        return None
+    
     # 检查数据库连接是否可用
     if DB is None:
         logging.error("Database connection not available")
