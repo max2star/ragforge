@@ -123,6 +123,12 @@ def init_settings():
         RAG_FLOW_SERVICE_NAME,
         {}).get("secret_key", str(date.today()))
 
+    # 静态文件目录配置
+    global STATIC_FOLDER
+    STATIC_FOLDER = os.path.join(get_project_base_directory(), "api", "static")
+    if not os.path.exists(STATIC_FOLDER):
+        os.makedirs(STATIC_FOLDER, exist_ok=True)
+
     global AUTHENTICATION_CONF, CLIENT_AUTHENTICATION, HTTP_APP_KEY, GITHUB_OAUTH, FEISHU_OAUTH
     # authentication
     AUTHENTICATION_CONF = get_base_config("authentication", {})
