@@ -4,8 +4,8 @@ cat /proc/sys/kernel/core_pattern
 ##/etc/security/limits.conf
 ##*               soft    core            unlimited
 ##*               hard    core            unlimited
-#mkdir -p  /opt/dmback/coredump
-#echo "kernel.core_pattern = /opt/dmback/coredump/core-%e-%s-%u-%g-%p-%t" >> /etc/sysctl.conf
+#mkdir -p  /opt/coredumps
+#echo "kernel.core_pattern = /opt/coredumps/core-%e-%s-%u-%g-%p-%t" >> /etc/sysctl.conf
 #echo "kernel.core_uses_pid = 0" >> /etc/sysctl.conf
 #sysctl -p
 #
