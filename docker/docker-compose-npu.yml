@@ -37,6 +37,7 @@ services:
       - 5679:5679
       - 9382:9382
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -90,6 +91,7 @@ services:
     image: ${RAGFLOW_IMAGE}
     container_name: ragflow-executor-0
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -140,6 +142,7 @@ services:
     image: ${RAGFLOW_IMAGE}
     container_name: ragflow-executor-1
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -190,6 +193,7 @@ services:
     image: ${RAGFLOW_IMAGE}
     container_name: ragflow-executor-2
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -240,6 +244,7 @@ services:
     image: ${RAGFLOW_IMAGE}
     container_name: ragflow-executor-3
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow/logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
