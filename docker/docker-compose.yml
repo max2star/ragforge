@@ -33,6 +33,7 @@ services:
       - 5678:5678
       - 5679:5679
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ../web:/ragflow/web
       - ./certs/ca.crt:/ragflow/ca.crt
@@ -99,6 +100,7 @@ services:
               device_ids: ['0']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -154,6 +156,7 @@ services:
               device_ids: ['1']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -209,6 +212,7 @@ services:
               device_ids: ['2']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -265,6 +269,7 @@ services:
               device_ids: ['3']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -320,6 +325,7 @@ services:
               device_ids: ['4']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -375,6 +381,7 @@ services:
               device_ids: ['5']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -430,6 +437,7 @@ services:
               device_ids: ['6']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
@@ -486,6 +494,7 @@ services:
               device_ids: ['7']
               capabilities: [gpu]
     volumes:
+      - /opt/coredumps:/opt/coredumps
       - /opt/ragflow_logs:/ragflow/logs
       - ./certs/ca.crt:/ragflow/ca.crt
       - ../rag:/ragflow/rag
