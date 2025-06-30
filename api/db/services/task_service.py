@@ -70,7 +70,7 @@ class TaskService(CommonService):
 
     @classmethod
     @DB.connection_context()
-    def get_task(cls, task_id):
+    def get_task(cls, task_id,task_consumer=""):
         """Retrieve detailed task information by task ID.
     
         This method fetches comprehensive task details including associated document,
@@ -119,7 +119,7 @@ class TaskService(CommonService):
         if not docs:
             return None
 
-        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received for doc {docs[0]['doc_id']},this is the {docs[0]['retry_count']} time."
+        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received,current consumer {task_consumer},related doc {docs[0]['doc_id']},this is the {docs[0]['retry_count']} time."
         prog = random.random() / 10.0
         retry_count_max = 5
         if docs[0]["retry_count"] >= retry_count_max:
