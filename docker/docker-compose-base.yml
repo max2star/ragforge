@@ -44,7 +44,7 @@ services:
         soft: -1
         hard: -1
     healthcheck:
-      test: ["CMD-SHELL", "curl http://localhost:9200"]
+      test: ["CMD-SHELL", "curl --insecure --user elastic:$ELASTIC_PASSWORD https://localhost:9200"]
       interval: 10s
       timeout: 10s
       retries: 120
@@ -100,7 +100,8 @@ services:
         soft: -1
         hard: -1
     healthcheck:
-      test: ["CMD-SHELL", "curl http://localhost:9200"]
+      test: ["CMD-SHELL", "curl --insecure --user elastic:$ELASTIC_PASSWORD https://localhost:9200"]
+        #test: ["CMD-SHELL", "curl http://localhost:9200"]
       interval: 10s
       timeout: 10s
       retries: 120
