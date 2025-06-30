@@ -236,7 +236,7 @@ async def collect():
 
     canceled = False
     #Task是从数据库获取的；所以有些在doc或msg中的信息，需要添加进去
-    task = TaskService.get_task(msg["id"])
+    task = TaskService.get_task(msg["id"],msg.get("consumer",""))
     if task:
         _, doc = DocumentService.get_by_id(task["doc_id"])
         canceled = doc.run == TaskStatus.CANCEL.value or doc.progress < 0
@@ -247,6 +247,7 @@ async def collect():
         redis_msg.ack()
         return None, None
     task["task_type"] = msg.get("task_type", "")
+    task["task_executor"] = msg.get("consumer", "")
     task["meta_fields"] = doc.meta_fields
     task["filter_fields"] = doc.filter_fields
     task["doc_name"] = doc.name
