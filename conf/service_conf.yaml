@@ -5,9 +5,9 @@ ragflow:
 mysql:
   name: 'rag_flow'
   user: 'root'
-  password: 'ragflow123'
+  password: 'infini_rag_flow'
   host: 'localhost'
-  port: 3306
+  port: 5455
   max_connections: 100
   stale_timeout: 30
 
@@ -22,13 +22,13 @@ mysql:
 #   stale_timeout: 300
 
 minio:
-  user: 'minioadmin'
-  password: 'minioadmin'
-  host: 'localhost:9000'
+  user: 'rag_flow'
+  password: 'infini_rag_flow'
+  host: 'localhost:19000'
   bucket_encryption: false
 
 es:
-  hosts: 'http://localhost:9200'
+  hosts: 'http://localhost:1200'
   username: 'elastic'
   password: 'changeme'
 
@@ -38,8 +38,9 @@ infinity:
 
 redis:
   db: 1
-  password: 'ragflow123'
-  host: 'localhost:6379'
+  password: 'infini_rag_flow'
+  host: 'localhost'
+  port: 16379
 
 user_default_llm:
   factory: 'OpenAI-API-Compatible'
@@ -61,14 +62,14 @@ user_default_llm:
     image2text_model: 'http://118.193.126.254:3525/v1'
 
 minio_backup:
-  user: 'minioadmin'
-  password: 'minioadmin'
-  host: 'localhost:9000'
+  user: 'rag_flow'
+  password: 'infini_rag_flow'
+  host: 'localhost:19000'
 
 s3:
-  access_key: 'minioadmin'
-  secret_key: 'minioadmin'
-  endpoint_url: 'http://localhost:9000'
+  access_key: 'rag_flow'
+  secret_key: 'infini_rag_flow'
+  endpoint_url: 'http://localhost:19000'
 
 # postgres:
 #   name: 'rag_flow'

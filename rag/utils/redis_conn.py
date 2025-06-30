@@ -71,16 +71,22 @@ class RedisDB:
 
     def __open__(self):
         try:
+            host = self.config.get("host", "localhost")
+            port = int(self.config.get("port", 6379))
+            db = int(self.config.get("db", 1))
+            password = self.config.get("password")
+            
             self.REDIS = redis.StrictRedis(
-                host=self.config["host"].split(":")[0],
-                port=int(self.config.get("host", ":6379").split(":")[1]),
-                db=int(self.config.get("db", 1)),
-                password=self.config.get("password"),
+                host=host,
+                port=port,
+                db=db,
+                password=password,
                 decode_responses=True,
             )
             self.register_scripts()
-        except Exception:
-            logging.warning("Redis can't be connected.")
+        except Exception as e:
+            logging.warning(f"Redis can't be connected: {e}")
+            self.REDIS = None
         return self.REDIS
 
     def health(self):
@@ -344,13 +350,25 @@ class RedisDistributedLock:
         else:
             self.lock_value = str(uuid.uuid4())
         self.timeout = timeout
-        self.lock = Lock(REDIS_CONN.REDIS, lock_key, timeout=timeout, blocking_timeout=blocking_timeout)
+        
+        # 检查Redis连接是否可用
+        if REDIS_CONN.REDIS is None:
+            logging.error("Redis connection is not available, cannot create distributed lock")
+            self.lock = None
+        else:
+            self.lock = Lock(REDIS_CONN.REDIS, lock_key, timeout=timeout, blocking_timeout=blocking_timeout)
 
     def acquire(self):
+        if self.lock is None:
+            logging.error("Cannot acquire lock: Redis connection is not available")
+            return False
         REDIS_CONN.delete_if_equal(self.lock_key, self.lock_value)
         return self.lock.acquire(token=self.lock_value)
 
     async def spin_acquire(self):
+        if self.lock is None:
+            logging.error("Cannot acquire lock: Redis connection is not available")
+            return False
         REDIS_CONN.delete_if_equal(self.lock_key, self.lock_value)
         while True:
             if self.lock.acquire(token=self.lock_value):
@@ -358,4 +376,7 @@ class RedisDistributedLock:
             await trio.sleep(10)
 
     def release(self):
+        if self.lock is None:
+            logging.error("Cannot release lock: Redis connection is not available")
+            return
         REDIS_CONN.delete_if_equal(self.lock_key, self.lock_value)

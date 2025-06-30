@@ -127,7 +127,7 @@ def update_progress():
                 result = True
                 redis_lock.release()
             stop_event.wait(6)
-        except Exception:
+        except Exception as e:
             logging.exception(f"update_progress exception: {e}")
         finally:
             redis_lock.release()
