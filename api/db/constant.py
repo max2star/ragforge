@@ -19,7 +19,8 @@ general=[
     "name": "标题",
     "code": "title",
     "description": "标题",
-    "must_exist": True
+    "must_exist": True,
+    "search_field":True,
   },
   {
     "id": 2,
@@ -33,7 +34,8 @@ general=[
     "name": "作者",
     "code": "authors",
     "description": "作者",
-    "must_exist": True
+    "must_exist": True,
+    "search_field":True,
   },
   {
     "id": 4,
@@ -61,14 +63,16 @@ general=[
     "name": "摘要",
     "code": "",
     "description": "",
-    "must_exist": True
+    "must_exist": True,
+    "search_field":True,
   },
   {
     "id": 8,
     "name": "关键词",
     "code": "keywords",
     "description": "描述信息内容的关键词",
-    "must_exist": True
+    "must_exist": True,
+    "search_field":True,
   },
   {
     "id": 9,
@@ -236,7 +240,7 @@ Book = [
     "code": "title",
     "description": "图书版权页的图书名称",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -276,7 +280,7 @@ Book = [
     "code": "author",
     "description": "作者名",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 8,
@@ -284,7 +288,7 @@ Book = [
     "code": "author_alternative",
     "description": "其他作者名",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 9,
@@ -316,7 +320,6 @@ Book = [
     "code": "subject",
     "description": "描述信息内容的5~8个关键词",
     "must_exist": True,
-    "外键": ""
   },
   {
     "id": 13,
@@ -324,7 +327,7 @@ Book = [
     "code": "abstract",
     "description": "描述图书内容的信息",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   # {
   #   "id": 14,
@@ -549,7 +552,7 @@ Journal = [
     "code": "title",
     "description": "期刊名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -681,7 +684,7 @@ Conference = [
     "code": "title",
     "description": "会议名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -753,7 +756,7 @@ Conference = [
     "code": "introduction",
     "description": "会议的基本介绍",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   # {
   #   "id": 12,
@@ -814,7 +817,7 @@ JournalPaper = [
     "code": "title",
     "description": "主篇名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -846,7 +849,7 @@ JournalPaper = [
     "code": "author",
     "description": "作者名",
     "must_exist": True,
-    "外键": "作者表 identifier"
+    "search_field":True,
   },
   {
     "id": 7,
@@ -854,7 +857,7 @@ JournalPaper = [
     "code": "author_alternative",
     "description": "其他语种作者名",
     "must_exist": False,
-    "外键": "作者表 identifier"
+    "search_field":True,
   },
   {
     "id": 8,
@@ -894,7 +897,7 @@ JournalPaper = [
     "code": "abstract",
     "description": "描述图书内容的信息",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 13,
@@ -1082,7 +1085,7 @@ ConferencePaper = [
     "code": "title",
     "description": "会议论文名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -1098,7 +1101,7 @@ ConferencePaper = [
     "code": "author",
     "description": "会议论文作者",
     "must_exist": True,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 5,
@@ -1106,7 +1109,7 @@ ConferencePaper = [
     "code": "author_alternative",
     "description": "会议论文其他作者",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 6,
@@ -1146,7 +1149,7 @@ ConferencePaper = [
     "code": "abstract",
     "description": "描述图书内容的信息",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 11,
@@ -1310,7 +1313,7 @@ Report = [
     "code": "title",
     "description": "报告题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -1334,7 +1337,7 @@ Report = [
     "code": "author",
     "description": "作者名",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 6,
@@ -1342,7 +1345,7 @@ Report = [
     "code": "author_alternative",
     "description": "其他作者名",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 7,
@@ -1374,7 +1377,7 @@ Report = [
     "code": "abstract",
     "description": "描述报告内容的信息",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   # {
   #   "id": 11,
@@ -1509,7 +1512,8 @@ Report = [
     "name": "关键词",
     "code": "keywords",
     "description": "描述信息内容的关键词",
-    "must_exist": True
+    "must_exist": True,
+    "search_field": True,
   },
 ]
 
@@ -1529,7 +1533,7 @@ Standard = [
     "code": "title",
     "description": "标准主题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -1545,7 +1549,7 @@ Standard = [
     "code": "author",
     "description": "标准编写者",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 5,
@@ -1553,7 +1557,7 @@ Standard = [
     "code": "anthor_alternative",
     "description": "其他编写者",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 6,
@@ -1609,7 +1613,7 @@ Standard = [
     "code": "abstract",
     "description": "描述标准内容的信息",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 13,
@@ -1801,7 +1805,7 @@ Patent = [
     "code": "title",
     "description": "专利的题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -1809,7 +1813,7 @@ Patent = [
     "code": "alternative",
     "description": "专利的其他题名",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 4,
@@ -1833,7 +1837,7 @@ Patent = [
     "code": "abstract",
     "description": "专利的摘要",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 7,
@@ -2029,7 +2033,7 @@ Dissertation  = [
     "code": "title",
     "description": "硕博论文题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -2061,7 +2065,7 @@ Dissertation  = [
     "code": "author",
     "description": "硕博论文的作者",
     "must_exist": True,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 7,
@@ -2069,7 +2073,7 @@ Dissertation  = [
     "code": "author_alternative",
     "description": "其他作者",
     "must_exist": False,
-    "外键": "作者表 identify"
+    "search_field":True,
   },
   {
     "id": 8,
@@ -2149,7 +2153,7 @@ Dissertation  = [
     "code": "abstract",
     "description": "正文摘要",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 18,
@@ -2157,7 +2161,6 @@ Dissertation  = [
     "code": "abstract_alternative",
     "description": "其他语种摘要",
     "must_exist": False,
-    "外键": ""
   },
   # {
   #   "id": 19,
@@ -2242,7 +2245,7 @@ News  = [
     "code": "title",
     "description": "新闻题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 2,
@@ -2274,7 +2277,7 @@ News  = [
     "code": "author",
     "description": "包括记者、通讯员、翻译者等",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 6,
@@ -2414,7 +2417,7 @@ OfficialDocument  =[
     "code": "title",
     "description": "公文题名",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 2,
@@ -2488,14 +2491,14 @@ OfficialDocument  =[
     "must_exist": "",
     "外键": ""
   },
-  # {
-  #   "id": 11,
-  #   "name": "文献类型",
-  #   "code": "literature_type",
-  #   "description": "本条知识的文献类型",
-  #   "must_exist": True,
-  #   "外键": ""
-  # },
+  {
+    "id": 11,
+    "name": "文献类型",
+    "code": "literature_type",
+    "description": "本条知识的文献类型",
+    "must_exist": True,
+    "外键": ""
+  },
   # {
   #   "id": 12,
   #   "name": "知识所有者",
@@ -2562,7 +2565,7 @@ Achievement=[
     "code": "title",
     "description": "项目的最终研究成果的名称",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 2,
@@ -2570,7 +2573,7 @@ Achievement=[
     "code": "author",
     "description": "成果作者,多个作者用英文封号分隔",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -2618,7 +2621,7 @@ Achievement=[
     "code": "abstract",
     "description": "描述成果内容的信息",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 9,
@@ -2750,7 +2753,7 @@ Project = [
     "code": "title",
     "description": "科研项目的项目名称",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 3,
@@ -2766,7 +2769,7 @@ Project = [
     "code": "project_manager",
     "description": "项目负责人",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 5,
@@ -2782,7 +2785,7 @@ Project = [
     "code": "abstract",
     "description": "描述项目内容的信息",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 7,
@@ -2790,7 +2793,6 @@ Project = [
     "code": "abstract_alternative",
     "description": "科研项目的英文摘要",
     "must_exist": False,
-    "外键": ""
   },
   {
     "id": 8,
@@ -2846,7 +2848,7 @@ Project = [
     "code": "project_name",
     "description": "成果对应的项目名称",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 15,
@@ -2938,7 +2940,7 @@ Glossary=  [
     "code": "glossary",
     "description": "术语名称",
     "must_exist": True,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 2,
@@ -2962,7 +2964,7 @@ Glossary=  [
     "code": "creator",
     "description": "术语的创建者",
     "must_exist": False,
-    "外键": ""
+    "search_field":True,
   },
   {
     "id": 5,
