@@ -484,7 +484,7 @@ Book = [
   },
   {
     "id": 34,
-    "name": "印次",
+    "name": "第几次印刷",
     "code": "",
     "description": "印次",
     "must_exist": False,
@@ -498,9 +498,9 @@ Book = [
   },
   {
     "id": 36,
-    "name": "编著",
+    "name": "编著人",
     "code": "",
-    "description": "编著",
+    "description": "编著著作者",
     "must_exist": False,
   },
   {
@@ -515,6 +515,20 @@ Book = [
     "name": "责任编辑",
     "code": "",
     "description": "责任编辑",
+    "must_exist": False,
+  },
+  {
+    "id": 39,
+    "name": "编著机构",
+    "code": "",
+    "description": "编著机构",
+    "must_exist": False,
+  },
+  {
+    "id": 40,
+    "name": "参编",
+    "code": "",
+    "description": "参编人员",
     "must_exist": False,
   },
 ]
