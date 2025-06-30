@@ -467,9 +467,11 @@ def update(tenant_id, dataset_id):
             )
             > 0
         ):
-            return get_error_data_result(
-                message="Duplicated dataset name in updating dataset."
-            )
+            # 允许创建或更新重名知识库
+            logging.info(f"Dataset name `{req['name']}` already exists. But it is be allowed.")
+            # return get_error_data_result(
+            #     message="Duplicated dataset name in updating dataset."
+            # )
     flds = list(req.keys())
     for f in flds:
         if req[f] == "" and f in ["permission", "parser_id", "chunk_method"]:
