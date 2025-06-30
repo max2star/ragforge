@@ -9,8 +9,10 @@ services:
         condition: service_healthy
       redis-ragflow:
         condition: service_healthy
-          #es01:
-          #  condition: service_healthy
+      es01:
+        condition: service_healthy
+      es02:
+        condition: service_healthy
           #minio-ragflow:
           #condition: service_healthy
     image: ${RAGFLOW_IMAGE}
