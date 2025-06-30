@@ -204,7 +204,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
     except DoesNotExist:
         import traceback
         traceback.print_exc()
-        logging.warning(f"set_progress({task_id}) got exception DoesNotExist,stack is {traceback.format_exc()}")
+        logging.error(f"set_progress({task_id}) got exception DoesNotExist,stack is {traceback.format_exc()}")
     except Exception:
         logging.exception(f"set_progress({task_id}), progress: {prog}, progress_msg: {msg}, got exception")
 
@@ -1035,6 +1035,7 @@ async def report_status():
     REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
     redis_lock = RedisDistributedLock("clean_task_executor", lock_value=CONSUMER_NAME, timeout=60)
     while True:
+        logging.info(f"report_status called")
         try:
             now = datetime.now()
             group_info = REDIS_CONN.queue_info(get_svr_queue_name(0), SVR_CONSUMER_GROUP_NAME)
@@ -1069,23 +1070,33 @@ async def report_status():
 
             expired = REDIS_CONN.zcount(CONSUMER_NAME, 0, now.timestamp() - 60 * 30)
             if expired > 0:
+                logging.info(f"report_status called clear expired {expired} for {CONSUMER_NAME}")
                 REDIS_CONN.zpopmin(CONSUMER_NAME, expired)
 
             # clean task executor
+            logging.info(f"report_status called before acquire")
             if redis_lock.acquire():
+                logging.info(f"report_status called after acquire")
                 task_executors = REDIS_CONN.smembers("TASKEXE")
+                logging.info(f"report_status called consumer {task_executors}")
                 for consumer_name in task_executors:
                     if consumer_name == CONSUMER_NAME:
+                        logging.info(f"report_status called consumer name same {consumer_name}")
                         continue
+                    logging.info(f"report_status called consumer name not same {consumer_name}")
                     expired = REDIS_CONN.zcount(
                         consumer_name, now.timestamp() - WORKER_HEARTBEAT_TIMEOUT, now.timestamp() + 10
                     )
                     if expired == 0:
-                        logging.info(f"{consumer_name} expired, removed")
+                        logging.info(f"{consumer_name} expired, to remove")
                         REDIS_CONN.srem("TASKEXE", consumer_name)
                         REDIS_CONN.delete(consumer_name)
-        except Exception:
-            logging.exception("report_status got exception")
+                        logging.info(f"{consumer_name} expired, removed")
+                logging.info(f"report_status handled after acquire")
+            else:
+                logging.info(f"report_status not acquire redis_lock")
+        except Exception as e:
+            logging.error(f"report_status got exception {e}")
         await trio.sleep(30)
 
 
