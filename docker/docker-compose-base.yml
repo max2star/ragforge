@@ -21,6 +21,7 @@ services:
       - node.roles=["master","data","ingest"]
       - discovery.seed_hosts=["es01","es02"]
       - cluster.initial_master_nodes=["es01"]
+      - http.max_initial_line_length="16K"
       - bootstrap.memory_lock=false
       - http.cors.enabled=true
       - http.cors.allow-origin="*"
@@ -76,6 +77,7 @@ services:
       - network.host=0.0.0.0
       - node.roles=["master","data","ingest"]
       - discovery.seed_hosts=["es01","es02"]
+      - http.max_initial_line_length="16K"
       - cluster.initial_master_nodes=["es01"]
       - bootstrap.memory_lock=false
       - http.cors.enabled=true
