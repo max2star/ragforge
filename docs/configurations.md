@@ -3,23 +3,22 @@ sidebar_position: 1
 slug: /configurations
 ---
 
-# Configuration
+# 配置
 
-Configurations for deploying RAGFlow via Docker.
+通过 Docker 部署 RAGFlow 的配置。
 
-## Guidelines
+## 指南
 
-When it comes to system configurations, you will need to manage the following files:
+在系统配置方面，您需要管理以下文件：
 
-- [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env): Contains important environment variables for Docker.
-- [service_conf.yaml.template](https://github.com/infiniflow/ragflow/blob/main/docker/service_conf.yaml.template): Configures the back-end services. It specifies the system-level configuration for RAGFlow and is used by its API server and task executor. Upon container startup, the `service_conf.yaml` file will be generated based on this template file. This process replaces any environment variables within the template, allowing for dynamic configuration tailored to the container's environment.
-- [docker-compose.yml](https://github.com/infiniflow/ragflow/blob/main/docker/docker-compose.yml): The Docker Compose file for starting up the RAGFlow service.
+- [.env](https://github.com/infiniflow/ragflow/blob/main/docker/.env)：包含 Docker 的重要环境变量。
+- [service_conf.yaml.template](https://github.com/infiniflow/ragflow/blob/main/docker/service_conf.yaml.template)：配置后端服务。它指定 RAGFlow 的系统级配置，由其 API 服务器和任务执行器使用。容器启动时，`service_conf.yaml` 文件将基于此模板文件生成。此过程替换模板中的任何环境变量，允许根据容器环境进行动态配置。
+- [docker-compose.yml](https://github.com/infiniflow/ragflow/blob/main/docker/docker-compose.yml)：用于启动 RAGFlow 服务的 Docker Compose 文件。
 
-To update the default HTTP serving port (80), go to [docker-compose.yml](https://github.com/infiniflow/ragflow/blob/main/docker/docker-compose.yml) and change `80:80`
-to `<YOUR_SERVING_PORT>:80`.
+要更新默认 HTTP 服务端口 (80)，请转到 [docker-compose.yml](https://github.com/infiniflow/ragflow/blob/main/docker/docker-compose.yml) 并将 `80:80` 更改为 `<YOUR_SERVING_PORT>:80`。
 
-:::tip NOTE
-Updates to the above configurations require a reboot of all containers to take effect:
+:::tip 注意
+上述配置的更新需要重启所有容器才能生效：
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
