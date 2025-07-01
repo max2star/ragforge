@@ -3,65 +3,65 @@ sidebar_position: 6
 slug: /manage_files
 ---
 
-# Files
+# 文件管理
 
-Knowledge base, hallucination-free chat, and file management are the three pillars of RAGFlow. RAGFlow's file management allows you to upload files individually or in bulk. You can then link an uploaded file to multiple target knowledge bases. This guide showcases some basic usages of the file management feature.
+知识库、无幻觉聊天和文件管理是 RAGFlow 的三大支柱。RAGFlow 的文件管理允许您单独或批量上传文件。然后您可以将上传的文件链接到多个目标知识库。本指南展示了文件管理功能的一些基本用法。
 
-:::info IMPORTANT
-Compared to uploading files directly to various knowledge bases, uploading them to RAGFlow's file management and then linking them to different knowledge bases is *not* an unnecessary step, particularly when you want to delete some parsed files or an entire knowledge base but retain the original files.
+:::info 重要提示
+与直接将文件上传到各种知识库相比，将文件上传到 RAGFlow 的文件管理然后链接到不同的知识库*不是*一个不必要的步骤，特别是当您想要删除一些已解析的文件或整个知识库但保留原始文件时。
 :::
 
-## Create folder
+## 创建文件夹
 
-RAGFlow's file management allows you to establish your file system with nested folder structures. To create a folder in the root directory of RAGFlow: 
+RAGFlow 的文件管理允许您建立具有嵌套文件夹结构的文件系统。要在 RAGFlow 的根目录中创建文件夹： 
 
 ![create new folder](https://github.com/infiniflow/ragflow/assets/93570324/3a37a5f4-43a6-426d-a62a-e5cd2ff7a533)
 
-:::caution NOTE
-Each knowledge base in RAGFlow has a corresponding folder under the **root/.knowledgebase** directory. You are not allowed to create a subfolder within it.
+:::caution 注意
+RAGFlow 中的每个知识库在 **root/.knowledgebase** 目录下都有一个对应的文件夹。您不允许在其中创建子文件夹。
 :::
 
-## Upload file
+## 上传文件
 
-RAGFlow's file management supports file uploads from your local machine, allowing both individual and bulk uploads: 
+RAGFlow 的文件管理支持从本地机器上传文件，允许单独和批量上传： 
 
 ![upload file](https://github.com/infiniflow/ragflow/assets/93570324/5d7ded14-ce2b-4703-8567-9356a978f45c)
 
 ![bulk upload](https://github.com/infiniflow/ragflow/assets/93570324/def0db55-824c-4236-b809-a98d8c8674e3)
 
-## Preview file
+## 预览文件
 
-RAGFlow's file management supports previewing files in the following formats:
+RAGFlow 的文件管理支持预览以下格式的文件：
 
-- Documents (PDF, DOCS)
-- Tables (XLSX)
-- Pictures (JPEG, JPG, PNG, TIF, GIF)
+- 文档 (PDF, DOCS)
+- 表格 (XLSX)
+- 图片 (JPEG, JPG, PNG, TIF, GIF)
 
 ![preview](https://github.com/infiniflow/ragflow/assets/93570324/2e931362-8bbf-482c-ac86-b68b09d331bc)
 
-## Link file to knowledge bases
+## 将文件链接到知识库
 
-RAGFlow's file management allows you to *link* an uploaded file to multiple knowledge bases, creating a file reference in each target knowledge base. Therefore, deleting a file in your file management will AUTOMATICALLY REMOVE all related file references across the knowledge bases.
+RAGFlow 的文件管理允许您将上传的文件*链接*到多个知识库，在每个目标知识库中创建文件引用。因此，删除文件管理中的文件将**自动删除**所有知识库中的相关文件引用。
 
 ![link knowledgebase](https://github.com/infiniflow/ragflow/assets/93570324/6c6b8db4-3269-4e35-9434-6089887e3e3f)
 
-You can link your file to one knowledge base or multiple knowledge bases at one time: 
+您可以一次将文件链接到一个知识库或多个知识库： 
 
 ![link multiple kb](https://github.com/infiniflow/ragflow/assets/93570324/6c508803-fb1f-435d-b688-683066fd7fff)
 
-## Move file to a specific folder
+## 将文件移动到特定文件夹
 
 ![move files](https://github.com/user-attachments/assets/3a2db469-6811-4ea0-be80-403b61ffe257)
 
-## Search files or folders
+## 搜索文件或文件夹
 
-**File Management** only supports file name and folder name filtering in the current directory (files or folders in the child directory will not be retrieved).
+**文件管理**仅支持当前目录中的文件名和文件夹名过滤（子目录中的文件或文件夹不会被检索）。
 
 ![search file](https://github.com/infiniflow/ragflow/assets/93570324/77ffc2e5-bd80-4ed1-841f-068e664efffe)
 
-## Rename file or folder
+## 重命名文件或文件夹
 
-RAGFlow's file management allows you to rename a file or folder:
+RAGFlow 的文件管理允许您重命名文件或文件夹：
 
 ![rename_file](https://github.com/infiniflow/ragflow/assets/93570324/5abb0704-d9e9-4b43-9ed4-5750ccee011f)
 

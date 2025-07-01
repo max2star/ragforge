@@ -3,43 +3,43 @@ sidebar_position: 0
 slug: /
 ---
 
-# Get started
+# 快速开始
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import APITable from '@site/src/components/APITable';
 
-RAGFlow is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document understanding. When integrated with LLMs, it is capable of providing truthful question-answering capabilities, backed by well-founded citations from various complex formatted data.
+RAGFlow 是一个基于深度文档理解的开源 RAG（检索增强生成）引擎。当与 LLM 集成时，它能够提供基于各种复杂格式数据的有理有据的问答能力。
 
-This quick start guide describes a general process from:
+本快速开始指南描述了从以下步骤的一般流程：
 
-- Starting up a local RAGFlow server, 
-- Creating a knowledge base, 
-- Intervening with file parsing, to 
-- Establishing an AI chat based on your datasets.
+- 启动本地 RAGFlow 服务器
+- 创建知识库
+- 干预文件解析
+- 基于您的数据集建立 AI 聊天
 
-:::danger IMPORTANT
-We officially support x86 CPU and Nvidia GPU, and this document offers instructions on deploying RAGFlow using Docker on x86 platforms. While we also test RAGFlow on ARM64 platforms, we do not maintain RAGFlow Docker images for ARM.
+:::danger 重要提示
+我们官方支持 x86 CPU 和 Nvidia GPU，本文档提供了在 x86 平台上使用 Docker 部署 RAGFlow 的说明。虽然我们也在 ARM64 平台上测试 RAGFlow，但我们不维护 ARM 的 RAGFlow Docker 镜像。
 
-If you are on an ARM platform, follow [this guide](./develop/build_docker_image.mdx) to build a RAGFlow Docker image.
+如果您在 ARM 平台上，请按照[此指南](./develop/build_docker_image.mdx)构建 RAGFlow Docker 镜像。
 :::
 
-## Prerequisites
+## 前置要求
 
-- CPU &ge; 4 cores (x86);
-- RAM &ge; 16 GB;
-- Disk &ge; 50 GB;
-- Docker &ge; 24.0.0 & Docker Compose &ge; v2.26.1.
+- CPU ≥ 4 核（x86）
+- RAM ≥ 16 GB
+- 磁盘 ≥ 50 GB
+- Docker ≥ 24.0.0 & Docker Compose ≥ v2.26.1
 
-## Start up the server
+## 启动服务器
 
-This section provides instructions on setting up the RAGFlow server on Linux. If you are on a different operating system, no worries. Most steps are alike.
+本节提供在 Linux 上设置 RAGFlow 服务器的说明。如果您使用不同的操作系统，不用担心。大多数步骤都是相似的。
 
 <details>
-  <summary>1. Ensure <code>vm.max_map_count</code> &ge; 262144:</summary>
+  <summary>1. 确保 <code>vm.max_map_count</code> ≥ 262144：</summary>
 
-   `vm.max_map_count`. This value sets the maximum number of memory map areas a process may have. Its default value is 65530. While most applications require fewer than a thousand maps, reducing this value can result in abnormal behaviors, and the system will throw out-of-memory errors when a process reaches the limitation.
+   `vm.max_map_count`。此值设置进程可能拥有的内存映射区域的最大数量。其默认值为 65530。虽然大多数应用程序需要少于一千个映射，但减少此值可能导致异常行为，当进程达到限制时，系统将抛出内存不足错误。
 
-   RAGFlow v0.18.0 uses Elasticsearch or [Infinity](https://github.com/infiniflow/infinity) for multiple recall. Setting the value of `vm.max_map_count` correctly is crucial to the proper functioning of the Elasticsearch component.
+   RAGFlow v0.18.0 使用 Elasticsearch 或 [Infinity](https://github.com/infiniflow/infinity) 进行多重召回。正确设置 `vm.max_map_count` 的值对于 Elasticsearch 组件的正常运行至关重要。
 
 <Tabs
   defaultValue="linux"
@@ -49,54 +49,54 @@ This section provides instructions on setting up the RAGFlow server on Linux. If
     {label: 'Windows', value: 'windows'},
   ]}>
   <TabItem value="linux">
-   1.1. Check the value of `vm.max_map_count`:
+   1.1. 检查 `vm.max_map_count` 的值：
 
    ```bash
    $ sysctl vm.max_map_count
    ```
 
-   1.2. Reset `vm.max_map_count` to a value at least 262144 if it is not.
+   1.2. 如果不是，将 `vm.max_map_count` 重置为至少 262144 的值：
 
    ```bash
    $ sudo sysctl -w vm.max_map_count=262144
    ```
 
-   :::caution WARNING
-   This change will be reset after a system reboot. If you forget to update the value the next time you start up the server, you may get a `Can't connect to ES cluster` exception.
+   :::caution 警告
+   此更改将在系统重启后重置。如果您下次启动服务器时忘记更新该值，可能会遇到 `Can't connect to ES cluster` 异常。
    :::
    
-   1.3. To ensure your change remains permanent, add or update the `vm.max_map_count` value in **/etc/sysctl.conf** accordingly:
+   1.3. 为确保您的更改保持永久性，请在 **/etc/sysctl.conf** 中相应地添加或更新 `vm.max_map_count` 值：
 
    ```bash
    vm.max_map_count=262144
    ```
   </TabItem>
   <TabItem value="macos">
-   If you are on macOS with Docker Desktop, run the following command to update `vm.max_map_count`:
+   如果您在 macOS 上使用 Docker Desktop，请运行以下命令更新 `vm.max_map_count`：
 
    ```bash
    docker run --rm --privileged --pid=host alpine sysctl -w vm.max_map_count=262144
    ```
 
-   :::caution WARNING
-   This change will be reset after a system reboot. If you forget to update the value the next time you start up the server, you may get a `Can't connect to ES cluster` exception.
+   :::caution 警告
+   此更改将在系统重启后重置。如果您下次启动服务器时忘记更新该值，可能会遇到 `Can't connect to ES cluster` 异常。
    :::
 
-   To make your change persistent, create a file with proper settings:
+   要使您的更改持久化，请创建具有适当设置的文件：
 
-   1.1. Create a file:
+   1.1. 创建文件：
 
    ```shell
    sudo nano /Library/LaunchDaemons/com.user.vmmaxmap.plist
    ```
 
-   1.2. Open the file:
+   1.2. 打开文件：
 
    ```shell
    sudo launchctl load /Library/LaunchDaemons/com.user.vmmaxmap.plist
    ```
 
-   1.3. Add settings:
+   1.3. 添加设置：
 
    ```xml
    <?xml version="1.0" encoding="UTF-8"?>
@@ -117,47 +117,47 @@ This section provides instructions on setting up the RAGFlow server on Linux. If
    </plist>
    ```
 
-   1.4. After saving the file, load the new daemon:
+   1.4. 保存文件后，加载新的守护进程：
 
    ```shell
    sudo launchctl load /Library/LaunchDaemons/com.user.vmmaxmap.plist
    ```
 
    :::note
-   If the above steps do not work, consider using [this workaround](https://github.com/docker/for-mac/issues/7047#issuecomment-1791912053), which employs a container and does not require manual editing of the macOS settings.
+   如果上述步骤不起作用，请考虑使用[此解决方法](https://github.com/docker/for-mac/issues/7047#issuecomment-1791912053)，它使用容器且不需要手动编辑 macOS 设置。
    :::
 
   </TabItem>
   <TabItem value="windows">
 
-   #### If you are on Windows with Docker Desktop, then you *must* use docker-machine to set `vm.max_map_count`:
+   #### 如果您在 Windows 上使用 Docker Desktop，那么您*必须*使用 docker-machine 设置 `vm.max_map_count`：
 
    ```bash
    $ docker-machine ssh
    $ sudo sysctl -w vm.max_map_count=262144
    ```
-   #### If you are on Windows with Docker Desktop WSL 2 backend, then use docker-desktop to set `vm.max_map_count`:
+   #### 如果您在 Windows 上使用 Docker Desktop WSL 2 后端，那么使用 docker-desktop 设置 `vm.max_map_count`：
 
-   1.1. Run the following in WSL: 
+   1.1. 在 WSL 中运行以下命令：
    ```bash
    $ wsl -d docker-desktop -u root
    $ sysctl -w vm.max_map_count=262144
    ```
 
-   :::caution WARNING
-   This change will be reset after you restart Docker. If you forget to update the value the next time you start up the server, you may get a `Can't connect to ES cluster` exception.
+   :::caution 警告
+   此更改将在您重启 Docker 后重置。如果您下次启动服务器时忘记更新该值，可能会遇到 `Can't connect to ES cluster` 异常。
    :::
 
-   1.2. If you do not wish to have to run those commands each time you restart Docker, you can update your `%USERPROFILE%.wslconfig` as follows to keep your change permanent and globally for all WSL distributions:
+   1.2. 如果您不希望每次重启 Docker 时都运行这些命令，可以按如下方式更新您的 `%USERPROFILE%.wslconfig` 以使您的更改永久化并全局适用于所有 WSL 发行版：
 
    ```bash
    [wsl2]
    kernelCommandLine = "sysctl.vm.max_map_count=262144"
    ```
-   *This causes all WSL2 virtual machines to have that setting assigned when they start.*
+   *这会导致所有 WSL2 虚拟机在启动时都分配该设置。*
 
    :::note
-   If you are on Windows 11 or Windows 10 version 22H2, and have installed the Microsoft Store version of WSL, you can also update the **/etc/sysctl.conf** within the docker-desktop WSL distribution to keep your change permanent:
+   如果您在 Windows 11 或 Windows 10 版本 22H2 上，并且安装了 Microsoft Store 版本的 WSL，您也可以在 docker-desktop WSL 发行版中更新 **/etc/sysctl.conf** 以使您的更改永久化：
 
    ```bash
    $ wsl -d docker-desktop -u root
@@ -165,7 +165,7 @@ This section provides instructions on setting up the RAGFlow server on Linux. If
    ```
 
    ```bash
-   # Append a line, which reads: 
+   # 添加一行，内容为：
    vm.max_map_count = 262144
    ```
    :::
@@ -174,7 +174,7 @@ This section provides instructions on setting up the RAGFlow server on Linux. If
 
 </details>
 
-2. Clone the repo:
+2. 克隆仓库：
 
    ```bash
    $ git clone https://github.com/infiniflow/ragflow.git
@@ -182,17 +182,17 @@ This section provides instructions on setting up the RAGFlow server on Linux. If
    $ git checkout -f v0.18.0
    ```
 
-3. Use the pre-built Docker images and start up the server:
+3. 使用预构建的 Docker 镜像并启动服务器：
 
-   :::tip NOTE
-   The command below downloads the `v0.18.0-slim` edition of the RAGFlow Docker image. Refer to the following table for descriptions of different RAGFlow editions. To download a RAGFlow edition different from `v0.18.0-slim`, update the `RAGFLOW_IMAGE` variable accordingly in **docker/.env** before using `docker compose` to start the server. For example: set `RAGFLOW_IMAGE=infiniflow/ragflow:v0.18.0` for the full edition `v0.18.0`.
+   :::tip 注意
+   下面的命令下载 RAGFlow Docker 镜像的 `v0.18.0-slim` 版本。请参考下表了解不同 RAGFlow 版本的描述。要下载与 `v0.18.0-slim` 不同的 RAGFlow 版本，请在使用 `docker compose` 启动服务器之前在 **docker/.env** 中相应地更新 `RAGFLOW_IMAGE` 变量。例如：为完整版本 `v0.18.0` 设置 `RAGFLOW_IMAGE=infiniflow/ragflow:v0.18.0`。
    :::
 
    ```bash
-   # Use CPU for embedding and DeepDoc tasks:
+   # 使用 CPU 进行嵌入和 DeepDoc 任务：
    $ docker compose -f docker-compose.yml up -d
 
-   # To use GPU to accelerate embedding and DeepDoc tasks:
+   # 使用 GPU 加速嵌入和 DeepDoc 任务：
    # docker compose -f docker-compose-gpu.yml up -d
    ```
 
