@@ -104,7 +104,7 @@ def create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Llama-70B",
     print(f"生成文本长度: {actual_length} 字符")
     
     # 构建 JSON 结构
-    if model_name == "DeepSeek-R1-Distill-Llama-70B":
+    if model_name.lower() == "DeepSeek-R1-Distill-Llama-70B".lower() or (model_name.lower() == "DeepSeek-70B".lower()):
         json_data = {
             "model": str(model_name),
             "messages": [{
@@ -124,7 +124,7 @@ def create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Llama-70B",
             "top_p": 0.95,
             "stream":False 
         }
-    if model_name == "DeepSeek-R1-Distill-Qwen-32B":
+    if model_name.lower() == "DeepSeek-R1-Distill-Qwen-32B".lower():
         json_data = {
             "model": str(model_name),
             "messages": [
@@ -145,6 +145,9 @@ def create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Llama-70B",
             "skip_special_tokens": True,
             "ignore_eos": False
         }
+
+
+
     # 输出到 JSON 文件（UTF-8 编码）
     with open(filename, "w", encoding="utf-8") as f:
         # 注意：ensure_ascii=False 确保中文字符不被转义
@@ -164,5 +167,8 @@ def create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Llama-70B",
         print(f"JSON 文件验证失败: {e}")
 
 if __name__ == "__main__":
-    create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Llama-70B",filename='deepseek_70b_llm.json',text_length=16380)
-    create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Qwen-32B",filename='deepseek_32b_llm.json',text_length=16380)
+    model_70b = "DeepSeek-R1-Distill-Llama-70B"
+    model_70b = "deepseek-r1-distill-llama-70b"
+    #model_70b = "deepseek-70b"
+    create_json_with_chinese_content(model_name=model_70b,filename='deepseek_70b_llm.json',text_length=65535)#2*16380)
+    create_json_with_chinese_content(model_name="DeepSeek-R1-Distill-Qwen-32B",filename='deepseek_32b_llm.json',text_length=65536)#2*16380)
