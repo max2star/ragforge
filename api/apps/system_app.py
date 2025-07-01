@@ -159,6 +159,7 @@ def status():
     task_executor_heartbeats = {}
     try:
         task_executors = REDIS_CONN.smembers("TASKEXE")
+        logging.info(f"当前的任务执行器有 {task_executors}")
         now = datetime.now().timestamp()
         for task_executor_id in task_executors:
             heartbeats = REDIS_CONN.zrangebyscore(task_executor_id, now - 60*30, now)
