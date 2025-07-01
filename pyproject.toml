@@ -7,7 +7,7 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.12"
 dependencies = [
     "datrie==0.8.2",
     "akshare>=1.15.78,<2.0.0",
@@ -115,7 +115,7 @@ dependencies = [
     "werkzeug==3.0.6",
     "wikipedia==1.4.0",
     "word2number==1.1",
-    "xgboost==1.5.0",
+    "xgboost==1.6.2",
     "xpinyin==0.7.6",
     "yfinance==0.1.96",
     "zhipuai==2.0.1",
