@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 import pathlib
 import datetime
 
@@ -23,7 +24,7 @@ from api.db.services.llm_service import TenantLLMService, LLMBundle
 from api import settings
 import xxhash
 import re
-from api.utils.api_utils import token_required
+from api.utils.api_utils import token_required, get_json_result
 from api.db.db_models import Task
 from api.db.services.task_service import TaskService, queue_tasks
 from api.utils.api_utils import server_error_response
@@ -165,9 +166,10 @@ def upload(dataset_id, tenant_id):
             message=f'No authorization for kb_id {dataset_id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
-
+    logging.info(f"/datasets/<{dataset_id}>/documents upload kb {kb}, file_objs {file_objs}, tenant_id {tenant_id}")
     err, files = FileService.upload_document(kb, file_objs, tenant_id)
     if err:
+        logging.error(f"Error uploading files: {err}")
         return get_result(message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
     # rename key's name
     renamed_doc_list = []
@@ -245,7 +247,7 @@ def update_doc(tenant_id, dataset_id, document_id):
 
     #控制权限
     if not DocumentService.accessible(document_id, tenant_id):
-        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {document_id}.")
 
     doc = doc[0]
     if "chunk_count" in req:
@@ -404,7 +406,7 @@ def download(tenant_id, dataset_id, document_id):
         )
 
     if not DocumentService.accessible(document_id, tenant_id):
-        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {document_id}.")
 
     # The process of downloading
     doc_id, doc_location = File2DocumentService.get_storage_address(
@@ -511,6 +513,7 @@ def list_docs(dataset_id, tenant_id):
                     type: string
                     description: Processing status.
     """
+    kb_id = dataset_id
     if not KnowledgebaseService.accessible(kb_id=dataset_id, user_id=tenant_id):
         return get_error_data_result(message=f"You don't own the dataset {dataset_id}. ")
     id = request.args.get("id")
@@ -519,14 +522,14 @@ def list_docs(dataset_id, tenant_id):
         d_ = DocumentService.query(id=id, kb_id=dataset_id)
         if not d_:
             return get_error_data_result(message=f"Kb {kb_id} don't own the document {id}.")
-        if not DocumentService.accessible(d.id, tenant_id):
-            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
+        if not DocumentService.accessible(d_.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d_.id}.")
     if name:
         d_ = DocumentService.query(name=name, kb_id=dataset_id)
         if not d_:
             return get_error_data_result(message=f"Kb {kb_id} don't own the document {name}.")
-        if not DocumentService.accessible(d.id, tenant_id):
-            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
+        if not DocumentService.accessible(d_.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d_.id}.")
 
     page = int(request.args.get("page", 1))
     keywords = request.args.get("keywords", "")
@@ -1102,7 +1105,7 @@ def add_chunk(tenant_id, dataset_id, document_id):
     doc = DocumentService.query(id=document_id, kb_id=dataset_id)
     if not doc:
         return get_error_data_result(
-            message=f"Kb {kb_id} don't own the document {document_id}."
+            message=f"Kb {dataset_id} don't own the document {document_id}."
         )
 
     if not DocumentService.accessible(document_id, tenant_id):
@@ -1460,6 +1463,7 @@ def retrieval_test(tenant_id):
     for kb in kbs:
         logging.info(f"retrieval sdk kb=={kb} kb.embd_id=={kb.embd_id}\n")
     if len(embd_nms) != 1:
+        size = len(embd_nms)
         logging.error(f"retrieval sdk {top},page {page},size {size},embedding not same.")
         return get_result(
             message=f'Datasets {kb_ids} use different embedding models {embd_nms}."',
@@ -1525,7 +1529,7 @@ def retrieval_test(tenant_id):
         if req.get("keyword", False):
             chat_mdl = LLMBundle(kb.tenant_id, LLMType.CHAT)
             question += keyword_extraction(chat_mdl, question)
-
+        logging.info(f"retrieval sdk question {question}")
         ranks = settings.retrievaler.retrieval(
             question,
             embd_mdl,
@@ -1577,8 +1581,8 @@ def retrieval_test(tenant_id):
         if len(ranks["chunks"])>top:
             ranks["chunks"] = ranks["chunks"][:top]
         logging.info(f"retrieval sdk {top},page {page},size {size},result length {len(ranks['chunks'])}")
-        if len(ranks["chunks"])>0:
-            logging.info(f"retrieval sdk {top},page {page},size {size},result one examples {ranks['chunks'][:1]}")
+        if len(ranks["chunks"])>5:
+            logging.info(f"retrieval sdk {top},page {page},size {size},result 5 examples {ranks['chunks'][:5]}")
         return get_result(data=ranks)
     except Exception as e:
         logging.error(f"retrieval exeception {e}")
