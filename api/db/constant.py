@@ -3164,7 +3164,7 @@ keyvalues_mapping = {
 def get_all_search_fields():
     search_fields = []
     for key, value in keyvalues_mapping.items():
-        print(f"Key: {key} -> Value: {value}")
+        #print(f"Key: {key} -> Value: {value}")
         for v in value:
             if v.get('search_field',False):
                 search_fields.append(v['name'])
