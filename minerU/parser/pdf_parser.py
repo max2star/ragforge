@@ -533,7 +533,7 @@ class MinerUPdf:
                 if chunk_data["type"] == "text" or chunk_data["type"] == "equation":
                     content = chunk_data["text"]
                     # 过滤 markdown 特殊符号
-                    content = re.sub(r"[!#\\$/]", "", content)
+                    #content = re.sub(r"[!#\\$/]", "", content)
                     chunk_object['text'] = content
                     sections.append(chunk_object)
                 elif chunk_data["type"] == "table":
