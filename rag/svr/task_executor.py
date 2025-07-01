@@ -1079,8 +1079,10 @@ async def report_status():
                 logging.info(f"report_status called after acquire")
                 task_executors = REDIS_CONN.smembers("TASKEXE")
                 logging.info(f"report_status called consumer {task_executors}")
+                has_self = False
                 for consumer_name in task_executors:
                     if consumer_name == CONSUMER_NAME:
+                        has_self=True
                         logging.info(f"report_status called consumer name same {consumer_name}")
                         continue
                     logging.info(f"report_status called consumer name not same {consumer_name}")
@@ -1092,12 +1094,90 @@ async def report_status():
                         REDIS_CONN.srem("TASKEXE", consumer_name)
                         REDIS_CONN.delete(consumer_name)
                         logging.info(f"{consumer_name} expired, removed")
+                if not has_self:
+                    logging.info(f"{consumer_name} add self")
+                    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
                 logging.info(f"report_status handled after acquire")
             else:
                 logging.info(f"report_status not acquire redis_lock")
         except Exception as e:
             logging.error(f"report_status got exception {e}")
         await trio.sleep(30)
+
+
+def report_status_thread():
+    global CONSUMER_NAME, BOOT_AT, PENDING_TASKS, LAG_TASKS, DONE_TASKS, FAILED_TASKS
+    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
+    redis_lock = RedisDistributedLock("clean_task_executor", lock_value=CONSUMER_NAME, timeout=60)
+    while not stop_event.is_set():
+        logging.debug(f"report_status called")
+        try:
+            now = datetime.now()
+            group_info = REDIS_CONN.queue_info(get_svr_queue_name(0), SVR_CONSUMER_GROUP_NAME)
+            if group_info is not None:
+                PENDING_TASKS = int(group_info.get("pending", 0))
+                LAG_TASKS = int(group_info.get("lag", 0))
+
+            current = copy.deepcopy(CURRENT_TASKS)
+            heartbeat = json.dumps({
+                "name": CONSUMER_NAME,
+                "now": now.astimezone().isoformat(timespec="milliseconds"),
+                "boot_at": BOOT_AT,
+                "pending": PENDING_TASKS,
+                "lag": LAG_TASKS,
+                "done": DONE_TASKS,
+                "failed": FAILED_TASKS,
+                "current": current,
+            })
+            heartbeat_ = json.dumps({
+                "name": CONSUMER_NAME,
+                "now": now.astimezone().isoformat(timespec="milliseconds"),
+                "boot_at": BOOT_AT,
+                "pending": PENDING_TASKS,
+                "lag": LAG_TASKS,
+                "done": DONE_TASKS,
+                "failed": FAILED_TASKS,
+            })
+
+            REDIS_CONN.zadd(CONSUMER_NAME, heartbeat, now.timestamp())
+            logging.debug(f"{CONSUMER_NAME} reported heartbeat: {heartbeat}")
+            logging.info(f"{CONSUMER_NAME} reported heartbeat: {heartbeat_}")
+
+            expired = REDIS_CONN.zcount(CONSUMER_NAME, 0, now.timestamp() - 60 * 30)
+            if expired > 0:
+                logging.info(f"report_status called clear expired {expired} for {CONSUMER_NAME}")
+                REDIS_CONN.zpopmin(CONSUMER_NAME, expired)
+
+            # clean task executor
+            logging.info(f"report_status called before acquire")
+            if redis_lock.acquire():
+                logging.debug(f"report_status called after acquire")
+                task_executors = REDIS_CONN.smembers("TASKEXE")
+                logging.debug(f"report_status called consumer {task_executors}")
+                has_self = False
+                for consumer_name in task_executors:
+                    if consumer_name == CONSUMER_NAME:
+                        has_self=True
+                        logging.info(f"report_status called consumer name same {consumer_name}")
+                        continue
+                    logging.info(f"report_status called consumer name not same {consumer_name}")
+                    expired = REDIS_CONN.zcount(
+                        consumer_name, now.timestamp() - WORKER_HEARTBEAT_TIMEOUT, now.timestamp() + 10
+                    )
+                    if expired == 0:
+                        logging.info(f"{consumer_name} expired, to remove")
+                        REDIS_CONN.srem("TASKEXE", consumer_name)
+                        REDIS_CONN.delete(consumer_name)
+                        logging.info(f"{consumer_name} expired, removed")
+                if not has_self:
+                    logging.info(f"{consumer_name} add self")
+                    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
+                logging.debug(f"report_status handled after acquire")
+            else:
+                logging.info(f"report_status not acquire redis_lock")
+            stop_event.wait(30)
+        except Exception as e:
+            logging.error(f"report_status got exception {e}")
 
 
 def recover_pending_tasks():
@@ -1157,9 +1237,10 @@ async def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     threading.Thread(name="RecoverPendingTask", target=recover_pending_tasks).start()
-
+    threading.Thread(name="ReportStatus", target=report_status_thread).start()
+    
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(report_status)
+        #nursery.start_soon(report_status)
         while not stop_event.is_set():
             async with task_limiter:
                 logging.info(f"task_limiter {task_limiter}")
