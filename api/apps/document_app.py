@@ -646,6 +646,56 @@ def get(doc_id):
     except Exception as e:
         return server_error_response(e)
 
+@manager.route('/get_pdf/<doc_id>', methods=['GET'])  # noqa: F821
+#@login_required
+def get_pdf(doc_id):
+    try:
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.info(f"get for {doc_id},not found")
+            return get_data_error_result(message="Document not found!")
+
+        #if not DocumentService.accessible(doc_id, current_user.id):
+        #    return get_json_result(
+        #        data=False,
+        #        message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
+        #        code=settings.RetCode.AUTHENTICATION_ERROR
+        #    )
+
+        b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
+        response = flask.make_response(STORAGE_IMPL.get(b, n))
+
+        #对于MinerU解析的，如果原文件不是PDF，则找到对应转化后的PDF返回
+        layout_recognize = None
+        parser_config = doc.parser_config
+        logging.info(f"get doc for {doc_id} parser_config is {parser_config}.")
+        if parser_config:
+            layout_recognize = parser_config.get('layout_recognize',None)
+        if layout_recognize and layout_recognize in ['MinerU','minerU']:
+            if doc.type != FileType.PDF.value:
+                logging.info(f"get doc for {doc_id} which is not pdf but will return transferred pdf.")
+                name_without_suff = n.split(".")[0]
+                name_for_file = f'minerU/{doc_id}'+'/'+name_without_suff+'.pdf'
+                response = flask.make_response(STORAGE_IMPL.get(b, name_for_file))
+            response.headers.set(
+                'Content-Type',
+                'application/%s' %
+                'pdf')
+        else:
+            ext = re.search(r"\.([^.]+)$", doc.name)
+            if ext:
+                logging.info(f"get for {doc_id},type {ext.group(1)}")
+                if doc.type == FileType.VISUAL.value:
+                    response.headers.set('Content-Type', 'image/%s' % ext.group(1))
+                else:
+                    response.headers.set(
+                        'Content-Type',
+                        'application/%s' %
+                        ext.group(1))
+        return response
+    except Exception as e:
+        return server_error_response(e)
+
 import markdown
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name

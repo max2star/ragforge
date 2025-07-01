@@ -528,7 +528,7 @@ class DocumentService(CommonService):
             try:
                 tsks = Task.query(doc_id=d["id"], order_by=Task.create_time)
                 if not tsks:
-                    logging.warning(f"update_progress not find any task for doc {d['id']}")
+                    logging.warning(f"update_progress not find any task for doc id {d['id']},kb_id {d.get('kb_id',None)},name {d.get('name',None)}")
                     continue
                 msg = []
                 prg = 0
