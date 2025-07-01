@@ -1529,7 +1529,7 @@ def retrieval_test(tenant_id):
         if req.get("keyword", False):
             chat_mdl = LLMBundle(kb.tenant_id, LLMType.CHAT)
             question += keyword_extraction(chat_mdl, question)
-
+        logging.info(f"retrieval sdk question {question}")
         ranks = settings.retrievaler.retrieval(
             question,
             embd_mdl,
@@ -1581,8 +1581,8 @@ def retrieval_test(tenant_id):
         if len(ranks["chunks"])>top:
             ranks["chunks"] = ranks["chunks"][:top]
         logging.info(f"retrieval sdk {top},page {page},size {size},result length {len(ranks['chunks'])}")
-        if len(ranks["chunks"])>0:
-            logging.info(f"retrieval sdk {top},page {page},size {size},result one examples {ranks['chunks'][:1]}")
+        if len(ranks["chunks"])>5:
+            logging.info(f"retrieval sdk {top},page {page},size {size},result 5 examples {ranks['chunks'][:5]}")
         return get_result(data=ranks)
     except Exception as e:
         logging.error(f"retrieval exeception {e}")
