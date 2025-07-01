@@ -13,6 +13,8 @@ services:
       - ${ES_PORT}:9200
     env_file: .env
     environment:
+      #默认逻辑是按照内存最大限制取1/2，并且不超过32G；大于32G需要覆盖
+      - "ES_JAVA_OPTS=-Xms64g -Xmx64g"
       - node.name=es01
       - cluster.name=docker-cluster
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -22,10 +24,13 @@ services:
       - discovery.seed_hosts=["es01","es02"]
       - cluster.initial_master_nodes=["es01"]
       - http.max_initial_line_length="16K"
+      - indices.query.bool.max_clause_count=10240
+        #8.x以上这些配置已经是根据内存自动计算了,需要提升内存，否则无法真正生效
+        #- indices.query.bool.max_clause_count="20000"
+        #- index.max_clause_count="20000"
       - bootstrap.memory_lock=false
       - http.cors.enabled=true
       - http.cors.allow-origin="*"
-      - indices.query.bool.max_clause_count=10240
       - search.max_buckets=50000000
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
@@ -71,6 +76,8 @@ services:
       - ${ES_PORT_2}:9200
     env_file: .env
     environment:
+      #默认逻辑是按照内存最大限制取1/2，并且不超过32G；大于32G需要覆盖
+      - "ES_JAVA_OPTS=-Xms64g -Xmx64g"
       - node.name=es02
       - cluster.name=docker-cluster
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
@@ -78,11 +85,16 @@ services:
       - node.roles=["master","data","ingest"]
       - discovery.seed_hosts=["es01","es02"]
       - http.max_initial_line_length="16K"
+      - search.max_bool_clause_count="20000"
+      - indices.query.bool.max_clause_count=10240
+        #8.x以上这些配置已经是根据内存自动计算了,需要提升内存，否则无法真正生效
+        #- indices.query.bool.max_clause_count="20000"
+        #- index.max_clause_count="20000"
+        #- indices.query.bool.max_clause_count=10240
       - cluster.initial_master_nodes=["es01"]
       - bootstrap.memory_lock=false
       - http.cors.enabled=true
       - http.cors.allow-origin="*"
-      - indices.query.bool.max_clause_count=10240
       - search.max_buckets=50000000
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
