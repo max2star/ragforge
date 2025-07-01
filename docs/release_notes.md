@@ -3,15 +3,15 @@ sidebar_position: 2
 slug: /release_notes
 ---
 
-# Releases
+# 发布说明
 
-Key features, improvements and bug fixes in the latest releases.
+最新版本中的关键功能、改进和错误修复。
 
 ## v0.18.0
 
-Released on April 23, 2025.
+2025年4月23日发布。
 
-### New features
+### 新功能
 
 - MCP server: enables access to RAGFlow's knowledge bases via MCP.
 - DeepDoc supports adopting VLM model as a processing pipeline during document layout recognition, enabling in-depth analysis of images in PDFs.
