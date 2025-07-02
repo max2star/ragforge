@@ -1,2 +1,0 @@
-#npm install -g npm后可能要重新登录下，否则版本还是之前的
-apt install npm;npm install -g npm;npm i -g n;n v20.19.2 ; npm install && npm run build
