@@ -8,8 +8,6 @@ import {
   useUploadInterfaceFile,
 } from '@/hooks/system-hooks';
 import {
-  DatabaseOutlined,
-  HddOutlined,
   PictureOutlined,
   PlusOutlined,
   SafetyCertificateOutlined,
@@ -102,138 +100,6 @@ const ModelSettings = () => {
         )}
       />
     </Spin>
-  );
-};
-
-const DatabaseSettings = () => {
-  const [databaseType, setDatabaseType] = useState('mysql');
-  const [damengForm] = Form.useForm();
-
-  const handleDatabaseTypeChange = (value: string) => {
-    setDatabaseType(value);
-  };
-
-  const handleDamengConnection = () => {
-    damengForm.validateFields().then((values) => {
-      console.log('Dameng connection values:', values);
-      // Here you would typically make an API call to test the connection
-    });
-  };
-
-  return (
-    <Card title="数据库管理">
-      <Form layout="vertical">
-        <Form.Item label="数据库类型">
-          <Radio.Group
-            value={databaseType}
-            onChange={(e) => handleDatabaseTypeChange(e.target.value)}
-          >
-            <Radio value="mysql">MySQL</Radio>
-            <Radio value="dameng">达梦数据库</Radio>
-          </Radio.Group>
-        </Form.Item>
-
-        {databaseType === 'mysql' && (
-          <Card
-            title="MySQL 连接信息"
-            size="small"
-            style={{ marginTop: 16 }}
-            className="bg-gray-50"
-            extra={<Tag color="green">当前使用</Tag>}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <div style={{ marginBottom: 12 }}>
-                  <Text strong>地址：</Text>
-                  <Text>localhost</Text>
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  <Text strong>端口：</Text>
-                  <Text>3306</Text>
-                </div>
-              </Col>
-              <Col span={12}>
-                <div style={{ marginBottom: 12 }}>
-                  <Text strong>用户名：</Text>
-                  <Text>root</Text>
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  <Text strong>密码：</Text>
-                  <Text type="secondary">••••••••</Text>
-                </div>
-              </Col>
-            </Row>
-            <div style={{ marginTop: 16 }}>
-              <Text strong>数据库名：</Text>
-              <Text>ragflow</Text>
-            </div>
-          </Card>
-        )}
-
-        {databaseType === 'dameng' && (
-          <Card
-            title="达梦数据库连接配置"
-            size="small"
-            style={{ marginTop: 16 }}
-          >
-            <Form form={damengForm} layout="vertical">
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="host"
-                    label="地址"
-                    rules={[{ required: true, message: '请输入数据库地址' }]}
-                  >
-                    <Input placeholder="请输入数据库地址" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="port"
-                    label="端口"
-                    rules={[{ required: true, message: '请输入端口号' }]}
-                  >
-                    <Input placeholder="请输入端口号" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item
-                    name="username"
-                    label="用户名"
-                    rules={[{ required: true, message: '请输入用户名' }]}
-                  >
-                    <Input placeholder="请输入用户名" />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="password"
-                    label="密码"
-                    rules={[{ required: true, message: '请输入密码' }]}
-                  >
-                    <Input.Password placeholder="请输入密码" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              <Form.Item
-                name="database"
-                label="数据库名"
-                rules={[{ required: true, message: '请输入数据库名' }]}
-              >
-                <Input placeholder="请输入数据库名" />
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" onClick={handleDamengConnection}>
-                  连接确认
-                </Button>
-              </Form.Item>
-            </Form>
-          </Card>
-        )}
-      </Form>
-    </Card>
   );
 };
 
@@ -592,27 +458,6 @@ const InterfaceSettings = () => {
   );
 };
 
-const StorageSettings = () => {
-  return (
-    <Card title="存储管理">
-      <Form layout="vertical">
-        <Form.Item label="存储加密方式">
-          <Radio.Group>
-            <Radio value="none">不加密</Radio>
-            <Radio value="aes256">AES-256</Radio>
-          </Radio.Group>
-        </Form.Item>
-        <Form.Item label="备份地址">
-          <Input placeholder="请输入备份地址" />
-        </Form.Item>
-        <Form.Item>
-          <Button type="primary">保存</Button>
-        </Form.Item>
-      </Form>
-    </Card>
-  );
-};
-
 const LicenseSettings = () => {
   return (
     <Card title="授权管理">
@@ -637,24 +482,20 @@ const LicenseSettings = () => {
 };
 
 const SystemManagementPage = () => {
-  const [selectedKey, setSelectedKey] = useState('database');
+  const [selectedKey, setSelectedKey] = useState('ocr');
 
   const renderContent = () => {
     switch (selectedKey) {
-      case 'database':
-        return <DatabaseSettings />;
       case 'ocr':
         return <OcrSettings />;
       case 'interface':
         return <InterfaceSettings />;
-      case 'storage':
-        return <StorageSettings />;
       case 'license':
         return <LicenseSettings />;
       case 'model':
         return <ModelSettings />;
       default:
-        return <DatabaseSettings />;
+        return <OcrSettings />;
     }
   };
 
@@ -667,17 +508,11 @@ const SystemManagementPage = () => {
           onClick={({ key }) => setSelectedKey(key)}
           style={{ height: '100%', borderRight: 0 }}
         >
-          <Menu.Item key="database" icon={<DatabaseOutlined />}>
-            数据库管理
-          </Menu.Item>
           <Menu.Item key="ocr" icon={<ScanOutlined />}>
             OCR管理
           </Menu.Item>
           <Menu.Item key="interface" icon={<PictureOutlined />}>
             界面管理
-          </Menu.Item>
-          <Menu.Item key="storage" icon={<HddOutlined />}>
-            存储管理
           </Menu.Item>
           <Menu.Item key="license" icon={<SafetyCertificateOutlined />}>
             授权管理
