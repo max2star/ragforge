@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from common import INVALID_API_TOKEN, list_documnets
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 from libs.utils import is_sorted
 
 
@@ -27,7 +27,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -212,7 +212,7 @@ class TestDocumentsList:
             ({"keywords": None}, 5),
             ({"keywords": ""}, 5),
             ({"keywords": "0"}, 1),
-            ({"keywords": "ragflow_test_upload"}, 5),
+            ({"keywords": "ragforge_test_upload"}, 5),
             ({"keywords": "unknown"}, 0),
         ],
     )
@@ -228,7 +228,7 @@ class TestDocumentsList:
         [
             ({"name": None}, 0, 5, ""),
             ({"name": ""}, 0, 5, ""),
-            ({"name": "ragflow_test_upload_0.txt"}, 0, 1, ""),
+            ({"name": "ragforge_test_upload_0.txt"}, 0, 1, ""),
             (
                 {"name": "unknown.txt"},
                 102,
@@ -294,12 +294,12 @@ class TestDocumentsList:
     @pytest.mark.parametrize(
         "document_id, name, expected_code, expected_num, expected_message",
         [
-            (lambda r: r[0], "ragflow_test_upload_0.txt", 0, 1, ""),
-            (lambda r: r[0], "ragflow_test_upload_1.txt", 0, 0, ""),
+            (lambda r: r[0], "ragforge_test_upload_0.txt", 0, 1, ""),
+            (lambda r: r[0], "ragforge_test_upload_1.txt", 0, 0, ""),
             (lambda r: r[0], "unknown", 102, 0, "You don't own the document unknown."),
             (
                 "id",
-                "ragflow_test_upload_0.txt",
+                "ragforge_test_upload_0.txt",
                 102,
                 0,
                 "You don't own the document id.",

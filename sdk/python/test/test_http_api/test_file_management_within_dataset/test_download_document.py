@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from common import INVALID_API_TOKEN, bulk_upload_documents, download_document, upload_documnets
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 from libs.utils import compare_by_hash
 from requests import codes
 
@@ -30,16 +30,16 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
         ],
     )
     def test_invalid_auth(self, tmp_path, auth, expected_code, expected_message):
-        res = download_document(auth, "dataset_id", "document_id", tmp_path / "ragflow_tes.txt")
+        res = download_document(auth, "dataset_id", "document_id", tmp_path / "ragforge_tes.txt")
         assert res.status_code == codes.ok
-        with (tmp_path / "ragflow_tes.txt").open("r") as f:
+        with (tmp_path / "ragforge_tes.txt").open("r") as f:
             response_json = json.load(f)
         assert response_json["code"] == expected_code
         assert response_json["message"] == expected_message
@@ -71,12 +71,12 @@ def test_file_type_validation(get_http_api_auth, add_dataset, generate_test_file
         get_http_api_auth,
         dataset_id,
         document_id,
-        fp.with_stem("ragflow_test_download"),
+        fp.with_stem("ragforge_test_download"),
     )
     assert res.status_code == codes.ok
     assert compare_by_hash(
         fp,
-        fp.with_stem("ragflow_test_download"),
+        fp.with_stem("ragforge_test_download"),
     )
 
 
@@ -97,10 +97,10 @@ class TestDocumentDownload:
             get_http_api_auth,
             dataset_id,
             document_id,
-            tmp_path / "ragflow_test_download_1.txt",
+            tmp_path / "ragforge_test_download_1.txt",
         )
         assert res.status_code == codes.ok
-        with (tmp_path / "ragflow_test_download_1.txt").open("r") as f:
+        with (tmp_path / "ragforge_test_download_1.txt").open("r") as f:
             response_json = json.load(f)
         assert response_json["code"] == expected_code
         assert response_json["message"] == expected_message
@@ -122,15 +122,15 @@ class TestDocumentDownload:
             get_http_api_auth,
             dataset_id,
             document_ids[0],
-            tmp_path / "ragflow_test_download_1.txt",
+            tmp_path / "ragforge_test_download_1.txt",
         )
         assert res.status_code == codes.ok
-        with (tmp_path / "ragflow_test_download_1.txt").open("r") as f:
+        with (tmp_path / "ragforge_test_download_1.txt").open("r") as f:
             response_json = json.load(f)
         assert response_json["code"] == expected_code
         assert response_json["message"] == expected_message
 
-    def test_same_file_repeat(self, get_http_api_auth, add_documents, tmp_path, ragflow_tmp_dir):
+    def test_same_file_repeat(self, get_http_api_auth, add_documents, tmp_path, ragforge_tmp_dir):
         num = 5
         dataset_id, document_ids = add_documents
         for i in range(num):
@@ -138,12 +138,12 @@ class TestDocumentDownload:
                 get_http_api_auth,
                 dataset_id,
                 document_ids[0],
-                tmp_path / f"ragflow_test_download_{i}.txt",
+                tmp_path / f"ragforge_test_download_{i}.txt",
             )
             assert res.status_code == codes.ok
             assert compare_by_hash(
-                ragflow_tmp_dir / "ragflow_test_upload_0.txt",
-                tmp_path / f"ragflow_test_download_{i}.txt",
+                ragforge_tmp_dir / "ragforge_test_upload_0.txt",
+                tmp_path / f"ragforge_test_download_{i}.txt",
             )
 
 
@@ -160,7 +160,7 @@ def test_concurrent_download(get_http_api_auth, add_dataset, tmp_path):
                 get_http_api_auth,
                 dataset_id,
                 document_ids[i],
-                tmp_path / f"ragflow_test_download_{i}.txt",
+                tmp_path / f"ragforge_test_download_{i}.txt",
             )
             for i in range(document_count)
         ]
@@ -168,6 +168,6 @@ def test_concurrent_download(get_http_api_auth, add_dataset, tmp_path):
     assert all(r.status_code == codes.ok for r in responses)
     for i in range(document_count):
         assert compare_by_hash(
-            tmp_path / f"ragflow_test_upload_{i}.txt",
-            tmp_path / f"ragflow_test_download_{i}.txt",
+            tmp_path / f"ragforge_test_upload_{i}.txt",
+            tmp_path / f"ragforge_test_download_{i}.txt",
         )

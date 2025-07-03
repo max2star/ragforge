@@ -28,7 +28,7 @@ from api.db.db_models import Task, Document, Knowledgebase, Tenant
 from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.utils import current_timestamp, get_uuid
-from deepdoc.parser.excel_parser import RAGFlowExcelParser
+from deepdoc.parser.excel_parser import RAGForgeExcelParser
 from rag.settings import get_svr_queue_name
 from rag.utils.storage_factory import STORAGE_IMPL
 from rag.utils.redis_conn import REDIS_CONN
@@ -70,7 +70,7 @@ class TaskService(CommonService):
 
     @classmethod
     @DB.connection_context()
-    def get_task(cls, task_id):
+    def get_task(cls, task_id,task_consumer=""):
         """Retrieve detailed task information by task ID.
     
         This method fetches comprehensive task details including associated document,
@@ -113,13 +113,13 @@ class TaskService(CommonService):
                 .join(Document, on=(cls.model.doc_id == Document.id))
                 .join(Knowledgebase, on=(Document.kb_id == Knowledgebase.id))
                 .join(Tenant, on=(Knowledgebase.tenant_id == Tenant.id))
-                .where(cls.model.id == task_id, cls.model.progress<=0.0)
+                .where(cls.model.id == task_id)#, cls.model.progress<=0.0)
         )
         docs = list(docs.dicts())
         if not docs:
             return None
 
-        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task has been received."
+        msg = f"\n{datetime.now().strftime('%H:%M:%S')} Task {task_id} has been received,current consumer {task_consumer},related doc {docs[0]['doc_id']},this is the {docs[0]['retry_count']} time."
         prog = random.random() / 10.0
         retry_count_max = 5
         if docs[0]["retry_count"] >= retry_count_max:
@@ -251,8 +251,14 @@ class TaskService(CommonService):
         Returns:
             bool: True if the task should be cancelled, False otherwise.
         """
-        task = cls.model.get_by_id(id)
-        _, doc = DocumentService.get_by_id(task.doc_id)
+        try:
+            task = cls.model.get_by_id(id)
+            _, doc = DocumentService.get_by_id(task.doc_id)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logging.info("do_cancel for task {},Exception {} ,excetion info is {}".format(id,e, traceback.format_exc()))
+            return True
         return doc.run == TaskStatus.CANCEL.value or doc.progress < 0
 
     @classmethod
@@ -321,6 +327,9 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
         file_bin = STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
         pages = PdfParser.total_page_number(doc["name"], file_bin)
+        if pages <= 0:
+            pages = 1000
+            logging.error(f"PDF {doc['name']} pages count less than 0, change to {pages}")
         page_size = doc["parser_config"].get("task_page_size", 12)
         if doc["parser_id"] == "paper":
             #page_size = 10 ** 9
@@ -340,7 +349,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
 
     elif doc["parser_id"] == "table":
         file_bin = STORAGE_IMPL.get(bucket, name)
-        rn = RAGFlowExcelParser.row_number(doc["name"], file_bin)
+        rn = RAGForgeExcelParser.row_number(doc["name"], file_bin)
         for i in range(0, rn, 3000):
             task = new_task()
             task["from_page"] = i

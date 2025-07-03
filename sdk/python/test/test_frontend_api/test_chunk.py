@@ -38,7 +38,7 @@ def test_parse_txt_document(get_auth):
             break
         page_number += 1
 
-    filename = 'ragflow_test.txt'
+    filename = 'ragforge_test.txt'
     res = upload_file(get_auth, dataset_id, f"../test_sdk_api/test_data/{filename}")
     assert res.get("code") == 0, f"{res.get('message')}"
 

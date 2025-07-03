@@ -46,7 +46,7 @@ FACTORY_LLM_INFOS = None
 
 # DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
 # 默认使用达梦数据库
-DATABASE_TYPE = os.getenv("DB_TYPE", "dm")
+DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
 DATABASE = decrypt_database_config(name=DATABASE_TYPE)
 
 # authentication
@@ -73,7 +73,7 @@ def init_settings():
     global LLM, LLM_FACTORY, LLM_BASE_URL, LIGHTEN, DATABASE_TYPE, DATABASE, FACTORY_LLM_INFOS, REGISTER_ENABLED,LLM_DEFAULT_MODELS_CONFIG
     LIGHTEN = int(os.environ.get('LIGHTEN', "0"))
     # DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
-    DATABASE_TYPE = os.getenv("DB_TYPE", 'dm')
+    DATABASE_TYPE = os.getenv("DB_TYPE", 'mysql')
     DATABASE = decrypt_database_config(name=DATABASE_TYPE)
     LLM = get_base_config("user_default_llm", {})
     LLM_DEFAULT_MODELS = LLM.get("default_models", {})
@@ -122,6 +122,12 @@ def init_settings():
     SECRET_KEY = get_base_config(
         RAG_FLOW_SERVICE_NAME,
         {}).get("secret_key", str(date.today()))
+
+    # 静态文件目录配置
+    global STATIC_FOLDER
+    STATIC_FOLDER = os.path.join(get_project_base_directory(), "api", "static")
+    if not os.path.exists(STATIC_FOLDER):
+        os.makedirs(STATIC_FOLDER, exist_ok=True)
 
     global AUTHENTICATION_CONF, CLIENT_AUTHENTICATION, HTTP_APP_KEY, GITHUB_OAUTH, FEISHU_OAUTH
     # authentication

@@ -1,7 +1,7 @@
 [project]
-name = "ragflow-sdk"
+name = "ragforge-sdk"
 version = "0.18.0"
-description = "Python client sdk of [RAGFlow](https://github.com/infiniflow/ragflow). RAGFlow is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document understanding."
+description = "Python client sdk of [RAGForge](https://github.com/infiniflow/ragforge). RAGForge is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document understanding."
 authors = [
     { name = "Zhichang Yu", email = "yuzhichang@gmail.com" }
 ]

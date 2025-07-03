@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 import requests
 from common import DOCUMENT_NAME_LIMIT, FILE_API_URL, HOST_ADDRESS, INVALID_API_TOKEN, list_datasets, upload_documnets
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 from libs.utils.file_utils import create_txt_file
 from requests_toolbelt import MultipartEncoder
 
@@ -32,7 +32,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -47,7 +47,7 @@ class TestAuthorization:
 class TestDocumentsUpload:
     def test_valid_single_upload(self, get_http_api_auth, add_dataset_func, tmp_path):
         dataset_id = add_dataset_func
-        fp = create_txt_file(tmp_path / "ragflow_test.txt")
+        fp = create_txt_file(tmp_path / "ragforge_test.txt")
         res = upload_documnets(get_http_api_auth, dataset_id, [fp])
         assert res["code"] == 0
         assert res["data"][0]["dataset_id"] == dataset_id
@@ -83,11 +83,11 @@ class TestDocumentsUpload:
     )
     def test_unsupported_file_type(self, get_http_api_auth, add_dataset_func, tmp_path, file_type):
         dataset_id = add_dataset_func
-        fp = tmp_path / f"ragflow_test.{file_type}"
+        fp = tmp_path / f"ragforge_test.{file_type}"
         fp.touch()
         res = upload_documnets(get_http_api_auth, dataset_id, [fp])
         assert res["code"] == 500
-        assert res["message"] == f"ragflow_test.{file_type}: This type of file has not been supported yet!"
+        assert res["message"] == f"ragforge_test.{file_type}: This type of file has not been supported yet!"
 
     def test_missing_file(self, get_http_api_auth, add_dataset_func):
         dataset_id = add_dataset_func
@@ -106,7 +106,7 @@ class TestDocumentsUpload:
 
     def test_filename_empty(self, get_http_api_auth, add_dataset_func, tmp_path):
         dataset_id = add_dataset_func
-        fp = create_txt_file(tmp_path / "ragflow_test.txt")
+        fp = create_txt_file(tmp_path / "ragforge_test.txt")
         url = f"{HOST_ADDRESS}{FILE_API_URL}".format(dataset_id=dataset_id)
         fields = (("file", ("", fp.open("rb"))),)
         m = MultipartEncoder(fields=fields)
@@ -128,14 +128,14 @@ class TestDocumentsUpload:
         assert res["message"] == "File name should be less than 128 bytes."
 
     def test_invalid_dataset_id(self, get_http_api_auth, tmp_path):
-        fp = create_txt_file(tmp_path / "ragflow_test.txt")
+        fp = create_txt_file(tmp_path / "ragforge_test.txt")
         res = upload_documnets(get_http_api_auth, "invalid_dataset_id", [fp])
         assert res["code"] == 100
         assert res["message"] == """LookupError("Can\'t find the dataset with ID invalid_dataset_id!")"""
 
     def test_duplicate_files(self, get_http_api_auth, add_dataset_func, tmp_path):
         dataset_id = add_dataset_func
-        fp = create_txt_file(tmp_path / "ragflow_test.txt")
+        fp = create_txt_file(tmp_path / "ragforge_test.txt")
         res = upload_documnets(get_http_api_auth, dataset_id, [fp, fp])
         assert res["code"] == 0
         assert len(res["data"]) == 2
@@ -148,7 +148,7 @@ class TestDocumentsUpload:
 
     def test_same_file_repeat(self, get_http_api_auth, add_dataset_func, tmp_path):
         dataset_id = add_dataset_func
-        fp = create_txt_file(tmp_path / "ragflow_test.txt")
+        fp = create_txt_file(tmp_path / "ragforge_test.txt")
         for i in range(10):
             res = upload_documnets(get_http_api_auth, dataset_id, [fp])
             assert res["code"] == 0
@@ -178,7 +178,7 @@ class TestDocumentsUpload:
         expected_document_count = 20
         fps = []
         for i in range(expected_document_count):
-            fp = create_txt_file(tmp_path / f"ragflow_test_{i}.txt")
+            fp = create_txt_file(tmp_path / f"ragforge_test_{i}.txt")
             fps.append(fp)
         res = upload_documnets(get_http_api_auth, dataset_id, fps)
         assert res["code"] == 0
@@ -193,7 +193,7 @@ class TestDocumentsUpload:
         expected_document_count = 20
         fps = []
         for i in range(expected_document_count):
-            fp = create_txt_file(tmp_path / f"ragflow_test_{i}.txt")
+            fp = create_txt_file(tmp_path / f"ragforge_test_{i}.txt")
             fps.append(fp)
 
         with ThreadPoolExecutor(max_workers=5) as executor:

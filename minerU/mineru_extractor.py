@@ -1,3 +1,18 @@
+#
+#  Copyright 2024 The InfiniFlow Authors. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
 from datetime import datetime
 import json
 import logging
@@ -6,87 +21,39 @@ import re
 from magic_pdf.data.data_reader_writer import S3DataReader
 from timeit import default_timer as timer
 from minerU.parser.figure_parser import VisionFigureParser
-import fitz
+
 from api.db import LLMType, constant
 from api.db.services.llm_service import LLMBundle
 from rag import settings
-import trio
-from graphrag.utils import (
-    chat_limiter,
-)
+
+
 def format_time(time_field_value):
-    time_field_value_format = None
+    time_field_value_format = "1970-01-01T00:00:00Z"
 
     formats = [
-        "%Y-%m-%d %H:%M:%S",
-        "%Y-%m-%d %H:%M",
-        "%Y-%m",
-        "%Y-%m-%d %H:%M:%S.%f",
-        "%Y年%m月%d日",
         "%Y-%m-%dT%H:%M:%SZ",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M",
+        "%m/%d/%Y %H:%M",
+        "%Y年%m月%d日",
+        "%Y-%m",
+        "%Y.%m",
+        "%Y年%m月",
         "%Y-%m-%d",
         "%Y.%m.%d",
-        "%m/%d/%Y %H:%M",
+        "%m/%Y",
     ]
     for format_string in formats:
         try:
             time_field_value_format = datetime.strptime(time_field_value, format_string)
             logging.info(f"Parsed date {time_field_value}-->{time_field_value_format}")
-            time_field_value_format = "{}".format(time_field_value_format.strftime('%Y-%m-%d %H:%M:%SZ'))
+            time_field_value_format = "{}".format(time_field_value_format.strftime('%Y-%m-%dT%H:%M:%SZ'))
             return time_field_value_format
         except Exception as e:
             logging.error("Failed to parse {} use format {} for Exception {}".format(time_field_value,format_string,time_field_value_format))
             continue
     return time_field_value_format
-
-class ChatWithModel:
-    def __init__(self, llm_model, prompt):
-        self._llm_model = llm_model
-        self._prompt = prompt
-
-    async def _chat(self, system, history, gen_conf):
-        response = await trio.to_thread.run_sync(
-            lambda: self._llm_model.chat(system, history, gen_conf)
-        )
-        logging.info(f"response begin ==>\n{response}")
-        if "</think>" in response:
-            response = re.sub(r"^.*?</think>", "", response, flags=re.DOTALL)
-        if "```json" in response:
-            response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
-        logging.info(f"response clean ==>\n{response}")
-        if response.find("**ERROR**") >= 0:
-            raise Exception(response)
-        return response
-
-
-    async def __call__(self, callback=None):
-        results = None
-        async def classifier():
-            nonlocal results
-            result = None
-
-            async with chat_limiter:
-                result = await self._chat(
-                    "You're a helpful assistant.",
-                    [
-                        {
-                            "role": "user",
-                            "content": self._prompt,
-                        },
-                        {
-                            "role": "system",
-                            "content": self._prompt,
-                        }
-                    ],
-                    {"temperature": 0.3},
-                )
-            results = await result
-        async with trio.open_nursery() as nursery:
-               async with chat_limiter:
-                    nursery.start_soon(classifier)
-
-        return results
-
 
 
 def get_pdf_file_bytes(bucketname, filename, doc_id, pdf_flag=True):
@@ -140,36 +107,59 @@ def vision_parser(tenant_id, figures, key_list_to_extract=None, prompt=None):
     return None
 
 
+def judge_directory_type(tenant_id=None, img=None, callback=None):
+    # 判断第一页目录图片是否是论文集或书籍
+    is_what = "其他目录"
+    maybe = {
+        "论文集目录": "核心特征是 由多篇独立的论文组成，论文标题后都跟随着该文作者的姓名（一定存在且作者可能不止一人）。内容是多位作者关于不同（但相关）主题的独立论文集合。",
+        "书籍目录": "核心特征是 层级化的章节结构（第X章、X.X节、可能出现整页都是最小的章节结构 ）和 页码的连续性。目录中不出现作者署名。",
+    }
+    example = {"结果":""}
+    prompt = (
+        f"声明：你的回答不需要有任何旁白，若不包含目录页面，请直接输出一个空花括号即可；定义：{maybe}"
+        f"现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是;"
+        f"请根据图片内容判断该图片是不是文档的目录页面，如果不是目录页面，请直接输出一个空花括号即可;如果是目录页面，请结合定义判断该页目录最有可能属于什么类型的目录；"
+        f"请你以JSON格式输出，以结果二字为Key，值是定义内最符合结果的键名；若都不符合则以其他目录四字为值；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格；格式示例：{example}")
+    logging.info(f"======prompt======{prompt}")
+    callback(msg="正在解析目录...")
+    try:
+        vision_result = vision_parser(tenant_id, [img], prompt=prompt)
+        if len(vision_result) > 0:
+            logging.info("<vision_result> {}".format(vision_result[0]))
+            res = json.loads(vision_result[0])
+            if "结果" in res:
+                is_what = res["结果"]
+    except Exception as e:
+        logging.error(f"Vision model error: {e}")
+    logging.info(f"目录识别结果：{is_what}")
+    return is_what.replace("目录", "")
+
+
 # 识别提取元数据
 def extract_metadata(tenant_id, images, fields=None, metadata_type="default", callback=None):
     start_ts = timer()
+    fields_map = {}
     # 获取相应元数据字段
     keys_to_use_list = []
     # 过滤字段
-    # for i in fields:
-    #     if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
-    #         logging.info(f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping[metadata_type]}")
-    #         keys_to_use_list.append({
-    #            "name": i["name"],
-    #            "description": i["description"] if i.get("description") else "",
-    #            "must_exist": i["must_exist"],
-    #         })
-
-    for i in constant.keyvalues_mapping.get(metadata_type, "default"):
+    for i in fields:
         logging.info(
-            f"==== i ===> {i}\nconstant.keyvalues_mapping[{metadata_type}]==>{constant.keyvalues_mapping.get(metadata_type, 'default')}")
+            f"metadata_type [{metadata_type}] ==== i ===> {i}")
         keys_to_use_list.append({
             "name": i["name"],
-            "description": i["description"] if i.get("description") else "",
+            #"description": i["description"] if i.get("description") else "",
             "must_exist": i["must_exist"],
         })
+        fields_map[i["name"]] = None
 
     # 通过视觉模型 从目录页前的内容中 提取元数据
-    fields_map = {}
-
+    example = """{"name1": 提取内容a,"name2": 提取内容b,"name3": 提取内容c}"""
     prompt = (
-        f"提取图中的：{keys_to_use_list} 文本内容；在图片中提取符合description描述的相应字段、must_exist 为True的字段必须提取；对于从图片中提取的内容，不要修改原文；"
-        f"不要输出```json```等Markdown格式代码段，请你以JSON格式输出。"
+        f"请提取图中的：{keys_to_use_list} 文本内容；不要编造，直接从图片中获取文本，注意完整性，不要仅返回部分内容。图片若不包含内容，请将所有抽取的值设置为空字符即可。"
+        f"must_exist 为True的字段必须提取；以图片中原始文本的语言输出，不要进行总结摘要等操作。"
+        f"不要获取除name字段之外的信息，如果某些name字段没有没有提取到相应的内容，设置为空字符即可；"
+        f"若存在语种字段，请识别出原文的语言种类；若存在日期、时间等相关字段，请以：%Y-%m-%dT%H:%M:%SZ格式提取为值，无或无法提取默认使用空双引号；"
+        f"请你以最紧凑的JSON格式输出文本，可以去掉多余的空格。key使用name字段，格式示例：{example}"
     )
     logging.info(msg="正在进行视觉模型调用提取要素...")
     logging.info(f"======prompt======{prompt}")
@@ -186,33 +176,85 @@ def extract_metadata(tenant_id, images, fields=None, metadata_type="default", ca
             for key in [v["name"] for v in keys_to_use_list]:
                 value_now = fields_map.get(key, None)
                 if value_now:
-                    if key not in ['摘要', '正文', '前言']:
+                    current_value = r_d.get(key, None)
+                    if not current_value:
                         continue
-                    else:
-                        current_value = r_d.get(key, None)
-                        if current_value:
-                            fields_map[key] = value_now + '\n' + current_value
+                    if key in ['正文', '前言']:
+                        try:
+                            fields_map[key] = value_now+ '\n' + current_value
+                        except Exception as e:
+                            logging.error(f"key {key} value_now {value_now},current_value {current_value},exception {e}")
+                            fields_map[key] = str(value_now)+ '\n' + str(current_value)
                 else:
                     current_value = r_d.get(key, None)
                     if current_value is not None:
                         fields_map[key] = current_value
 
+    for key,value in fields_map.items():
+        if re.search(r'时间|日期', key, re.IGNORECASE):
+            logging.info(f"search key {key} value ===> {value}")
+            value = format_time(value)[:19]
+            fields_map[key] = value
+            logging.info(f"new key {key} value ===> {value}")
     return fields_map
 
 # 视觉模型识别提取目录数据
-def extract_directory(tenant_id, images, callback=None):
+def extract_directory(tenant_id, images, metadata_type, callback=None):
     start_ts = timer()
 
     # 最大识别图片页数
     MAX_IMAGES = 40
     example = """{"目录": [{"章节": "章节1","页码": 1},{"章节": "章节2","页码": 14}]}"""
-    prompt = f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码。请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；格式示例：{example}"
+    prompt = (f"声明：你的回答不需要有任何旁白，若不是纯粹的目录页面，请直接输出一个空花括号即可；现在输入的图片，有可能是文档的目录索引，也有可能是正文章节，也有可能都不是，请根据图片内容判断该图片是不是文档的纯粹的目录页面，如果不是纯粹的目录页面，请不要提取。如果是，请提取图中的目录，请输出目录中的各个章节所对应的页码，"
+              f"若章节没有章节序号，则提取图片内的所有章节及页码；若存在章节序号，只需要提取一级目录（一级目录的章节序号只有一个整数数字带有小数的章节序号都不是一级目录，可能存在整页都不是一级目录的情况），若没有一级目录请直接输出一个空花括号即可；"
+              f"请你以JSON格式输出，以目录二字为Key，值是一个章节索引的列表，列表中是章节作为key，页码作为Key，两个Key组成；请你以最紧凑的JSON格式输出文本，可以去掉多余的空格，key值中不需要有章节序号；格式示例：{example}")
     logging.info(f"======prompt======{prompt}")
     callback(msg="正在进行视觉模型调用提取目录...")
-    vision_results = vision_parser(tenant_id, images[:MAX_IMAGES], prompt=prompt)
-    result = [v for k,v in vision_results.items()]
-    logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
 
+    is_what = None
+    # 找到目录后又出现空结果则判断目录页结束
+    empty_num = 0
+    directory_num = 0
+    is_begin = False
+    result = []
+    the_directory_end = 0
+    the_directory_begins = 0
+    for idx, img in enumerate(images[:MAX_IMAGES]):
+        vision_result = vision_parser(tenant_id, [img], prompt=prompt)
+        res = [v for k, v in vision_result.items()]
+        if len(res) > 0:
+            response = res[0]
+            try:
+                response_ = json.loads(response)
+                if "目录" in response_:
+                    if not len(response_['目录']) > 0:
+                        empty_num += 1
+                        continue
+                    is_begin = True
+                    empty_num = 0
+                    directory_num += 1
+                    the_directory_end = idx
+                    if not is_what and metadata_type not in ["图书"]:
+                        the_directory_begins = idx
+                        try:
+                            # 判断第一页目录图片是否是论文集或书籍
+                            is_what = judge_directory_type(tenant_id=tenant_id, img=img, callback=callback)
+                        except Exception as e:
+                            logging.error("judge_directory_type error {}".format(e))
+                elif is_begin:
+                    empty_num += 1
+            except Exception as e:
+                logging.error("error {}".format(e))
+            result.append(response)
+        else:
+            empty_num += 1
+        if empty_num >= 3:
+            logging.info(f"找到目录后又出现空结果{empty_num}次，判断目录页结束")
+            break
+        logging.info(f"idx {idx}, 已找到{directory_num}页完整目录json")
+
+    logging.info(f"输入 images 共{len(images)}页 解析{len(images[:MAX_IMAGES])}页结果：{result}")
+    logging.info(f"the_directory_begins idx: {the_directory_begins}; the_directory_end idx: {the_directory_end} ")
     current_page_index = 0
     page_end = 0
     page_start = 0
@@ -254,12 +296,15 @@ def extract_directory(tenant_id, images, callback=None):
     logging.info('\n章节页码结果{}, 从index_id {}开始是正文,{}~{}是目录.将会对{}进行分析'.format(
         dic_result, page_end + 1, page_start, page_end, page_numbers
     ))
-
+    # 目录页面过于连续则判断不属于论文集
+    # arr = [int(i["页码"]) for i in dic_result]
+    # if any(abs(a - b) <= 2 for a, b in zip(arr, arr[1:])):
+    #     is_what = ""
     callback(msg="提取目录完成，用时({:.2f}s)".format(timer() - start_ts))
     return {
         "dic_result": dic_result,
-        "main_content_begin": page_end + 1,
+        "main_content_begin": the_directory_end + 1,
         "directory_begin": page_start,
         "directory_end": page_end,
         "page_numbers_before_directory": page_numbers,
-    }
+    }, is_what

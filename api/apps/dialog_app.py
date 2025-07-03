@@ -44,7 +44,7 @@ def set_dialog():
     vector_similarity_weight = req.get("vector_similarity_weight", 0.3)
     llm_setting = req.get("llm_setting", {})
     default_prompt = {
-        "system": """你是一个智能助手，请总结知识库的内容来回答问题，请列举知识库中的数据详细回答。当所有知识库内容都与问题无关时，你的回答必须包括“知识库中未找到您要的答案！”这句话。回答需要考虑聊天历史。
+        "system": """你是一个智能助手，请总结知识库的内容来回答问题，请列举知识库中的数据详细回答。当所有知识库内容都与问题无关时，你的回答必须包括"知识库中未找到您要的答案！"这句话。回答需要考虑聊天历史。
 以下是知识库：
 {knowledge}
 以上是知识库。""",
@@ -56,9 +56,31 @@ def set_dialog():
     }
     prompt_config = req.get("prompt_config", default_prompt)
 
-    if not prompt_config["system"]:
-        prompt_config["system"] = default_prompt["system"]
+    # 兜底，防止为 null
+    if similarity_threshold is None:
+        similarity_threshold = 0.2
+    if vector_similarity_weight is None:
+        vector_similarity_weight = 0.3
+    req["similarity_threshold"] = similarity_threshold
+    req["vector_similarity_weight"] = vector_similarity_weight
 
+    # 确保 prompt_config 有必要的键
+    if not isinstance(prompt_config, dict):
+        prompt_config = default_prompt
+    else:
+        # 确保有 system 键
+        if "system" not in prompt_config or not prompt_config["system"]:
+            prompt_config["system"] = default_prompt["system"]
+        
+        # 确保有其他必要的键
+        if "prologue" not in prompt_config:
+            prompt_config["prologue"] = default_prompt["prologue"]
+        if "parameters" not in prompt_config:
+            prompt_config["parameters"] = default_prompt["parameters"]
+        if "empty_response" not in prompt_config:
+            prompt_config["empty_response"] = default_prompt["empty_response"]
+
+    # 检查必需参数是否在 system 中使用
     for p in prompt_config["parameters"]:
         if p["optional"]:
             continue
