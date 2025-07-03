@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# RAGFlow开发环境自动修复脚本
+# RAGForge开发环境自动修复脚本
 # 用于修复常见的配置问题和连接问题
 
 set -e
 
-echo "🔧 开始修复RAGFlow开发环境..."
+echo "🔧 开始修复RAGForge开发环境..."
 
 # 检查是否在正确的目录
 if [ ! -f "docker-compose.yml" ]; then
-    echo "❌ 请在RAGFlow项目根目录运行此脚本"
+    echo "❌ 请在RAGForge项目根目录运行此脚本"
     exit 1
 fi
 
@@ -26,11 +26,11 @@ if [ -f ".env" ]; then
     
     # 修复MySQL配置
     echo "   修复MySQL配置..."
-    sed -i.bak 's/MYSQL_HOST=.*/MYSQL_HOST=ragflow-mysql-dev/' .env
+    sed -i.bak 's/MYSQL_HOST=.*/MYSQL_HOST=ragforge-mysql-dev/' .env
     sed -i.bak 's/MYSQL_PORT=.*/MYSQL_PORT=13306/' .env
     sed -i.bak 's/MYSQL_USER=.*/MYSQL_USER=root/' .env
     sed -i.bak 's/MYSQL_PASSWORD=.*/MYSQL_PASSWORD=infini_rag_flow/' .env
-    sed -i.bak 's/MYSQL_DATABASE=.*/MYSQL_DATABASE=ragflow/' .env
+    sed -i.bak 's/MYSQL_DATABASE=.*/MYSQL_DATABASE=ragforge/' .env
     
     # 修复Redis配置
     echo "   修复Redis配置..."
@@ -67,7 +67,7 @@ if [ -f "service_conf.yaml" ]; then
     
     # 修复MySQL配置
     echo "   修复MySQL配置..."
-    sed -i.bak 's/host:.*mysql.*/host: ragflow-mysql-dev:3306/' service_conf.yaml
+    sed -i.bak 's/host:.*mysql.*/host: ragforge-mysql-dev:3306/' service_conf.yaml
     
     # 修复MinIO配置
     echo "   修复MinIO配置..."
@@ -88,13 +88,13 @@ read -p "是否要清理数据卷？这将删除所有数据！(y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "   清理MySQL数据卷..."
-    docker volume rm ragflow_mysql_data 2>/dev/null || true
+    docker volume rm ragforge_mysql_data 2>/dev/null || true
     
     echo "   清理Elasticsearch数据卷..."
-    docker volume rm ragflow_elasticsearch_data 2>/dev/null || true
+    docker volume rm ragforge_elasticsearch_data 2>/dev/null || true
     
     echo "   清理MinIO数据卷..."
-    docker volume rm ragflow_minio_data 2>/dev/null || true
+    docker volume rm ragforge_minio_data 2>/dev/null || true
     
     echo "✅ 数据卷已清理"
 else
@@ -110,7 +110,7 @@ echo "   等待服务启动..."
 sleep 10
 
 echo "   启动后端服务..."
-docker-compose up -d ragflow-server
+docker-compose up -d ragforge-server
 
 echo "✅ 服务启动完成"
 

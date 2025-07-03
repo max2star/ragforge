@@ -1,6 +1,6 @@
 # 检查Redis连接
 echo "=== 检查Redis连接 ==="
-if docker exec ragflow-redis-dev redis-cli -a infini_rag_flow ping 2>/dev/null | grep -q "PONG"; then
+if docker exec ragforge-redis-dev redis-cli -a infini_rag_flow ping 2>/dev/null | grep -q "PONG"; then
     echo "✅ Redis连接正常"
 else
     echo "❌ Redis连接失败"

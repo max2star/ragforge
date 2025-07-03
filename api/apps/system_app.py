@@ -33,7 +33,7 @@ from api.utils.api_utils import (
     server_error_response,
     generate_confirmation_token,
 )
-from api.versions import get_ragflow_version
+from api.versions import get_ragforge_version
 from rag.utils.storage_factory import STORAGE_IMPL, STORAGE_IMPL_TYPE
 from timeit import default_timer as timer
 
@@ -59,7 +59,7 @@ def version():
               type: string
               description: Version number.
     """
-    return get_json_result(data=get_ragflow_version())
+    return get_json_result(data=get_ragforge_version())
 
 
 @manager.route("/status", methods=["GET"])  # noqa: F821
@@ -207,7 +207,7 @@ def new_token():
         obj = {
             "tenant_id": tenant_id,
             "token": generate_confirmation_token(tenant_id),
-            "beta": generate_confirmation_token(generate_confirmation_token(tenant_id)).replace("ragflow-", "")[:32],
+            "beta": generate_confirmation_token(generate_confirmation_token(tenant_id)).replace("ragforge-", "")[:32],
             "create_time": current_timestamp(),
             "create_date": datetime_format(datetime.now()),
             "update_time": None,
@@ -263,7 +263,7 @@ def token_list():
         objs = [o.to_dict() for o in objs]
         for o in objs:
             if not o["beta"]:
-                o["beta"] = generate_confirmation_token(generate_confirmation_token(tenants[0].tenant_id)).replace("ragflow-", "")[:32]
+                o["beta"] = generate_confirmation_token(generate_confirmation_token(tenants[0].tenant_id)).replace("ragforge-", "")[:32]
                 APITokenService.filter_update([APIToken.tenant_id == tenant_id, APIToken.token == o["token"]], o)
         return get_json_result(data=objs)
     except Exception as e:
@@ -375,9 +375,9 @@ def get_interface_config():
             "logo": config.get("logo", ""),
             "favicon": config.get("favicon", ""),
             "login_logo": config.get("login_logo", ""),
-            "login_welcome_text": config.get("login_welcome_text", "欢迎使用 RAGFlow\n智能知识管理与AI助手平台"),
-            "app_name": config.get("app_name", "RAGFlow"),
-            "login_title": config.get("login_title", "欢迎使用 RAGFlow")
+            "login_welcome_text": config.get("login_welcome_text", "欢迎使用 RAGForge\n智能知识管理与AI助手平台"),
+            "app_name": config.get("app_name", "RAGForge"),
+            "login_title": config.get("login_title", "欢迎使用 RAGForge")
         })
     except Exception as e:
         return server_error_response(e)
@@ -431,9 +431,9 @@ def save_interface_config():
             "logo": request_data.get("logo", ""),
             "favicon": request_data.get("favicon", ""),
             "login_logo": request_data.get("login_logo", ""),
-            "login_welcome_text": request_data.get("login_welcome_text", "欢迎使用 RAGFlow\n智能知识管理与AI助手平台"),
-            "app_name": request_data.get("app_name", "RAGFlow"),
-            "login_title": request_data.get("login_title", "欢迎使用 RAGFlow")
+            "login_welcome_text": request_data.get("login_welcome_text", "欢迎使用 RAGForge\n智能知识管理与AI助手平台"),
+            "app_name": request_data.get("app_name", "RAGForge"),
+            "login_title": request_data.get("login_title", "欢迎使用 RAGForge")
         }
         
         # 保存配置到存储

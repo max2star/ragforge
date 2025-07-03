@@ -477,7 +477,7 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             import subprocess
             import os
             try:
-                tika_jar = os.getenv("TIKA_SERVER_JAR", "file:///ragflow/tika-server-standard-3.0.0.jar").replace(
+                tika_jar = os.getenv("TIKA_SERVER_JAR", "file:///ragforge/tika-server-standard-3.0.0.jar").replace(
                     "file://", "")
                 java_opts = os.getenv("JAVA_OPTS", "-Xmx1g -Xms512m")
                 startup_timeout = int(os.getenv("TIKA_STARTUP_TIMEOUT", "300"))

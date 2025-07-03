@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试RAGFlow用户创建和对话框创建功能
+测试RAGForge用户创建和对话框创建功能
 """
 
 import sys
@@ -43,7 +43,7 @@ AQAB
 
 def create_user_and_test_dialog():
     """创建用户并测试对话框创建"""
-    print("🔐 RAGFlow 用户创建和对话框测试")
+    print("🔐 RAGForge 用户创建和对话框测试")
     print("=" * 50)
     
     # 用户信息

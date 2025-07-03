@@ -1,4 +1,4 @@
-# RAGFlow 开发环境
+# RAGForge 开发环境
 
 这个目录包含了用于开发的 Docker Compose 配置，使用单机模式的 Elasticsearch，简化了配置并移除了集群相关的复杂性。
 
@@ -62,8 +62,8 @@ docker-compose -f docker-compose-dev-no-infinity.yml down
 ### MySQL
 - **端口**: 3306
 - **用户名**: root
-- **密码**: ragflow123
-- **数据库**: ragflow
+- **密码**: ragforge123
+- **数据库**: ragforge
 
 ### MinIO
 - **API 端口**: 9000
@@ -74,7 +74,7 @@ docker-compose -f docker-compose-dev-no-infinity.yml down
 
 ### Redis
 - **端口**: 6379
-- **密码**: ragflow123
+- **密码**: ragforge123
 
 ### Infinity (向量数据库) - 仅完整模式
 - **Thrift 端口**: 23817

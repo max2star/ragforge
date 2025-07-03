@@ -8,7 +8,7 @@ set -e
 function usage() {
     echo "Usage: $0 [--disable-webserver] [--disable-taskexecutor] [--consumer-no-beg=<num>] [--consumer-no-end=<num>] [--workers=<num>] [--host-id=<string>]"
     echo
-    echo "  --disable-webserver             Disables the web server (nginx + ragflow_server)."
+    echo "  --disable-webserver             Disables the web server (nginx + ragforge_server)."
     echo "  --disable-taskexecutor          Disables task executor workers."
     echo "  --enable-mcpserver              Enables the MCP server."
     echo "  --consumer-no-beg=<num>         Start range for consumers (if using range-based)."
@@ -34,7 +34,7 @@ WORKERS=1
 MCP_HOST="127.0.0.1"
 MCP_PORT=9382
 MCP_BASE_URL="http://127.0.0.1:9380"
-MCP_SCRIPT_PATH="/ragflow/mcp/server/server.py"
+MCP_SCRIPT_PATH="/ragforge/mcp/server/server.py"
 MCP_MODE="self-host"
 MCP_HOST_API_KEY=""
 
@@ -116,7 +116,7 @@ done
 # -----------------------------------------------------------------------------
 # Replace env variables in the service_conf.yaml file
 # -----------------------------------------------------------------------------
-CONF_DIR="/ragflow/conf"
+CONF_DIR="/ragforge/conf"
 TEMPLATE_FILE="${CONF_DIR}/service_conf.yaml.template"
 CONF_FILE="${CONF_DIR}/service_conf.yaml"
 
@@ -166,9 +166,9 @@ if [[ "${ENABLE_WEBSERVER}" -eq 1 ]]; then
     echo "Starting nginx..."
     /usr/sbin/nginx
 
-    echo "Starting ragflow_server..."
+    echo "Starting ragforge_server..."
     while true; do
-        "$PY" api/ragflow_server.py
+        "$PY" api/ragforge_server.py
     done &
 fi
 

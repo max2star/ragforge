@@ -45,7 +45,7 @@ if LOCK_KEY_pdfplumber not in sys.modules:
     sys.modules[LOCK_KEY_pdfplumber] = threading.Lock()
 
 
-class RAGFlowPdfParser:
+class RAGForgePdfParser:
     def __init__(self, **kwargs):
         """
         If you have trouble downloading HuggingFace models, -_^ this might help!!
@@ -77,7 +77,7 @@ class RAGFlowPdfParser:
                 if torch.cuda.is_available():
                     self.updown_cnt_mdl.set_param({"device": "cuda"})
             except Exception:
-                logging.exception("RAGFlowPdfParser __init__")
+                logging.exception("RAGForgePdfParser __init__")
         try:
             model_dir = os.path.join(
                 get_project_base_directory(),
@@ -1018,7 +1018,7 @@ class RAGFlowPdfParser:
                     self.total_page = len(self.pdf.pages)
 
         except Exception:
-            logging.exception("RAGFlowPdfParser __images__")
+            logging.exception("RAGForgePdfParser __images__")
         logging.info(f"__images__ dedupe_chars cost {timer() - start}s")
 
         self.outlines = []
@@ -1263,7 +1263,7 @@ class PlainParser:
         raise NotImplementedError
 
 
-class VisionParser(RAGFlowPdfParser):
+class VisionParser(RAGForgePdfParser):
     def __init__(self, vision_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.vision_model = vision_model

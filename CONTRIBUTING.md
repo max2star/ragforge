@@ -1,8 +1,8 @@
 # Contribution guidelines
 
-This document offers guidelines and major considerations for submitting your contributions to RAGFlow.
+This document offers guidelines and major considerations for submitting your contributions to RAGForge.
 
-- To report a bug, file a [GitHub issue](https://github.com/infiniflow/ragflow/issues/new/choose) with us.
+- To report a bug, file a [GitHub issue](https://github.com/infiniflow/ragforge/issues/new/choose) with us.
 - For further questions, you can explore existing discussions or initiate a new one in [Discussions](https://github.com/orgs/infiniflow/discussions).
 
 ## What you can contribute
@@ -22,7 +22,7 @@ The list below mentions some contributions you can make, but it is not a complet
 
 1. Fork our GitHub repository.
 2. Clone your fork to your local machine:
-`git clone git@github.com:<yourname>/ragflow.git`
+`git clone git@github.com:<yourname>/ragforge.git`
 3. Create a local branch: 
 `git checkout -b my-branch`
 4. Provide sufficient information in your commit message

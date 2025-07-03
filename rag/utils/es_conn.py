@@ -34,7 +34,7 @@ from rag.nlp import is_english, rag_tokenizer
 
 ATTEMPT_TIME = 2
 
-logger = logging.getLogger('ragflow.es_conn')
+logger = logging.getLogger('ragforge.es_conn')
 
 
 @singleton

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试RAGFlow界面配置功能
+测试RAGForge界面配置功能
 """
 
 import requests
@@ -94,17 +94,17 @@ def register_user(email: str, password: str, nickname: str):
 
 def test_interface_config():
     """测试界面配置功能"""
-    print("=== 测试RAGFlow界面配置功能 ===")
+    print("=== 测试RAGForge界面配置功能 ===")
     
     # 0. 先尝试注册用户
     print("\n0. 注册用户...")
-    register_success = register_user("admin@ragflow.com", "admin123", "管理员")
+    register_success = register_user("admin@ragforge.com", "admin123", "管理员")
     if not register_success:
         print("注册失败或用户已存在")
     
     # 1. 登录获取token
     print("\n1. 登录获取token...")
-    token = login_and_get_token("admin@ragflow.com", "admin123")
+    token = login_and_get_token("admin@ragforge.com", "admin123")
     if not token:
         print("登录失败，无法继续测试")
         return
@@ -142,7 +142,7 @@ def test_interface_config():
             "logo": "",
             "favicon": "",
             "login_logo": "",
-            "login_welcome_text": "欢迎使用 RAGFlow\n智能知识管理与AI助手平台\n测试配置"
+            "login_welcome_text": "欢迎使用 RAGForge\n智能知识管理与AI助手平台\n测试配置"
         }
         
         response = requests.post(

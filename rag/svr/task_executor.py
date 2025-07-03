@@ -59,7 +59,7 @@ from api.db.services.llm_service import LLMBundle
 from api.db.services.task_service import TaskService
 from api.db.services.file2document_service import File2DocumentService
 from api import settings
-from api.versions import get_ragflow_version
+from api.versions import get_ragforge_version
 from api.db.db_models import close_connection
 from rag.app import laws, paper, presentation, manual, qa, table, book, resume, picture, naive, one, audio, \
     email, tag
@@ -1223,7 +1223,7 @@ async def main():
         # 获取第一个参数
         FIRST_ARG = sys.argv[1]
         logging.info(f"参数数量{len(sys.argv)},第一个参数 {FIRST_ARG}")
-    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()},executor {FIRST_ARG},task_limiter {task_limiter},chunk_limiter {chunk_limiter}')
+    logging.info(f'TaskExecutor: RAGForge version: {get_ragforge_version()},executor {FIRST_ARG},task_limiter {task_limiter},chunk_limiter {chunk_limiter}')
     settings.init_settings()
     print_rag_settings()
     if sys.platform != "win32":

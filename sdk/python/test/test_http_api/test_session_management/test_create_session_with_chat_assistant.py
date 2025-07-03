@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from common import INVALID_API_TOKEN, SESSION_WITH_CHAT_NAME_LIMIT, create_session_with_chat_assistant, delete_chat_assistants, list_session_with_chat_assistants
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 
 
 class TestAuthorization:
@@ -26,7 +26,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
