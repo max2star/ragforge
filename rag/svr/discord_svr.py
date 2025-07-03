@@ -19,11 +19,11 @@ import requests
 import base64
 import asyncio
 
-URL = '{YOUR_IP_ADDRESS:PORT}/v1/api/completion_aibotk' # Default: https://demo.ragflow.io/v1/api/completion_aibotk
+URL = '{YOUR_IP_ADDRESS:PORT}/v1/api/completion_aibotk' # Default: https://demo.ragforge.io/v1/api/completion_aibotk
 
 JSON_DATA = {
     "conversation_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxx", # Get conversation id from /api/new_conversation
-    "Authorization": "ragflow-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", # RAGFlow Assistant Chat Bot API Key
+    "Authorization": "ragforge-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx", # RAGForge Assistant Chat Bot API Key
     "word": "" # User question, don't need to initialize
 }
 

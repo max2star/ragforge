@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# RAGFlow 开发环境检查脚本
+# RAGForge 开发环境检查脚本
 # 用于检查所有服务的状态和连接性
 
 set -e
@@ -33,7 +33,7 @@ print_status() {
 }
 
 echo "=========================================="
-echo "RAGFlow 开发环境检查脚本"
+echo "RAGForge 开发环境检查脚本"
 echo "=========================================="
 echo
 
@@ -65,7 +65,7 @@ echo
 
 # 3. 检查容器状态
 echo "3. 检查容器状态..."
-containers=("ragflow-mysql-dev" "ragflow-redis-dev" "ragflow-es-dev" "ragflow-minio-dev")
+containers=("ragforge-mysql-dev" "ragforge-redis-dev" "ragforge-es-dev" "ragforge-minio-dev")
 
 for container in "${containers[@]}"; do
     if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "$container"; then
@@ -107,7 +107,7 @@ echo
 
 # 5. 检查数据库连接
 echo "5. 检查数据库连接..."
-if docker exec ragflow-mysql-dev mysql -uroot -pinfini_rag_flow -e "SELECT 1;" >/dev/null 2>&1; then
+if docker exec ragforge-mysql-dev mysql -uroot -pinfini_rag_flow -e "SELECT 1;" >/dev/null 2>&1; then
     print_status "OK" "MySQL数据库连接正常"
 else
     print_status "ERROR" "MySQL数据库连接失败"
@@ -116,7 +116,7 @@ echo
 
 # 6. 检查Redis连接
 echo "6. 检查Redis连接..."
-if docker exec ragflow-redis-dev redis-cli ping >/dev/null 2>&1; then
+if docker exec ragforge-redis-dev redis-cli ping >/dev/null 2>&1; then
     print_status "OK" "Redis连接正常"
 else
     print_status "ERROR" "Redis连接失败"
@@ -148,12 +148,12 @@ echo
 
 # 9. 检查网络配置
 echo "9. 检查Docker网络..."
-if docker network ls | grep -q "docker_ragflow"; then
-    print_status "OK" "ragflow网络存在"
-    network_info=$(docker network inspect docker_ragflow --format '{{.IPAM.Config}}')
+if docker network ls | grep -q "docker_ragforge"; then
+    print_status "OK" "ragforge网络存在"
+    network_info=$(docker network inspect docker_ragforge --format '{{.IPAM.Config}}')
     print_status "INFO" "网络配置: $network_info"
 else
-    print_status "ERROR" "ragflow网络不存在"
+    print_status "ERROR" "ragforge网络不存在"
 fi
 echo
 
@@ -191,8 +191,8 @@ echo
 
 # 12. 检查服务版本兼容性
 echo "12. 检查服务版本兼容性..."
-mysql_version=$(docker exec ragflow-mysql-dev mysql --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
-es_version=$(docker exec ragflow-es-dev elasticsearch --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+mysql_version=$(docker exec ragforge-mysql-dev mysql --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
+es_version=$(docker exec ragforge-es-dev elasticsearch --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+')
 
 print_status "INFO" "MySQL版本: $mysql_version"
 print_status "INFO" "Elasticsearch版本: $es_version"
@@ -280,8 +280,8 @@ echo "=========================================="
 # 总结
 echo
 echo "服务状态总结:"
-healthy_count=$(docker ps --filter "name=ragflow" --filter "health=healthy" --format "table {{.Names}}" | wc -l)
-total_count=$(docker ps --filter "name=ragflow" --format "table {{.Names}}" | wc -l)
+healthy_count=$(docker ps --filter "name=ragforge" --filter "health=healthy" --format "table {{.Names}}" | wc -l)
+total_count=$(docker ps --filter "name=ragforge" --format "table {{.Names}}" | wc -l)
 
 if [ $healthy_count -eq $total_count ]; then
     print_status "OK" "所有服务运行正常 ($healthy_count/$total_count)"
@@ -292,6 +292,6 @@ fi
 echo
 echo "如果发现问题，请检查:"
 echo "1. 容器日志: docker logs <container_name>"
-echo "2. 网络连接: docker network inspect docker_ragflow"
+echo "2. 网络连接: docker network inspect docker_ragforge"
 echo "3. 配置文件: 检查 .env 和 service_conf.yaml"
 echo "4. 重启服务: docker-compose -f docker-compose-dev.yml restart" 

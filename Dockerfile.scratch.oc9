@@ -1,7 +1,7 @@
 FROM opencloudos/opencloudos:9.0
 USER root
 
-WORKDIR /ragflow
+WORKDIR /ragforge
 
 RUN dnf update -y && dnf install -y wget curl gcc-c++ openmpi-devel
 
@@ -50,7 +50,7 @@ RUN conda run -n py11 pip install ollama
 RUN conda run -n py11 python -m nltk.downloader punkt
 RUN conda run -n py11 python -m nltk.downloader wordnet
 
-ENV PYTHONPATH=/ragflow/
+ENV PYTHONPATH=/ragforge/
 ENV HF_ENDPOINT=https://hf-mirror.com
 
 COPY docker/service_conf.yaml.template ./conf/service_conf.yaml.template

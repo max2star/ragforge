@@ -1,6 +1,6 @@
 # 开发环境配置说明
 
-这个目录包含了用于开发环境的配置文件，用于将 RAGFlow API 连接到开发环境的 Docker 服务。
+这个目录包含了用于开发环境的配置文件，用于将 RAGForge API 连接到开发环境的 Docker 服务。
 
 ## 文件说明
 
@@ -15,10 +15,10 @@
 
 | 服务 | 原配置 | 开发环境配置 |
 |------|--------|--------------|
-| **MySQL** | localhost:5455 (root/infini_rag_flow) | localhost:3306 (root/ragflow123) |
+| **MySQL** | localhost:5455 (root/infini_rag_flow) | localhost:3306 (root/ragforge123) |
 | **Elasticsearch** | https://localhost:1200 (elastic/EPPso10r8Ja) | http://localhost:9200 (elastic/changeme) |
 | **MinIO** | localhost:9000 (rag_flow/infini_rag_flow) | localhost:9000 (minioadmin/minioadmin) |
-| **Redis** | localhost:6379 (infini_rag_flow) | localhost:6379 (ragflow123) |
+| **Redis** | localhost:6379 (infini_rag_flow) | localhost:6379 (ragforge123) |
 | **Infinity** | localhost:23817 | localhost:23817 |
 
 ## 使用方法
@@ -51,7 +51,7 @@ cd conf
 mysql:
   host: 'localhost'
   port: 3306
-  password: 'ragflow123'
+  password: 'ragforge123'
 
 es:
   hosts: 'http://localhost:9200'
@@ -63,7 +63,7 @@ minio:
   host: 'localhost:9000'
 
 redis:
-  password: 'ragflow123'
+  password: 'ragforge123'
   host: 'localhost:6379'
 ```
 

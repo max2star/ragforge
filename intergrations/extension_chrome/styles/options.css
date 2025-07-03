@@ -1,4 +1,4 @@
-#ragflow {
+#ragforge {
   font-family: "Segoe UI", Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -8,14 +8,14 @@
   height: 600px;
 }
 
-#ragflow .window {
+#ragforge .window {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
   overflow: hidden;
 }
-#ragflow #form-config {
+#ragforge #form-config {
   background-color: #fff;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-#ragflow .header {
+#ragforge .header {
   background-color: #fff;
   padding: 4px;
   display: flex;
@@ -33,30 +33,30 @@
   flex-direction: row;
 }
 
-#ragflow .header .title {
+#ragforge .header .title {
   font-size: 16px;
 }
 
-#ragflow .header .logo {
+#ragforge .header .logo {
   width: 100px; /* Adjust size as needed */
   height: auto;
   margin-right: 10px;
 }
 
-#ragflow .content {
+#ragforge .content {
   padding: 20px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-#ragflow label {
+#ragforge label {
   font-weight: bold;
   margin-bottom: 5px;
 }
 
-#ragflow input,
-#ragflow select {
+#ragforge input,
+#ragforge select {
   width: 100%;
   padding: 8px;
   margin-bottom: 15px;
@@ -65,7 +65,7 @@
   box-sizing: border-box;
 }
 
-#ragflow button {
+#ragforge button {
   background-color: #0078d4;
   color: #fff;
   padding: 10px;
@@ -75,17 +75,17 @@
   font-size: 14px;
 }
 
-#ragflow button:hover {
+#ragforge button:hover {
   background-color: #005bb5;
 }
 
-#ragflow #config-button {
+#ragforge #config-button {
   display: flex;
   position: absolute;
   top: 2px;
   right: 2px;
   font-size: 22px;
 }
-#ragflow #config-button:hover {
+#ragforge #config-button:hover {
   cursor: pointer;
 }

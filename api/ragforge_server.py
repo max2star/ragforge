@@ -19,7 +19,7 @@
 # beartype_all(conf=BeartypeConf(violation_type=UserWarning))    # <-- emit warnings from all code
 
 from api.utils.log_utils import initRootLogger
-initRootLogger("ragflow_server")
+initRootLogger("ragforge_server")
 
 import logging
 import os
@@ -42,14 +42,14 @@ from api import utils
 
 from api.db.db_models import init_database_tables as init_web_db, close_connection
 from api.db.init_data import init_web_data
-from api.versions import get_ragflow_version
+from api.versions import get_ragforge_version
 from api.utils import show_configs
 from rag.settings import print_rag_settings
 from rag.utils.redis_conn import RedisDistributedLock
 
 stop_event = threading.Event()
 
-RAGFLOW_DEBUGPY_LISTEN = int(os.environ.get('RAGFLOW_DEBUGPY_LISTEN', "0"))
+RAGFORGE_DEBUGPY_LISTEN = int(os.environ.get('RAGFORGE_DEBUGPY_LISTEN', "0"))
 
 def database_retry(max_retries=3, retry_delay=1):
     """数据库操作重试装饰器"""
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     /_/ |_|/_/  |_|\____//_/    /_/ \____/ |__/|__/                             
 
     """)
-    logging.info(f'RAGFlow version: {get_ragflow_version()}')
+    logging.info(f'RAGForge version: {get_ragforge_version()}')
     logging.info(f'project base: {utils.file_utils.get_project_base_directory()}')
 
     try:
@@ -228,10 +228,10 @@ if __name__ == '__main__':
         logging.error(f"Configuration initialization failed: {e}")
         sys.exit(1)
 
-    if RAGFLOW_DEBUGPY_LISTEN > 0:
-        logging.info(f"debugpy listen on {RAGFLOW_DEBUGPY_LISTEN}")
+    if RAGFORGE_DEBUGPY_LISTEN > 0:
+        logging.info(f"debugpy listen on {RAGFORGE_DEBUGPY_LISTEN}")
         import debugpy
-        debugpy.listen(("0.0.0.0", RAGFLOW_DEBUGPY_LISTEN))
+        debugpy.listen(("0.0.0.0", RAGFORGE_DEBUGPY_LISTEN))
 
     # init db
     # 只需要执行一次，成功后注释
@@ -244,14 +244,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--version", default=False, help="RAGFlow version", action="store_true"
+        "--version", default=False, help="RAGForge version", action="store_true"
     )
     parser.add_argument(
         "--debug", default=False, help="debug mode", action="store_true"
     )
     args = parser.parse_args()
     if args.version:
-        print(get_ragflow_version())
+        print(get_ragforge_version())
         sys.exit(0)
 
     RuntimeConfig.DEBUG = args.debug
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     # thread = ThreadPoolExecutor(max_workers=1)
     # thread.submit(update_progress)
     # 启动后台任务
-    executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="ragflow-bg")
+    executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="ragforge-bg")
 
     try:
         # 启动进度更新任务 - 改为循环任务而不是递归调用
@@ -288,7 +288,7 @@ if __name__ == '__main__':
     # start http server
     # 启动HTTP服务器
     try:
-        logging.info("RAGFlow HTTP server starting...")
+        logging.info("RAGForge HTTP server starting...")
         run_simple(
             hostname=settings.HOST_IP,
             port=settings.HOST_PORT,

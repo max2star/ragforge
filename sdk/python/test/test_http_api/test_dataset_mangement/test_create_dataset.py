@@ -16,7 +16,7 @@
 
 import pytest
 from common import DATASET_NAME_LIMIT, INVALID_API_TOKEN, create_dataset
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 from libs.utils import encode_avatar
 from libs.utils.file_utils import create_image_file
 
@@ -28,7 +28,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -76,7 +76,7 @@ class TestDatasetCreation:
             assert res["code"] == 0, f"Failed to create dataset {i}"
 
     def test_avatar(self, get_http_api_auth, tmp_path):
-        fn = create_image_file(tmp_path / "ragflow_test.png")
+        fn = create_image_file(tmp_path / "ragforge_test.png")
         payload = {
             "name": "avatar_test",
             "avatar": encode_avatar(fn),

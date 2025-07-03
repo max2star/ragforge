@@ -1,4 +1,4 @@
-#ragflow {
+#ragforge {
   font-family: "Segoe UI", Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -8,13 +8,13 @@
   width: 320px;
 }
 
-#ragflow .window {
+#ragforge .window {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
   overflow: hidden;
 }
-#ragflow #output {
+#ragforge #output {
   position: absolute;
 }

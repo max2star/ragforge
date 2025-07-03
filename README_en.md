@@ -1,6 +1,6 @@
 <div align="center">
-<a href="https://demo.ragflow.io/">
-<img src="web/src/assets/logo-with-text.png" width="520" alt="NewRAGflow logo">
+<a href="https://demo.ragforge.io/">
+<img src="web/src/assets/logo-with-text.png" width="520" alt="RAGForge logo">
 </a>
 </div>
 
@@ -13,32 +13,32 @@
     <a href="https://x.com/intent/follow?screen_name=infiniflowai" target="_blank">
         <img src="https://img.shields.io/twitter/follow/infiniflow?logo=X&color=%20%23f5f5f5" alt="follow on X(Twitter)">
     </a>
-    <a href="https://demo.ragflow.io" target="_blank">
+    <a href="https://demo.ragforge.io" target="_blank">
         <img alt="Static Badge" src="https://img.shields.io/badge/Online-Demo-4e6b99">
     </a>
-    <a href="https://hub.docker.com/r/infiniflow/ragflow" target="_blank">
-        <img src="https://img.shields.io/badge/docker_pull-ragflow:v0.18.0-brightgreen" alt="docker pull infiniflow/ragflow:v0.18.0">
+    <a href="https://hub.docker.com/r/infiniflow/ragforge" target="_blank">
+        <img src="https://img.shields.io/badge/docker_pull-ragforge:v0.18.0-brightgreen" alt="docker pull infiniflow/ragforge:v0.18.0">
     </a>
-    <a href="https://github.com/infiniflow/ragflow/releases/latest">
-        <img src="https://img.shields.io/github/v/release/infiniflow/ragflow?color=blue&label=Latest%20Release" alt="Latest Release">
+    <a href="https://github.com/infiniflow/ragforge/releases/latest">
+        <img src="https://img.shields.io/github/v/release/infiniflow/ragforge?color=blue&label=Latest%20Release" alt="Latest Release">
     </a>
-    <a href="https://github.com/infiniflow/ragflow/blob/main/LICENSE">
+    <a href="https://github.com/infiniflow/ragforge/blob/main/LICENSE">
         <img height="21" src="https://img.shields.io/badge/License-Apache--2.0-ffffff?labelColor=d4eaf7&color=2e6cc4" alt="license">
     </a>
 </p>
 
 <h4 align="center">
-  <a href="https://ragflow.io/docs/dev/">Document</a> |
-  <a href="https://github.com/infiniflow/ragflow/issues/4214">Roadmap</a> |
+  <a href="https://ragforge.io/docs/dev/">Document</a> |
+  <a href="https://github.com/infiniflow/ragforge/issues/4214">Roadmap</a> |
   <a href="https://twitter.com/infiniflowai">Twitter</a> |
   <a href="https://discord.gg/NjYzJD3GM3">Discord</a> |
-  <a href="https://demo.ragflow.io">Demo</a>
+  <a href="https://demo.ragforge.io">Demo</a>
 </h4>
 
 <details open>
 <summary><b>📕 Table of Contents</b></summary>
 
-- 💡 [What is NewRAGflow?](#-what-is-newragflow)
+- 💡 [What is RAGForge?](#-what-is-newragforge)
 - 🎮 [Demo](#-demo)
 - 📌 [Latest Updates](#-latest-updates)
 - 🌟 [Core Features](#-core-features)
@@ -55,16 +55,16 @@
 
 </details>
 
-## 💡 What is NewRAGflow?
+## 💡 What is RAGForge?
 
-NewRAGflow is an open-source RAG (Retrieval-Augmented Generation) engine based on RAGFlow with enhanced enterprise features. While maintaining the core functionality of RAGFlow, it adds multiple enterprise-level enhancements to provide developers with a more powerful RAG solution.
+RAGForge is an open-source RAG (Retrieval-Augmented Generation) engine based on RAGForge with enhanced enterprise features. While maintaining the core functionality of RAGForge, it adds multiple enterprise-level enhancements to provide developers with a more powerful RAG solution.
 
 ## 🎮 Demo
 
-Try our demo at [https://demo.ragflow.io](https://demo.ragflow.io).
+Try our demo at [https://demo.ragforge.io](https://demo.ragforge.io).
 
 <div align="center" style="margin-top:20px;margin-bottom:20px;">
-<img src="https://github.com/infiniflow/ragflow/assets/7248/2f6baa3e-1092-4f11-866d-36f6a9d075e5" width="1200"/>
+<img src="https://github.com/infiniflow/ragforge/assets/7248/2f6baa3e-1092-4f11-866d-36f6a9d075e5" width="1200"/>
 <img src="https://github.com/user-attachments/assets/504bbbf1-c9f7-4d83-8cc5-e9cb63c26db6" width="1200"/>
 </div>
 
@@ -127,7 +127,7 @@ releases! 🌟
 ## 🔎 System Architecture
 
 <div align="center" style="margin-top:20px;margin-bottom:20px;">
-<img src="https://github.com/infiniflow/ragflow/assets/12318111/d6ac5664-c237-4200-a7c2-a4a00691b485" width="1000"/>
+<img src="https://github.com/infiniflow/ragforge/assets/12318111/d6ac5664-c237-4200-a7c2-a4a00691b485" width="1000"/>
 </div>
 
 ## 🎬 Get Started
@@ -142,8 +142,8 @@ releases! 🌟
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/infiniflow/ragflow.git
-   cd ragflow/docker
+   git clone https://github.com/infiniflow/ragforge.git
+   cd ragforge/docker
    ```
 
 2. **Start the service**
@@ -157,7 +157,7 @@ releases! 🌟
 
 3. **Verify startup**
    ```bash
-   docker logs -f ragflow-server
+   docker logs -f ragforge-server
    ```
 
 4. **Access the system**
@@ -193,7 +193,7 @@ Updates to the above configurations require a reboot of all containers to take e
 
 ### Switch doc engine from Elasticsearch to Infinity
 
-RAGFlow uses Elasticsearch by default for storing full text and vectors. To switch to [Infinity](https://github.com/infiniflow/infinity/), follow these steps:
+RAGForge uses Elasticsearch by default for storing full text and vectors. To switch to [Infinity](https://github.com/infiniflow/infinity/), follow these steps:
 
 1. Stop all running containers:
 
@@ -220,9 +220,9 @@ RAGFlow uses Elasticsearch by default for storing full text and vectors. To swit
 This image is approximately 2 GB in size and relies on external LLM and embedding services.
 
 ```bash
-git clone https://github.com/infiniflow/ragflow.git
-cd ragflow/
-docker build --platform linux/amd64 --build-arg LIGHTEN=1 -f Dockerfile -t infiniflow/ragflow:nightly-slim .
+git clone https://github.com/infiniflow/ragforge.git
+cd ragforge/
+docker build --platform linux/amd64 --build-arg LIGHTEN=1 -f Dockerfile -t infiniflow/ragforge:nightly-slim .
 ```
 
 ## 🔧 Build a Docker image including embedding models
@@ -230,9 +230,9 @@ docker build --platform linux/amd64 --build-arg LIGHTEN=1 -f Dockerfile -t infin
 This image is approximately 9 GB in size. As it includes embedding models, it relies on external LLM services only.
 
 ```bash
-git clone https://github.com/infiniflow/ragflow.git
-cd ragflow/
-docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly .
+git clone https://github.com/infiniflow/ragforge.git
+cd ragforge/
+docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragforge:nightly .
 ```
 
 ## 🔨 Launch service from source for development
@@ -246,9 +246,9 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 2. Clone the source code and install Python dependencies:
 
    ```bash
-   git clone https://github.com/infiniflow/ragflow.git
-   cd ragflow/
-   uv sync --python 3.10 --all-extras # install RAGFlow dependent python modules
+   git clone https://github.com/infiniflow/ragforge.git
+   cd ragforge/
+   uv sync --python 3.10 --all-extras # install RAGForge dependent python modules
    ```
 
 3. Launch the dependent services (MinIO, Elasticsearch, Redis, and MySQL) using Docker Compose:
@@ -294,13 +294,13 @@ docker build --platform linux/amd64 -f Dockerfile -t infiniflow/ragflow:nightly 
 
 ## 📚 Documentation
 
-- [API Documentation](https://ragflow.io/docs/dev/category/api)
-- [Configuration Guide](https://ragflow.io/docs/dev/category/configuration)
-- [Deployment Guide](https://ragflow.io/docs/dev/category/deployment)
+- [API Documentation](https://ragforge.io/docs/dev/category/api)
+- [Configuration Guide](https://ragforge.io/docs/dev/category/configuration)
+- [Deployment Guide](https://ragforge.io/docs/dev/category/deployment)
 
 ## 📜 Roadmap
 
-See the [RAGFlow Roadmap 2025](https://github.com/infiniflow/ragflow/issues/4214)
+See the [RAGForge Roadmap 2025](https://github.com/infiniflow/ragforge/issues/4214)
 
 ## 🏄 Community
 
@@ -310,5 +310,5 @@ See the [RAGFlow Roadmap 2025](https://github.com/infiniflow/ragflow/issues/4214
 
 ## 🙌 Contributing
 
-RAGFlow flourishes via open-source collaboration. In this spirit, we embrace diverse contributions from the community.
+RAGForge flourishes via open-source collaboration. In this spirit, we embrace diverse contributions from the community.
 If you would like to be a part, review our [Contribution Guidelines](./CONTRIBUTING.md) first.

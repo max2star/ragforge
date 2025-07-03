@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from common import INVALID_API_TOKEN, batch_add_chunks, list_chunks
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 
 
 class TestAuthorization:
@@ -27,7 +27,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -90,7 +90,7 @@ class TestChunksList:
             ({"keywords": ""}, 5),
             ({"keywords": "1"}, 1),
             pytest.param({"keywords": "chunk"}, 4, marks=pytest.mark.skipif(os.getenv("DOC_ENGINE") == "infinity", reason="issues/6509")),
-            ({"keywords": "ragflow"}, 1),
+            ({"keywords": "ragforge"}, 1),
             ({"keywords": "unknown"}, 0),
         ],
     )

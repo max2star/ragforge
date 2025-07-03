@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试RAGFlow对话框创建功能
+测试RAGForge对话框创建功能
 """
 
 import requests
@@ -131,7 +131,7 @@ def create_dialog(token: str):
         return False
 
 if __name__ == "__main__":
-    print("🔐 RAGFlow 对话框创建测试")
+    print("🔐 RAGForge 对话框创建测试")
     print("=" * 50)
     
     # 测试用户凭据

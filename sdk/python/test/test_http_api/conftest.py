@@ -80,16 +80,16 @@ def clear_session_with_chat_assistants(request, get_http_api_auth, add_chat_assi
 @pytest.fixture
 def generate_test_files(request, tmp_path):
     file_creators = {
-        "docx": (tmp_path / "ragflow_test.docx", create_docx_file),
-        "excel": (tmp_path / "ragflow_test.xlsx", create_excel_file),
-        "ppt": (tmp_path / "ragflow_test.pptx", create_ppt_file),
-        "image": (tmp_path / "ragflow_test.png", create_image_file),
-        "pdf": (tmp_path / "ragflow_test.pdf", create_pdf_file),
-        "txt": (tmp_path / "ragflow_test.txt", create_txt_file),
-        "md": (tmp_path / "ragflow_test.md", create_md_file),
-        "json": (tmp_path / "ragflow_test.json", create_json_file),
-        "eml": (tmp_path / "ragflow_test.eml", create_eml_file),
-        "html": (tmp_path / "ragflow_test.html", create_html_file),
+        "docx": (tmp_path / "ragforge_test.docx", create_docx_file),
+        "excel": (tmp_path / "ragforge_test.xlsx", create_excel_file),
+        "ppt": (tmp_path / "ragforge_test.pptx", create_ppt_file),
+        "image": (tmp_path / "ragforge_test.png", create_image_file),
+        "pdf": (tmp_path / "ragforge_test.pdf", create_pdf_file),
+        "txt": (tmp_path / "ragforge_test.txt", create_txt_file),
+        "md": (tmp_path / "ragforge_test.md", create_md_file),
+        "json": (tmp_path / "ragforge_test.json", create_json_file),
+        "eml": (tmp_path / "ragforge_test.eml", create_eml_file),
+        "html": (tmp_path / "ragforge_test.html", create_html_file),
     }
 
     files = {}
@@ -101,7 +101,7 @@ def generate_test_files(request, tmp_path):
 
 
 @pytest.fixture(scope="class")
-def ragflow_tmp_dir(request, tmp_path_factory):
+def ragforge_tmp_dir(request, tmp_path_factory):
     class_name = request.cls.__name__
     return tmp_path_factory.mktemp(class_name)
 
@@ -129,9 +129,9 @@ def add_dataset_func(request, get_http_api_auth):
 
 
 @pytest.fixture(scope="class")
-def add_document(get_http_api_auth, add_dataset, ragflow_tmp_dir):
+def add_document(get_http_api_auth, add_dataset, ragforge_tmp_dir):
     dataset_id = add_dataset
-    document_ids = bulk_upload_documents(get_http_api_auth, dataset_id, 1, ragflow_tmp_dir)
+    document_ids = bulk_upload_documents(get_http_api_auth, dataset_id, 1, ragforge_tmp_dir)
     return dataset_id, document_ids[0]
 
 

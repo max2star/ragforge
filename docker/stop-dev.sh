@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 开发环境停止脚本
-echo "停止 RAGFlow 开发环境..."
+echo "停止 RAGForge 开发环境..."
 
 # 停止所有可能的开发环境配置
 echo "停止完整模式服务..."

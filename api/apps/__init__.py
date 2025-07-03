@@ -64,7 +64,7 @@ swagger = Swagger(
     template={
         "swagger": "2.0",
         "info": {
-            "title": "RAGFlow API",
+            "title": "RAGForge API",
             "description": "",
             "version": "1.0.0",
         },

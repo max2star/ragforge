@@ -14,16 +14,16 @@
 #  limitations under the License.
 #
 
-from ragflow_sdk import RAGFlow
+from ragforge_sdk import RAGForge
 from common import HOST_ADDRESS
 
 
 def test_create_chat_with_name(get_api_key_fixture):
     API_KEY = get_api_key_fixture
-    rag = RAGFlow(API_KEY, HOST_ADDRESS)
+    rag = RAGForge(API_KEY, HOST_ADDRESS)
     kb = rag.create_dataset(name="test_create_chat")
-    display_name = "ragflow.txt"
-    with open("test_data/ragflow.txt", "rb") as file:
+    display_name = "ragforge.txt"
+    with open("test_data/ragforge.txt", "rb") as file:
         blob = file.read()
     document = {"display_name": display_name, "blob": blob}
     documents = []
@@ -36,10 +36,10 @@ def test_create_chat_with_name(get_api_key_fixture):
 
 def test_update_chat_with_name(get_api_key_fixture):
     API_KEY = get_api_key_fixture
-    rag = RAGFlow(API_KEY, HOST_ADDRESS)
+    rag = RAGForge(API_KEY, HOST_ADDRESS)
     kb = rag.create_dataset(name="test_update_chat")
-    display_name = "ragflow.txt"
-    with open("test_data/ragflow.txt", "rb") as file:
+    display_name = "ragforge.txt"
+    with open("test_data/ragforge.txt", "rb") as file:
         blob = file.read()
     document = {"display_name": display_name, "blob": blob}
     documents = []
@@ -53,10 +53,10 @@ def test_update_chat_with_name(get_api_key_fixture):
 
 def test_delete_chats_with_success(get_api_key_fixture):
     API_KEY = get_api_key_fixture
-    rag = RAGFlow(API_KEY, HOST_ADDRESS)
+    rag = RAGForge(API_KEY, HOST_ADDRESS)
     kb = rag.create_dataset(name="test_delete_chat")
-    display_name = "ragflow.txt"
-    with open("test_data/ragflow.txt", "rb") as file:
+    display_name = "ragforge.txt"
+    with open("test_data/ragforge.txt", "rb") as file:
         blob = file.read()
     document = {"display_name": display_name, "blob": blob}
     documents = []
@@ -70,10 +70,10 @@ def test_delete_chats_with_success(get_api_key_fixture):
 
 def test_list_chats_with_success(get_api_key_fixture):
     API_KEY = get_api_key_fixture
-    rag = RAGFlow(API_KEY, HOST_ADDRESS)
+    rag = RAGForge(API_KEY, HOST_ADDRESS)
     kb = rag.create_dataset(name="test_list_chats")
-    display_name = "ragflow.txt"
-    with open("test_data/ragflow.txt", "rb") as file:
+    display_name = "ragforge.txt"
+    with open("test_data/ragforge.txt", "rb") as file:
         blob = file.read()
     document = {"display_name": display_name, "blob": blob}
     documents = []
