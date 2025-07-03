@@ -170,11 +170,17 @@ def set_conversation():
             e, dia = DialogService.get_by_id(objs[0].dialog_id)
             if not e:
                 return get_data_error_result(message="Dialog not found")
+            
+            # 安全获取 prologue，如果没有则使用默认值
+            prologue = "您好，我是您的助手，有什么可以帮助您的吗？"
+            if hasattr(dia, 'prompt_config') and isinstance(dia.prompt_config, dict):
+                prologue = dia.prompt_config.get("prologue", prologue)
+            
             conv = {
                 "id": get_uuid(),
                 "dialog_id": dia.id,
                 "user_id": request.args.get("user_id", ""),
-                "message": [{"role": "assistant", "content": dia.prompt_config["prologue"]}]
+                "message": [{"role": "assistant", "content": prologue}]
             }
             API4ConversationService.save(**conv)
             return get_json_result(data=conv)

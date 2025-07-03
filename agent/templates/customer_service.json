@@ -36,7 +36,7 @@
               },
               "4. product related": {
                 "description": "The question is about the product usage, appearance and how it works.",
-                "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGFlow image from scratch",
+                "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGForge image from scratch",
                 "to": "Retrieval:WholeStarsDrive"
               }
             },
@@ -532,7 +532,7 @@
                 },
                 "4. product related": {
                   "description": "The question is about the product usage, appearance and how it works.",
-                  "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGFlow image from scratch",
+                  "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGForge image from scratch",
                   "to": "Retrieval:WholeStarsDrive"
                 }
               },
@@ -945,7 +945,7 @@
         {
           "data": {
             "form": {
-              "text": "Complete questions by conversation history.\nUser: What's RAGFlow?\nAssistant: RAGFlow is xxx.\nUser: How to deploy it?\n\nRefine it: How to deploy RAGFlow?"
+              "text": "Complete questions by conversation history.\nUser: What's RAGForge?\nAssistant: RAGForge is xxx.\nUser: How to deploy it?\n\nRefine it: How to deploy RAGForge?"
             },
             "label": "Note",
             "name": "N: Refine Question"

@@ -1,6 +1,6 @@
 apiVersion: v2
-name: ragflow
-description: A Helm chart for deploying RAGFlow on Kubernetes
+name: ragforge
+description: A Helm chart for deploying RAGForge on Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
 #

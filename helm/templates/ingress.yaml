@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "ragflow.fullname" . }}
+  name: {{ include "ragforge.fullname" . }}
   labels:
-    {{- include "ragflow.labels" . | nindent 4 }}
+    {{- include "ragforge.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}

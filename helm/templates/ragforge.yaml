@@ -1,0 +1,94 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ragforge.fullname" . }}
+  labels:
+    {{- include "ragforge.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ragforge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ragforge.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ragforge
+  {{- with .Values.ragforge.deployment.strategy }}
+  strategy:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "ragforge.labels" . | nindent 8 }}
+        app.kubernetes.io/component: ragforge
+      annotations:
+        checksum/config-env: {{ include (print $.Template.BasePath "/env.yaml") . | sha256sum }}
+        checksum/config-ragforge: {{ include (print $.Template.BasePath "/ragforge_config.yaml") . | sha256sum }}
+    spec:
+      containers:
+      - name: ragforge
+        image: {{ .Values.env.RAGFORGE_IMAGE }}
+        ports:
+          - containerPort: 80
+            name: http
+          - containerPort: 9380
+            name: http-api
+        volumeMounts:
+          - mountPath: /etc/nginx/conf.d/ragforge.conf
+            subPath: ragforge.conf
+            name: nginx-config-volume
+          - mountPath: /etc/nginx/proxy.conf
+            subPath: proxy.conf
+            name: nginx-config-volume
+          - mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            name: nginx-config-volume
+        envFrom:
+          - secretRef:
+              name: {{ include "ragforge.fullname" . }}-env-config
+        {{- with .Values.ragforge.deployment.resources }}
+        resources:
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ragforge.fullname" . }}
+  labels:
+    {{- include "ragforge.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ragforge
+spec:
+  selector:
+    {{- include "ragforge.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ragforge
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http
+      name: http
+  type: {{ .Values.ragforge.service.type }}
+---
+{{- if .Values.ragforge.api.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-api
+  labels:
+    {{- include "ragforge.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ragforge
+spec:
+  selector:
+    {{- include "ragforge.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ragforge
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: http-api
+      name: http-api
+  type: {{ .Values.ragforge.api.service.type }}
+{{- end }}

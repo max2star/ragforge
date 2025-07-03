@@ -468,7 +468,12 @@ class FileService(CommonService):
 
                 doc_id = get_uuid()
 
-                img = thumbnail_img(filename, blob)
+                try:
+                    img = thumbnail_img(filename, blob)
+                except Exception as e:
+                    logging.error(f"Error uploading file for thumbnail_img: {e}")
+                    img = None
+
                 thumbnail_location = ''
                 if img is not None:
                     thumbnail_location = f'thumbnail_{doc_id}.png'

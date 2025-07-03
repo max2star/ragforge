@@ -34,13 +34,14 @@ from rag.nlp import is_english, rag_tokenizer
 
 ATTEMPT_TIME = 2
 
-logger = logging.getLogger('ragflow.es_conn')
+logger = logging.getLogger('ragforge.es_conn')
 
 
 @singleton
 class ESConnection(DocStoreConnection):
     def __init__(self):
         self.info = {}
+        self.es = None
         logger.info(f"Use Elasticsearch {settings.ES['hosts']} as the doc engine.")
         for _ in range(ATTEMPT_TIME):
             try:
@@ -50,19 +51,23 @@ class ESConnection(DocStoreConnection):
                         "password"]) if "username" in settings.ES and "password" in settings.ES else None,
                     verify_certs=False,
                     ssl_show_warn=False,
-                    ca_certs=settings.ES.get('ca_path','/ragflow/ca.crt'),
                     timeout=600
                 )
-                if self.es:
+                if self.es and self.es.ping():
                     self.info = self.es.info()
                     break
+                else:
+                    logger.warning(f"Elasticsearch {settings.ES['hosts']} is not responding. Waiting...")
+                    time.sleep(5)
             except Exception as e:
                 logger.warning(f"{str(e)}. Waiting Elasticsearch {settings.ES['hosts']} to be healthy.")
                 time.sleep(5)
-        if not self.es.ping():
+        
+        if not self.es or not self.es.ping():
             msg = f"Elasticsearch {settings.ES['hosts']} is unhealthy in 120s."
             logger.error(msg)
             raise Exception(msg)
+            
         v = self.info.get("version", {"number": "8.11.3"})
         v = v["number"].split(".")[0]
         if int(v) < 8:

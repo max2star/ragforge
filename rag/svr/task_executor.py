@@ -28,13 +28,13 @@ from PIL import Image
 from api.utils.log_utils import initRootLogger, get_project_base_directory
 from graphrag.general.index import run_graphrag
 from graphrag.utils import get_llm_cache, set_llm_cache, get_tags_from_cache, set_tags_to_cache
-from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, ChatWithModel, format_time
+from minerU.mineru_extractor import get_pdf_file_bytes, extract_metadata, extract_directory, format_time
 from rag.prompts import keyword_extraction, question_proposal, content_tagging
 
 import logging
 import os
 import bisect
-
+import traceback
 from datetime import datetime
 import json
 import xxhash
@@ -59,7 +59,7 @@ from api.db.services.llm_service import LLMBundle
 from api.db.services.task_service import TaskService
 from api.db.services.file2document_service import File2DocumentService
 from api import settings
-from api.versions import get_ragflow_version
+from api.versions import get_ragforge_version
 from api.db.db_models import close_connection
 from rag.app import laws, paper, presentation, manual, qa, table, book, resume, picture, naive, one, audio, \
     email, tag
@@ -115,6 +115,9 @@ stop_event = threading.Event()
 
 
 def find_interval(arr, n):
+    if len(arr) == 0:
+        return None, None
+
     # 使用 bisect_left 定位 n 的插入位置 (寻找子论文属于哪个分块)
     pos = bisect.bisect_left(arr, n)
 
@@ -190,7 +193,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
             msg = datetime.now().strftime("%H:%M:%S") + " " + msg
         d = {"progress_msg": msg}
         if prog is not None:
-            d["progress"] = prog
+            d["progress"] = round(prog, 4)
 
         TaskService.update_progress(task_id, d)
 
@@ -201,7 +204,7 @@ def set_progress(task_id, from_page=0, to_page=-1, prog=None, msg="Processing...
     except DoesNotExist:
         import traceback
         traceback.print_exc()
-        logging.warning(f"set_progress({task_id}) got exception DoesNotExist,stack is {traceback.format_exc()}")
+        logging.error(f"set_progress({task_id}) got exception DoesNotExist,stack is {traceback.format_exc()}")
     except Exception:
         logging.exception(f"set_progress({task_id}), progress: {prog}, progress_msg: {msg}, got exception")
 
@@ -233,19 +236,23 @@ async def collect():
 
     canceled = False
     #Task是从数据库获取的；所以有些在doc或msg中的信息，需要添加进去
-    task = TaskService.get_task(msg["id"])
+    task_consumer=msg.get("consumer",CONSUMER_NAME)
+    logging.info(f"collect got message id {msg['id']},consumer {task_consumer}")
+    task = TaskService.get_task(msg["id"],task_consumer)
     if task:
         _, doc = DocumentService.get_by_id(task["doc_id"])
         canceled = doc.run == TaskStatus.CANCEL.value or doc.progress < 0
     if not task or canceled:
         state = "is unknown" if not task else "has been cancelled"
         FAILED_TASKS += 1
-        logging.warning(f"collect task {msg['id']} {state}")
+        logging.error(f"collect task {msg['id']} {state}")
         redis_msg.ack()
         return None, None
     task["task_type"] = msg.get("task_type", "")
+    task["consumer"] = msg.get("consumer", CONSUMER_NAME)
     task["meta_fields"] = doc.meta_fields
     task["filter_fields"] = doc.filter_fields
+    task["doc_name"] = doc.name
     return redis_msg, task
 
 
@@ -275,7 +282,9 @@ async def build_chunks(task, progress_callback):
             progress_callback(-1, "Can not find file <%s> from minio. Could you try it again?" % task["name"])
         else:
             progress_callback(-1, "Get file from minio: %s" % str(e).replace("'", ""))
-        logging.exception("Chunking {}/{} got exception".format(task["location"], task["name"]))
+        import traceback
+        traceback.print_exc()
+        logging.exception("Chunking {}/{} got exception {}".format(task["location"], task["name"],traceback.format_exc()))
         raise
 
     try:
@@ -285,6 +294,7 @@ async def build_chunks(task, progress_callback):
                                 kb_id=task["kb_id"], parser_config=task["parser_config"], tenant_id=task["tenant_id"],doc_id=task["doc_id"]))
         logging.info("Chunking({}) {}/{} done".format(timer() - st, task["location"], task["name"]))
     except TaskCanceledException:
+        logging.exception("Chunking {}/{} got exception {}".format(task["location"], task["name"],"TaskCanceledException"))
         raise
     except Exception as e:
         progress_callback(-1, "Internal server error while chunking: %s" % str(e).replace("'", ""))
@@ -302,7 +312,12 @@ async def build_chunks(task, progress_callback):
     for ck in cks:
         d = copy.deepcopy(doc)
         d.update(ck)
-        d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+        try:
+            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+        except Exception as e:
+            content_to_encode = ck["content_with_weight"] + str(d["doc_id"])
+            logging.error(f"encode error for {content_to_encode},will replace and retry...")
+            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8",errors="replace")).hexdigest()
         d["create_time"] = str(datetime.now()).replace("T", " ")[:19]
         d["create_timestamp_flt"] = datetime.now().timestamp()
         if not d.get("image"):
@@ -506,6 +521,17 @@ async def run_raptor(row, chat_mdl, embd_mdl, vector_size, callback=None):
     return res, tk_count
 
 
+async def run_extract_(fields, metadata_type, chat_mdl, content, callback=None):
+    key = fields
+    extractor = PaperExtractor(
+        chat_mdl,
+        None,
+        key
+    )
+    result = await extractor(content,key,metadata_type,callback)
+    return result
+
+
 async def run_extract(row, chat_mdl, content,callback=None):
     extractor_config = row["parser_config"].get('extractor')
     metadata_type = extractor_config.get("metadata_type", "default")
@@ -520,20 +546,6 @@ async def run_extract(row, chat_mdl, content,callback=None):
         key
     )
     result = await extractor(content,key,metadata_type,callback)
-    return result
-
-# todo modify
-async def run_chat(chat_mdl, prompt=None, callback=None):
-    chatter = ChatWithModel(
-        chat_mdl,
-        prompt
-    )
-    try:
-        result = await chatter(callback)
-    except Exception as e:
-        result = {}
-        logging.error(f"run_chat Failed for {e}")
-    logging.info(f"run_chat result {result}")
     return result
 
 
@@ -624,9 +636,11 @@ async def do_handle_task(task):
         chunks = await build_chunks(task, progress_callback)
         logging.info("Build document {}: {:.2f}s".format(task_document_name, timer() - start_ts))
         if chunks is None:
+            logging.error("Build document {} failed".format(task_document_name))
             return
         if not chunks:
-            progress_callback(1., msg=f"No chunk built from {task_document_name}")
+            logging.error("Build document chunks {} failed".format(task_document_name))
+            progress_callback(-1., msg=f"No chunk built from {task_document_name}")
             return
         # TODO: exception handler
         ## set_progress(task["did"], -1, "ERROR: ")
@@ -682,29 +696,42 @@ async def do_handle_task(task):
     #先获取现有的元数据
     dict_result = task.get('meta_fields',{})
     DocumentService.update_meta_fields(task["doc_id"],  {})
-    dict_result.pop('meta_fields',None)
+    # dict_result.pop('meta_fields',None)
     logging.info(f"doc {task['doc_id']} 当前的 meta fields {dict_result}")
     key_now = dict_result.keys()
 
     file_type = task.get("type", "pdf")
     pdf_article_type = None
 
-    # 获取元数据字段
-    extractor_config = task["parser_config"].get('extractor')
-    prompt = extractor_config.get("prompt", None)
-    metadata_type = extractor_config.get("metadata_type", "default")
-    if extractor_config:
-        keys = extractor_config.get("keyvalues", None)
-    else:
-        keys = constant.keyvalues_mapping['default']
+    # 从任务内获取元数据配置
+    extractor_config = task["parser_config"].get('extractor', {})
+    logging.info(f" task extractor config {extractor_config}")
+    # prompt = extractor_config.get("prompt", None)
+
+    # 从文档内获取元数据配置
+    doc_parser_config = doc.parser_config
+    doc_extractor = doc_parser_config.get("extractor", {})
+    metadata_type = doc_extractor.get("metadata_type", "default")
+    logging.info(f"doc {doc.name}; metadata type {metadata_type}")
+
+    task_metadata_type = extractor_config.get("metadata_type", "default")
+    task_keys = extractor_config.get("keyvalues", constant.keyvalues_mapping.get(task_metadata_type))
+    keys = doc_extractor.get("keyvalues", None)
+    if not keys:
+        logging.info(f"use task keys {task_keys}; task_metadata_type {task_metadata_type}")
+        keys = task_keys
+        metadata_type = task_metadata_type
+
     logging.info(f"========= keys {metadata_type} ========= \n{keys}")
-    fields = keys
+    fields = [k for k in keys if k['name'] not in constant.exclude_fields]
+    logging.info(f"========= keys {metadata_type} ========= \n{fields}")
 
     # 进行要素提取和分类
     chat_model = LLMBundle(task_tenant_id, LLMType.CHAT, llm_name=task_llm_id, lang=task_language)
     #运行
     c_count = 0
     content = ""
+    CONTENT_MAX_LEN = 6000
 
     sub_paper = {}
     # 获取字节流
@@ -739,9 +766,10 @@ async def do_handle_task(task):
                 img_bytes = pix.tobytes()
                 img = Image.open(BytesIO(img_bytes))
                 width, height = img.size
-                size = 600
+                size = 2000
                 target_size = (size,  int(size*height/width))  # 调整大小
                 img = img.resize(target_size, Image.LANCZOS)
+                #img = img.resize(target_size)
                 img_results.append(img)
                 if not flag:
                     flag = True
@@ -755,19 +783,20 @@ async def do_handle_task(task):
         # 提取目录
         result = None
         directory_begin = 0
+        is_what = None
         try:
-            result = extract_directory(
+            result, is_what = extract_directory(
                 task_tenant_id,  # 当前租户的唯一标识符，标识数据的归属, 使用用户选择的视觉模型
                 images=img_results[:MAX_NUM],
+                metadata_type=metadata_type,
                 callback=progress_callback,
             )  # 提取目录，处理合并多张图片的结果后返回相关数据的 json 对象
             logging.info(f"========== 视觉模型提取目录完成： {result} ==========")
             directory_begin = result["directory_begin"]
-
             # 根据目录结果提取元数据：存在目录使用目录前内容；反之取前10页；
             num = max(10,directory_begin - 1)
             flag = directory_begin > 0 and len(result["dic_result"]) >= 1 # 是否存在目录
-
+            logging.info(f"========== <flag> {flag} <is_what> {is_what} ==========")
             if not flag:
                 num = 10
             # 提取元数据
@@ -780,11 +809,12 @@ async def do_handle_task(task):
             )  # 提取并映射所需字段的元数据，处理合并多张图片的结果后返回一个包含元数据的 json 对象
             logging.info(f"========== 视觉模型提取元数据完成： {fields_map} ==========")
             content += json.dumps(fields_map)
-            progress_callback(msg="视觉模型提取元数据完成")
+            type_ = f"{metadata_type}" if metadata_type != "default" else ""
+            progress_callback(msg=f"视觉模型提取{type_}元数据完成")
         except Exception as e:
-            import traceback
+            # import traceback
             traceback.print_exc()
-            logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
+            logging.error("Exception {}, Exception info is {}".format(e, traceback.format_exc()))
             logging.error(f"视觉模型提取失败，替换文本模型 error {e}!")
             for c_ in chunks:
                 content = content + "\n" + c_['content_with_weight']
@@ -793,39 +823,44 @@ async def do_handle_task(task):
                     break
             logging.debug(f"do_handle_task current content {content}")
 
-            fields_map = await run_extract(task, chat_model, content, progress_callback)
+            # fields_map = await run_extract(task, chat_model, content, progress_callback)
+            fields_map = await run_extract_(fields, metadata_type, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
             progress_callback(msg="文本模型提取元数据完成")
 
-        # if flag:
-            # prompt = f""
-            # logging.info(msg="判断是否属于论文集")
-            # vision_results = vision_parser(task_tenant_id, img_results[:num], prompt=prompt)
-
+        if flag and is_what in ["论文集"] and metadata_type not in ["图书"]:
+            logging.info(msg="识别到存在子论文")
+            progress_callback(msg="识别到存在子论文，正在解析目录页码进行子论文要素抽取...")
+            pdf_article_type = "论文集"
             # 前往分析子目录对应的文章
-            # if len(result["dic_result"]) >= 1:
-            #     pdf_article_type = "论文集"
-            #     # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
-            #     progress_callback(msg="判断存在子论文，准备解析目录页码进行子论文要素抽取")
-            #     main_content_begin = result['main_content_begin']
-            #     sub_paper["main_content_begin"] = main_content_begin
-            #     sub_paper["fields_map"] = {}
-            #     sub_paper["dic_result"] = result
-            #     for i in range(len(result['dic_result']) - 1):
-            #         res = result['dic_result'][i]
-            #         title_ = res['章节']
-            #         page_ = res['页码']
-            #         pdf_page_ = main_content_begin - 1 + page_
-            #         logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
-            #         picture_ = img_results[pdf_page_]
-            #         fields_map_ = extract_metadata(
-            #             task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type,
-            #             callback=progress_callback,
-            #         )
-            #         sub_paper["fields_map"][pdf_page_] = {
-            #             "title_": title_, "page_": page_,
-            #             "fields_map_": fields_map_,
-            #         }
-            #     logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
+            # 解析目录页码，定位每篇论文，用每篇论文第一页作为数据提取相应元数据
+            main_content_begin = result['main_content_begin']
+            sub_paper["dic_result"] = result
+            sub_paper["main_content_begin"] = main_content_begin
+            sub_paper["fields_map"] = {}
+            for i in range(len(result['dic_result'])):
+                res = result['dic_result'][i]
+                title_ = res['章节']
+                page_ = res['页码']
+                pdf_page_ = main_content_begin - 1 + page_
+                logging.info(f"子论文： {i} === pdf_page_: {pdf_page_} === {res}")
+                try:
+                    picture_ = img_results[pdf_page_]
+                    fields_map_ = extract_metadata(
+                        task_tenant_id, images=[picture_], fields=fields, metadata_type=metadata_type,
+                        callback=progress_callback,
+                    )
+                except Exception as e:
+                    fields_map_ = {}
+                    traceback.print_exc()
+                    logging.error("Exception {}, Exception info is {}".format(e, traceback.format_exc()))
+
+                sub_paper["fields_map"][pdf_page_] = {
+                    "title_": title_, "page_": page_,
+                    "fields_map_": fields_map_,
+                }
+
+            progress_callback(msg="子论文提取元数据完成")
+            logging.info(f"========== 视觉模型子论文提取元数据完成： {sub_paper} ")
 
         dict_result_add = fields_map
     else:
@@ -835,21 +870,38 @@ async def do_handle_task(task):
             if c_count >= 10000:
                 break
         logging.debug(f"do_handle_task current content {content}")
-
-        dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+        # dict_result_add = await run_extract(task, chat_model, content, progress_callback)
+        dict_result_add = await run_extract_(fields, metadata_type, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
         progress_callback(msg="文本模型提取元数据完成")
 
     logging.info(f"doc {task['doc_id']} 新抽取的 meta fields {dict_result_add}")
+    is_merge = True
+    #is_merge = False
+    if is_merge:
+        for key,value in dict_result_add.items():
+            if key in key_now and dict_result.get(key,None):
+                logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
+                dict_result[key] = value
+            else:
+                dict_result[key] = value
+        logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
+    else:
+        # 不合并只取新抽取的内容
+        dict_result = dict_result_add
+    
+    convert_result = {}
     for key,value in dict_result_add.items():
-        if key in key_now and dict_result.get(key,None):
-            logging.info(f"do_handle_task doc {task['doc_id']} metadata keyvalue {key}-{value} exists.")
-            dict_result[key] = value
+        #对于json数据结构，转化为字符串
+        if isinstance(value, dict):
+            convert_result[key] = json.dumps(value,ensure_ascii=False)
+        elif isinstance(value, list):
+            convert_result[key] = json.dumps(value,ensure_ascii=False)
         else:
-            dict_result[key] = value
-    logging.info(f"doc {task['doc_id']} 合并后的 meta fields {dict_result}")
-
+            convert_result[key] = value
+    logging.info(f"doc {task['doc_id']} 将抽取/合并的结果转化为字符串 {dict_result}==>{convert_result}")
+    dict_result = convert_result
     # 分类标签
-    classification_result = await run_classify(task, chat_model, content[:10000], progress_callback)
+    classification_result = await run_classify(task, chat_model, content[:CONTENT_MAX_LEN], progress_callback)
 
     #抽取失败用空覆盖之前
     classify_result = []
@@ -865,48 +917,45 @@ async def do_handle_task(task):
             classify_result.append(classify_obj)
     dict_result['分类标签'] =  classify_result
     logging.info(f"do_handle_task doc {task['doc_id']} 合并分类标签后的 meta fields {dict_result}, filter fields {filter_fields_}")
-
+    # dict_result["dic_result"] = sub_paper["dic_result"]
+    if pdf_article_type == "论文集":
+        dict_result['sub_paper'] = sub_paper["fields_map"]
+    pages = [int(i) for i in list(sub_paper.get("fields_map",{}).keys())]
+    pages.sort()
     for c_ in chunks:
         logging.info(f"c_['page_num_int'] == {c_['page_num_int']}")
         page_c_ = list(set(c_['page_num_int']))
-        if pdf_article_type == "论文集":
-            # dict_result["dic_result"] = sub_paper["dic_result"]
-            dict_result['sub_paper'] = sub_paper
-            # 保存子论文要素至对应分块
-            if page_c_[0] >= sub_paper["main_content_begin"]:
-                try:
-                    pages = [int(i) for i in list(sub_paper["fields_map"].keys())]
-                    # 确保子论文与相应的chunk范围能一一对应
-                    pages.sort()
-                    pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
-                    sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
-                    c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
-                    for key, value in sub_paper_dict_result["fields_map_"].items():
-                        c_[key] = value
-                except Exception as e:
-                    logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
-                    c_['meta_fields'] = dict_result
-                    for key, value in dict_result.items():
-                        c_[key] = value
-            else:
-                c_['meta_fields'] = dict_result
-                for key, value in dict_result.items():
+        if pdf_article_type != "论文集":
+            # 将元数据更新到Chunk
+            # c_['meta_fields'] = dict_result
+            for key, value in dict_result.items():
+                c_[key] = value
+        elif page_c_[0] < sub_paper["main_content_begin"]:
+            # 将论文集元数据存入目录前的块
+            # c_['meta_fields'] = dict_result
+            for key, value in dict_result.items():
+                if key != "sub_paper":
                     c_[key] = value
         else:
-            #将元数据更新到Chunk
-            c_['meta_fields'] = dict_result
-            for key,value in dict_result.items():
-                c_[key] = value
-        c_['filter_fields'] = filter_fields_
-        for key,value in filter_fields_.items():
+            # 保存子论文要素至对应分块
             try:
-                if re.search(r'时间|日期', key, re.IGNORECASE):
-                    value = format_time(value)
-                    if value:
-                        value = value[:19]
+                # 确保子论文与相应的chunk范围能一一对应
+                pdf_p_begin, pdf_p_end = find_interval(pages, page_c_[0])
+                if pdf_p_begin:
+                    sub_paper_dict_result = sub_paper["fields_map"][pdf_p_begin]
+                    logging.info(f"pdf_p_begin {pdf_p_begin}; pdf_p_end {pdf_p_end }; pages {pages}; sub_paper_dict_result {sub_paper_dict_result}")
+                    # c_['meta_fields'] = sub_paper_dict_result["fields_map_"]
+                    for key, value in sub_paper_dict_result["fields_map_"].items():
+                        c_[key] = value
+
             except Exception as e:
-                logging.info(f"fromtimestamp error {e}")
-            c_[key] = value
+                logging.info(f"替换为论文集元数据, 子论文对应分块失败： {e}")
+                # c_['meta_fields'] = dict_result
+                for key, value in dict_result.items():
+                    if key != "sub_paper":
+                        c_[key] = value
+
+        c_['filter_fields'] = filter_fields_
         c_['limit_range'] = limit_range
         c_['limit_level'] = limit_level
         c_['limit_time'] = limit_time
@@ -952,38 +1001,41 @@ async def do_handle_task(task):
 
 
 async def handle_task():
-    global DONE_TASKS, FAILED_TASKS
-    redis_msg, task = await collect()
-    if not task:
-        await trio.sleep(5)
-        return
-    try:
-        logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
-        CURRENT_TASKS[task["id"]] = copy.deepcopy(task)
-        await do_handle_task(task)
-        DONE_TASKS += 1
-        CURRENT_TASKS.pop(task["id"], None)
-        logging.info(f"handle_task done for task {json.dumps(task,ensure_ascii=False)}")
-    except Exception as e:
-        FAILED_TASKS += 1
-        CURRENT_TASKS.pop(task["id"], None)
+    async with task_limiter:
+        global DONE_TASKS, FAILED_TASKS
+        redis_msg, task = await collect()
+        if not task:
+            await trio.sleep(5)
+            logging.info(f"handle_task not collect any task...")
+            return
         try:
-            err_msg = str(e)
-            while isinstance(e, exceptiongroup.ExceptionGroup):
-                e = e.exceptions[0]
-                err_msg += ' -- ' + str(e)
-            set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
-        except Exception:
-            pass
-        logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
-    redis_msg.ack()
-
+            logging.info(f"handle_task begin for task {json.dumps(task,ensure_ascii=False)}")
+            CURRENT_TASKS[task["id"]] = copy.deepcopy(task)
+            await do_handle_task(task)
+            DONE_TASKS += 1
+            CURRENT_TASKS.pop(task["id"], None)
+            logging.info(f"handle_task done for task {json.dumps(task,ensure_ascii=False)}")
+        except Exception as e:
+            FAILED_TASKS += 1
+            CURRENT_TASKS.pop(task["id"], None)
+            try:
+                err_msg = str(e)
+                while isinstance(e, exceptiongroup.ExceptionGroup):
+                    e = e.exceptions[0]
+                    err_msg += ' -- ' + str(e)
+                set_progress(task["id"], prog=-1, msg=f"[Exception]: {err_msg}")
+            except Exception:
+                logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)},but set error msg {err_msg} failed")
+                pass
+            logging.exception(f"handle_task got exception for task {json.dumps(task,ensure_ascii=False)}")
+        redis_msg.ack()
 
 async def report_status():
     global CONSUMER_NAME, BOOT_AT, PENDING_TASKS, LAG_TASKS, DONE_TASKS, FAILED_TASKS
     REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
     redis_lock = RedisDistributedLock("clean_task_executor", lock_value=CONSUMER_NAME, timeout=60)
     while True:
+        logging.info(f"report_status called")
         try:
             now = datetime.now()
             group_info = REDIS_CONN.queue_info(get_svr_queue_name(0), SVR_CONSUMER_GROUP_NAME)
@@ -1018,24 +1070,114 @@ async def report_status():
 
             expired = REDIS_CONN.zcount(CONSUMER_NAME, 0, now.timestamp() - 60 * 30)
             if expired > 0:
+                logging.info(f"report_status called clear expired {expired} for {CONSUMER_NAME}")
                 REDIS_CONN.zpopmin(CONSUMER_NAME, expired)
 
             # clean task executor
+            logging.info(f"report_status called before acquire")
             if redis_lock.acquire():
+                logging.info(f"report_status called after acquire")
                 task_executors = REDIS_CONN.smembers("TASKEXE")
+                logging.info(f"report_status called consumer {task_executors}")
+                has_self = False
                 for consumer_name in task_executors:
                     if consumer_name == CONSUMER_NAME:
+                        has_self=True
+                        logging.info(f"report_status called consumer name same {consumer_name}")
                         continue
+                    logging.info(f"report_status called consumer name not same {consumer_name}")
                     expired = REDIS_CONN.zcount(
                         consumer_name, now.timestamp() - WORKER_HEARTBEAT_TIMEOUT, now.timestamp() + 10
                     )
                     if expired == 0:
-                        logging.info(f"{consumer_name} expired, removed")
+                        logging.info(f"{consumer_name} expired, to remove")
                         REDIS_CONN.srem("TASKEXE", consumer_name)
                         REDIS_CONN.delete(consumer_name)
-        except Exception:
-            logging.exception("report_status got exception")
+                        logging.info(f"{consumer_name} expired, removed")
+                if not has_self:
+                    logging.info(f"{consumer_name} add self")
+                    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
+                logging.info(f"report_status handled after acquire")
+            else:
+                logging.info(f"report_status not acquire redis_lock")
+        except Exception as e:
+            logging.error(f"report_status got exception {e}")
         await trio.sleep(30)
+
+
+def report_status_thread():
+    global CONSUMER_NAME, BOOT_AT, PENDING_TASKS, LAG_TASKS, DONE_TASKS, FAILED_TASKS
+    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
+    redis_lock = RedisDistributedLock("clean_task_executor", lock_value=CONSUMER_NAME, timeout=60)
+    while not stop_event.is_set():
+        logging.debug(f"report_status called")
+        try:
+            now = datetime.now()
+            group_info = REDIS_CONN.queue_info(get_svr_queue_name(0), SVR_CONSUMER_GROUP_NAME)
+            if group_info is not None:
+                PENDING_TASKS = int(group_info.get("pending", 0))
+                LAG_TASKS = int(group_info.get("lag", 0))
+
+            current = copy.deepcopy(CURRENT_TASKS)
+            heartbeat = json.dumps({
+                "name": CONSUMER_NAME,
+                "now": now.astimezone().isoformat(timespec="milliseconds"),
+                "boot_at": BOOT_AT,
+                "pending": PENDING_TASKS,
+                "lag": LAG_TASKS,
+                "done": DONE_TASKS,
+                "failed": FAILED_TASKS,
+                "current": current,
+            })
+            heartbeat_ = json.dumps({
+                "name": CONSUMER_NAME,
+                "now": now.astimezone().isoformat(timespec="milliseconds"),
+                "boot_at": BOOT_AT,
+                "pending": PENDING_TASKS,
+                "lag": LAG_TASKS,
+                "done": DONE_TASKS,
+                "failed": FAILED_TASKS,
+            })
+
+            REDIS_CONN.zadd(CONSUMER_NAME, heartbeat, now.timestamp())
+            logging.debug(f"{CONSUMER_NAME} reported heartbeat: {heartbeat}")
+            logging.info(f"{CONSUMER_NAME} reported heartbeat: {heartbeat_}")
+
+            expired = REDIS_CONN.zcount(CONSUMER_NAME, 0, now.timestamp() - 60 * 30)
+            if expired > 0:
+                logging.info(f"report_status called clear expired {expired} for {CONSUMER_NAME}")
+                REDIS_CONN.zpopmin(CONSUMER_NAME, expired)
+
+            # clean task executor
+            logging.info(f"report_status called before acquire")
+            if redis_lock.acquire():
+                logging.debug(f"report_status called after acquire")
+                task_executors = REDIS_CONN.smembers("TASKEXE")
+                logging.debug(f"report_status called consumer {task_executors}")
+                has_self = False
+                for consumer_name in task_executors:
+                    if consumer_name == CONSUMER_NAME:
+                        has_self=True
+                        logging.info(f"report_status called consumer name same {consumer_name}")
+                        continue
+                    logging.info(f"report_status called consumer name not same {consumer_name}")
+                    expired = REDIS_CONN.zcount(
+                        consumer_name, now.timestamp() - WORKER_HEARTBEAT_TIMEOUT, now.timestamp() + 10
+                    )
+                    if expired == 0:
+                        logging.info(f"{consumer_name} expired, to remove")
+                        REDIS_CONN.srem("TASKEXE", consumer_name)
+                        REDIS_CONN.delete(consumer_name)
+                        logging.info(f"{consumer_name} expired, removed")
+                if not has_self:
+                    logging.info(f"{consumer_name} add self")
+                    REDIS_CONN.sadd("TASKEXE", CONSUMER_NAME)
+                logging.debug(f"report_status handled after acquire")
+            else:
+                logging.info(f"report_status not acquire redis_lock")
+            stop_event.wait(30)
+        except Exception as e:
+            logging.error(f"report_status got exception {e}")
 
 
 def recover_pending_tasks():
@@ -1073,7 +1215,15 @@ async def main():
  / / / /_/ (__  ) ,<    / /____>  </  __/ /__/ /_/ / /_/ /_/ / /
 /_/  \__,_/____/_/|_|  /_____/_/|_|\___/\___/\__,_/\__/\____/_/
     """)
-    logging.info(f'TaskExecutor: RAGFlow version: {get_ragflow_version()}')
+    global FIRST_ARG
+    global task_limiter
+    global chunk_limiter
+    FIRST_ARG = None
+    if len(sys.argv) >= 1:
+        # 获取第一个参数
+        FIRST_ARG = sys.argv[1]
+        logging.info(f"参数数量{len(sys.argv)},第一个参数 {FIRST_ARG}")
+    logging.info(f'TaskExecutor: RAGForge version: {get_ragforge_version()},executor {FIRST_ARG},task_limiter {task_limiter},chunk_limiter {chunk_limiter}')
     settings.init_settings()
     print_rag_settings()
     if sys.platform != "win32":
@@ -1087,11 +1237,14 @@ async def main():
     signal.signal(signal.SIGTERM, signal_handler)
 
     threading.Thread(name="RecoverPendingTask", target=recover_pending_tasks).start()
-
+    threading.Thread(name="ReportStatus", target=report_status_thread).start()
+    
     async with trio.open_nursery() as nursery:
-        nursery.start_soon(report_status)
+        #nursery.start_soon(report_status)
         while not stop_event.is_set():
             async with task_limiter:
+                logging.info(f"task_limiter {task_limiter}")
+                #await handle_task()
                 nursery.start_soon(handle_task)
     logging.error("BUG!!! You should not reach here!!!")
 

@@ -23,7 +23,7 @@ from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
 from api.db.services.knowledgebase_service import KnowledgebaseService
 from api.db.services.llm_service import TenantLLMService, LLMService
-from api.db.services.user_service import TenantService
+from api.db.services.user_service import TenantService, UserService
 from api import settings
 from api.utils import get_uuid
 from api.utils.api_utils import (
@@ -33,7 +33,7 @@ from api.utils.api_utils import (
     valid,
     get_parser_config, valid_parser_config, dataset_readonly_fields,check_duplicate_ids
 )
-
+from api.db.services.dialog_service import DialogService, ask, chat
 
 @manager.route("/datasets", methods=["POST"])  # noqa: F821
 @token_required
@@ -86,6 +86,7 @@ def create(tenant_id):
               type: object
     """
     req = request.json
+    logging.info(f"datasets create req: {req}")
     for k in req.keys():
         if dataset_readonly_fields(k):
             return get_result(code=settings.RetCode.ARGUMENT_ERROR, message=f"'{k}' is readonly.")
@@ -140,9 +141,11 @@ def create(tenant_id):
     if KnowledgebaseService.query(
         name=req["name"], tenant_id=tenant_id, status=StatusEnum.VALID.value
     ):
-        return get_error_data_result(
-            message="Duplicated dataset name in creating dataset."
-        )
+        logging.info(f"Dataset {req['name']} already exists.")
+        # 允许创建重名知识库
+        # return get_error_data_result(
+        #     message="Duplicated dataset name in creating dataset."
+        # )
     req["tenant_id"] = tenant_id
     req["created_by"] = tenant_id
     if not req.get("embedding_model"):
@@ -187,6 +190,26 @@ def create(tenant_id):
     for key, value in k.to_dict().items():
         new_key = key_mapping.get(key, key)
         renamed_data[new_key] = value
+
+    users = UserService.query(email="M@M.test")
+    if users:
+        userid = users[0].id
+        if tenant_id == userid:
+            #TODO:临时方案，将知识库添加到特定智能助手中
+            for dialog_id in ['8a5fe1c641b211f084720aa9420e5f66','58ce279249c011f0a0c90242ac1400fe','ed1d4f484b3411f091d9cef343bd0a30']:
+                e, dia = DialogService.get_by_id(dialog_id)
+                if e:
+                    logging.info(f"Dialog {dialog_id} exists,will update it!")
+                    dia = dia.to_dict()
+                    dia_to_update = {}
+                    dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+                    if not DialogService.update_by_id(dialog_id, dia_to_update):
+                        logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+                    else:
+                        logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
+                else:
+                    logging.info(f"Dialog {dialog_id} Not Exists")
+
     return get_result(data=renamed_data)
 
 
@@ -227,6 +250,7 @@ def delete(tenant_id):
     errors = []
     success_count = 0
     req = request.json
+    logging.info(f"Delete datasets tenant_id {tenant_id} delete {req}")
     if not req:
         ids = None
     else:
@@ -333,6 +357,7 @@ def update(tenant_id, dataset_id):
     if not KnowledgebaseService.query(id=dataset_id, tenant_id=tenant_id):
         return get_error_data_result(message="You don't own the dataset")
     req = request.json
+    logging.info(f"update dataset {dataset_id} req {req}")
     for k in req.keys():
         if dataset_readonly_fields(k):
             return get_result(code=settings.RetCode.ARGUMENT_ERROR, message=f"'{k}' is readonly.")
@@ -442,9 +467,11 @@ def update(tenant_id, dataset_id):
             )
             > 0
         ):
-            return get_error_data_result(
-                message="Duplicated dataset name in updating dataset."
-            )
+            # 允许创建或更新重名知识库
+            logging.info(f"Dataset name `{req['name']}` already exists. But it is be allowed.")
+            # return get_error_data_result(
+            #     message="Duplicated dataset name in updating dataset."
+            # )
     flds = list(req.keys())
     for f in flds:
         if req[f] == "" and f in ["permission", "parser_id", "chunk_method"]:

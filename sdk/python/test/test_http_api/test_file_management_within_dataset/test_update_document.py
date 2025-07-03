@@ -17,7 +17,7 @@
 
 import pytest
 from common import DOCUMENT_NAME_LIMIT, INVALID_API_TOKEN, list_documnets, update_documnet
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 
 
 class TestAuthorization:
@@ -26,7 +26,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -64,17 +64,17 @@ class TestDocumentsUpdated:
                 "The extension of file can't be changed",
             ),
             (
-                "ragflow_test_upload_0",
+                "ragforge_test_upload_0",
                 101,
                 "The extension of file can't be changed",
             ),
             (
-                "ragflow_test_upload_1.txt",
+                "ragforge_test_upload_1.txt",
                 102,
                 "Duplicated document name in the same dataset.",
             ),
             (
-                "RAGFLOW_TEST_UPLOAD_1.TXT",
+                "RAGFORGE_TEST_UPLOAD_1.TXT",
                 0,
                 "",
             ),
@@ -191,25 +191,25 @@ class TestDocumentsUpdated:
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"created_by": "ragflow_test"},
+                {"created_by": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"dataset_id": "ragflow_test"},
+                {"dataset_id": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"id": "ragflow_test"},
+                {"id": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"location": "ragflow_test.txt"},
+                {"location": "ragforge_test.txt"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
@@ -228,13 +228,13 @@ class TestDocumentsUpdated:
             ),
             pytest.param({"progress": 1.0}, 102, "Can't change `progress`."),
             pytest.param(
-                {"progress_msg": "ragflow_test"},
+                {"progress_msg": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"run": "ragflow_test"},
+                {"run": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
@@ -246,20 +246,20 @@ class TestDocumentsUpdated:
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"source_type": "ragflow_test"},
+                {"source_type": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             pytest.param(
-                {"thumbnail": "ragflow_test"},
+                {"thumbnail": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),
             ),
             ({"token_count": 1}, 102, "Can't change `token_count`."),
             pytest.param(
-                {"type": "ragflow_test"},
+                {"type": "ragforge_test"},
                 102,
                 "The input parameters are invalid.",
                 marks=pytest.mark.skip(reason="issues/6104"),

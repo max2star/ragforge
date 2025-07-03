@@ -21,7 +21,7 @@ from openpyxl import Workbook, load_workbook
 from rag.nlp import find_codec
 
 
-class RAGFlowExcelParser:
+class RAGForgeExcelParser:
 
     @staticmethod
     def _load_excel_to_workbook(file_like_object):
@@ -39,7 +39,7 @@ class RAGFlowExcelParser:
             try:
                 file_like_object.seek(0)
                 df = pd.read_csv(file_like_object)
-                return RAGFlowExcelParser._dataframe_to_workbook(df)
+                return RAGForgeExcelParser._dataframe_to_workbook(df)
 
             except Exception as e_csv:
                 raise Exception(f"****wxy: Failed to parse CSV and convert to Excel Workbook: {e_csv}")
@@ -51,7 +51,7 @@ class RAGFlowExcelParser:
             try:
                 file_like_object.seek(0)
                 df = pd.read_excel(file_like_object)
-                return RAGFlowExcelParser._dataframe_to_workbook(df)
+                return RAGForgeExcelParser._dataframe_to_workbook(df)
             except Exception as e_pandas:
                 raise Exception(f"****wxy: pandas.read_excel error: {e_pandas}, original openpyxl error: {e}")
 
@@ -72,7 +72,7 @@ class RAGFlowExcelParser:
 
     def html(self, fnm, chunk_rows=256):
         file_like_object = BytesIO(fnm) if not isinstance(fnm, str) else fnm
-        wb = RAGFlowExcelParser._load_excel_to_workbook(file_like_object)
+        wb = RAGForgeExcelParser._load_excel_to_workbook(file_like_object)
         tb_chunks = []
         for sheetname in wb.sheetnames:
             ws = wb[sheetname]
@@ -106,7 +106,7 @@ class RAGFlowExcelParser:
 
     def __call__(self, fnm):
         file_like_object = BytesIO(fnm) if not isinstance(fnm, str) else fnm
-        wb = RAGFlowExcelParser._load_excel_to_workbook(file_like_object)
+        wb = RAGForgeExcelParser._load_excel_to_workbook(file_like_object)
 
         res = []
         for sheetname in wb.sheetnames:
@@ -132,7 +132,7 @@ class RAGFlowExcelParser:
     @staticmethod
     def row_number(fnm, binary):
         if fnm.split(".")[-1].lower().find("xls") >= 0:
-            wb = RAGFlowExcelParser._load_excel_to_workbook(BytesIO(binary))
+            wb = RAGForgeExcelParser._load_excel_to_workbook(BytesIO(binary))
             total = 0
             for sheetname in wb.sheetnames:
                 ws = wb[sheetname]
@@ -146,5 +146,5 @@ class RAGFlowExcelParser:
 
 
 if __name__ == "__main__":
-    psr = RAGFlowExcelParser()
+    psr = RAGForgeExcelParser()
     psr(sys.argv[1])

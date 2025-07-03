@@ -1,5 +1,5 @@
-ragflow:
-  host: ${RAGFLOW_HOST:-0.0.0.0}
+ragforge:
+  host: ${RAGFORGE_HOST:-0.0.0.0}
   http_port: 9380
 mysql:
   name: '${MYSQL_DBNAME:-rag_flow}'
@@ -27,7 +27,7 @@ es:
   hosts: 'https://${ES_HOST:-es01}:9200'
   username: '${ES_USER:-elastic}'
   password: '${ELASTIC_PASSWORD:-infini_rag_flow}'
-  ca_path: '/ragflow/ca.crt'
+  ca_path: '/ragforge/ca.crt'
 infinity:
   uri: '${INFINITY_HOST:-infinity}:23817'
   db_name: 'default_db'

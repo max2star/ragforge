@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ragflow_tests:
-    name: ragflow_tests
+  ragforge_tests:
+    name: ragforge_tests
     # https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution
     # https://github.com/orgs/community/discussions/26261
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci') }}
@@ -53,36 +53,36 @@ jobs:
           version: ">=0.8.2"
           args: "check"
 
-      - name: Build ragflow:nightly-slim
+      - name: Build ragforge:nightly-slim
         run: |
           RUNNER_WORKSPACE_PREFIX=${RUNNER_WORKSPACE_PREFIX:-$HOME}
           sudo docker pull ubuntu:22.04
-          sudo docker build --progress=plain --build-arg LIGHTEN=1 --build-arg NEED_MIRROR=1 -f Dockerfile -t infiniflow/ragflow:nightly-slim .
+          sudo docker build --progress=plain --build-arg LIGHTEN=1 --build-arg NEED_MIRROR=1 -f Dockerfile -t infiniflow/ragforge:nightly-slim .
 
-      - name: Build ragflow:nightly
+      - name: Build ragforge:nightly
         run: |
-          sudo docker build --progress=plain --build-arg NEED_MIRROR=1 -f Dockerfile -t infiniflow/ragflow:nightly .
+          sudo docker build --progress=plain --build-arg NEED_MIRROR=1 -f Dockerfile -t infiniflow/ragforge:nightly .
 
-      - name: Start ragflow:nightly-slim
+      - name: Start ragforge:nightly-slim
         run: |
-          echo -e "\nRAGFLOW_IMAGE=infiniflow/ragflow:nightly-slim" >> docker/.env
+          echo -e "\nRAGFORGE_IMAGE=infiniflow/ragforge:nightly-slim" >> docker/.env
           sudo docker compose -f docker/docker-compose.yml up -d
 
-      - name: Stop ragflow:nightly-slim
+      - name: Stop ragforge:nightly-slim
         if: always()  # always run this step even if previous steps failed
         run: |
           sudo docker compose -f docker/docker-compose.yml down -v
 
-      - name: Start ragflow:nightly
+      - name: Start ragforge:nightly
         run: |
-          echo -e "\nRAGFLOW_IMAGE=infiniflow/ragflow:nightly" >> docker/.env
+          echo -e "\nRAGFORGE_IMAGE=infiniflow/ragforge:nightly" >> docker/.env
           sudo docker compose -f docker/docker-compose.yml up -d
 
       - name: Run sdk tests against Elasticsearch
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -92,7 +92,7 @@ jobs:
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -102,18 +102,18 @@ jobs:
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
           cd sdk/python && uv sync --python 3.10 --frozen && uv pip install . && source .venv/bin/activate && cd test/test_http_api && pytest -s --tb=short -m "not slow"
 
-      - name: Stop ragflow:nightly
+      - name: Stop ragforge:nightly
         if: always()  # always run this step even if previous steps failed
         run: |
           sudo docker compose -f docker/docker-compose.yml down -v
 
-      - name: Start ragflow:nightly
+      - name: Start ragforge:nightly
         run: |
           sudo DOC_ENGINE=infinity docker compose -f docker/docker-compose.yml up -d
 
@@ -121,7 +121,7 @@ jobs:
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -131,7 +131,7 @@ jobs:
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
@@ -141,13 +141,13 @@ jobs:
         run: |
           export http_proxy=""; export https_proxy=""; export no_proxy=""; export HTTP_PROXY=""; export HTTPS_PROXY=""; export NO_PROXY=""
           export HOST_ADDRESS=http://host.docker.internal:9380
-          until sudo docker exec ragflow-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
+          until sudo docker exec ragforge-server curl -s --connect-timeout 5 ${HOST_ADDRESS} > /dev/null; do
             echo "Waiting for service to be available..."
             sleep 5
           done
           cd sdk/python && uv sync --python 3.10 --frozen && uv pip install . && source .venv/bin/activate && cd test/test_http_api && DOC_ENGINE=infinity pytest -s --tb=short -m "not slow"
 
-      - name: Stop ragflow:nightly
+      - name: Stop ragforge:nightly
         if: always()  # always run this step even if previous steps failed
         run: |
           sudo DOC_ENGINE=infinity docker compose -f docker/docker-compose.yml down -v

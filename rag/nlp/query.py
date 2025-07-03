@@ -22,7 +22,7 @@ from collections import defaultdict
 
 from rag.utils.doc_store_conn import MatchTextExpr
 from rag.nlp import rag_tokenizer, term_weight, synonym
-
+from api.db.constant import get_all_search_fields
 
 class FulltextQueryer:
     def __init__(self):
@@ -36,7 +36,7 @@ class FulltextQueryer:
             "question_tks^20",
             "content_ltks^2",
             "content_sm_ltks",
-        ]
+        ]+get_all_search_fields()
 
     @staticmethod
     def subSpecialChar(line):

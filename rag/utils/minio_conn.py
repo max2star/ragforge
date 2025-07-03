@@ -14,7 +14,9 @@
 #  limitations under the License.
 #
 import os
-os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
+# Only set SSL_CERT_FILE if the certificate file exists (for production environment)
+if os.path.exists('/etc/nginx/public.crt'):
+    os.environ['SSL_CERT_FILE']='/etc/nginx/public.crt'
 import logging
 import time
 from minio import Minio
@@ -31,7 +33,7 @@ from minio.sseconfig import Rule, SSEConfig
 
 
 @singleton
-class RAGFlowMinio:
+class RAGForgeMinio:
     def __init__(self):
         self.secure = True
         self.conn = None
@@ -48,18 +50,30 @@ class RAGFlowMinio:
 
         try:
             logging.info("cluster {},backup clutser {}".format(settings.MINIO,settings.MINIO_BACKUP))
+            
+            # Use HTTP for localhost/development environment, HTTPS for production
+            is_localhost = settings.MINIO["host"].startswith("localhost") or settings.MINIO["host"].startswith("127.0.0.1")
+            secure_connection = not is_localhost
+            self.secure = secure_connection  # Update the instance variable
+            
             self.conn = Minio(settings.MINIO["host"],
                               access_key=settings.MINIO["user"],
                               secret_key=settings.MINIO["password"],
-                              secure=True
+                              secure=secure_connection
                               )
-            self.bucket_encryption = settings.MINIO['bucket_encryption']
+            self.bucket_encryption = settings.MINIO.get("bucket_encryption", True)
+            if type(settings.MINIO['bucket_encryption']) == str:
+                logging.info(f"settings.MINIO['bucket_encryption'] {settings.MINIO['bucket_encryption']} type {type(settings.MINIO['bucket_encryption'])}")
+                self.bucket_encryption = settings.MINIO['bucket_encryption'].lower() == "true"
+            logging.info(f"self.bucket_encryption {self.bucket_encryption} type {type(self.bucket_encryption)}")
             if settings.MINIO_BACKUP.get("host",None):
                 logging.info(f"enable minio backup cluster")
+                backup_is_localhost = settings.MINIO_BACKUP["host"].startswith("localhost") or settings.MINIO_BACKUP["host"].startswith("127.0.0.1")
+                backup_secure = not backup_is_localhost
                 self.remote_conn =  Minio(settings.MINIO_BACKUP["host"],
                                   access_key=settings.MINIO_BACKUP["user"],
                                   secret_key=settings.MINIO_BACKUP["password"],
-                                  secure=True
+                                  secure=backup_secure
                                   )
                 self.remote_flag = True
                 self.config_alias(src_cluster_alias=None,dest_cluster_alias=None)
@@ -92,15 +106,22 @@ class RAGFlowMinio:
             '--insecure'
         ]
 
-        process = subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_alias {cmd1} excuted,result {process.returncode}")
+        try:
+            process = subprocess.run(cmd1, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_alias {cmd1} excuted,result {process.returncode}")
 
-        process = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_alias {cmd2} excuted,result {process.returncode}")
+            process = subprocess.run(cmd2, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_alias {cmd2} excuted,result {process.returncode}")
+        except FileNotFoundError:
+            logging.warning("MinIO client (mc) not found. Skipping alias configuration. This is normal for development environments.")
+        except Exception as e:
+            logging.warning(f"Failed to configure MinIO aliases: {str(e)}")
 
     def config_backup_policy(self,src_cluster_alias,source_bucket, dest_cluster_alias,dest_bucket):
         if not self.remote_flag:
@@ -120,10 +141,16 @@ class RAGFlowMinio:
             f"{src_cluster_alias}/{source_bucket}"
         ]
         logging.info(f"config_backup_policy {cmd}")
-        process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if process.returncode != 0:
-            raise Exception(process.stderr.decode())
-        logging.info(f"config_backup_policy {cmd} excuted,result {process.returncode}")
+        try:
+            process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if process.returncode != 0:
+                logging.warning(f"mc command failed: {process.stderr.decode()}")
+                return
+            logging.info(f"config_backup_policy {cmd} excuted,result {process.returncode}")
+        except FileNotFoundError:
+            logging.warning("MinIO client (mc) not found. Skipping backup policy configuration. This is normal for development environments.")
+        except Exception as e:
+            logging.warning(f"Failed to configure backup policy: {str(e)}")
 
     def __close__(self):
         del self.conn

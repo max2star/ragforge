@@ -198,6 +198,9 @@ class Base(ABC):
                 return ans, self.total_token_count(response)
             except Exception as e:
                 logging.exception("chat_model.Base.chat got exception")
+                import traceback
+                traceback.print_exc()
+                logging.error("Exception {} ,excetion info is {}".format(e, traceback.format_exc()))
                 # Classify the error
                 error_code = self._classify_error(e)
 

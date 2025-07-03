@@ -22,7 +22,7 @@ import json
 from typing import Any
 
 from rag.nlp import find_codec
-class RAGFlowJsonParser:
+class RAGForgeJsonParser:
     def __init__(
         self, max_chunk_size: int = 2000, min_chunk_size: int | None = None
     ):

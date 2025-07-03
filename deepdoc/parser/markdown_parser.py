@@ -17,7 +17,7 @@
 
 import re
 
-class RAGFlowMarkdownParser:
+class RAGForgeMarkdownParser:
     def __init__(self, chunk_token_num=128):
         self.chunk_token_num = int(chunk_token_num)
 

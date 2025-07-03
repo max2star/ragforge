@@ -56,7 +56,7 @@ class DocumentService(CommonService):
             )
         if keywords:
             docs = docs.where(
-                fn.LOWER(cls.model.name).contains(keywords.lower())
+                (fn.LOWER(cls.model.name).contains(keywords.lower())) | (fn.LOWER(cls.model.id).contains(keywords.lower()))
             )
         if desc:
             docs = docs.order_by(cls.model.getter_by(orderby).desc())
@@ -70,14 +70,15 @@ class DocumentService(CommonService):
     @classmethod
     @DB.connection_context()
     def get_by_kb_id(cls, kb_id, page_number, items_per_page,
-                     orderby, desc, keywords):
+                     orderby, desc, keywords, run=None, id=None):
+
+        docs= cls.model.select().where(cls.model.kb_id == kb_id)
         if keywords:
-            docs = cls.model.select().where(
-                (cls.model.kb_id == kb_id),
-                (fn.LOWER(cls.model.name).contains(keywords.lower()))
-            )
-        else:
-            docs = cls.model.select().where(cls.model.kb_id == kb_id)
+            docs= docs.where( (fn.LOWER(cls.model.name).contains(keywords.lower())) | (fn.LOWER(cls.model.id).contains(keywords.lower())))
+        if run:
+            docs= docs.where(cls.model.run == run)
+        if id:
+            docs= docs.where(cls.model.id == id)
         count = docs.count()
         if desc:
             docs = docs.order_by(cls.model.getter_by(orderby).desc())
@@ -402,6 +403,8 @@ class DocumentService(CommonService):
         configs = configs.dicts()
         if not configs:
             return None
+        else:
+            logging.info(f"get_chunking_config {configs[0]}")
         return configs[0]
 
     @classmethod
@@ -440,7 +443,12 @@ class DocumentService(CommonService):
                 if k not in old:
                     old[k] = v
                     continue
+                if k == "pages":
+                    new[k] = old[k]
+                    continue
                 if isinstance(v, dict):
+                    logging.info(f"Updating {k} from {old[k]} -> {new[k]}")
+                    logging.info(f"type {k} from {type(old[k])} -> {type(new[k])}")
                     assert isinstance(old[k], dict)
                     dfs_update(old[k], v)
                 else:
@@ -520,6 +528,7 @@ class DocumentService(CommonService):
             try:
                 tsks = Task.query(doc_id=d["id"], order_by=Task.create_time)
                 if not tsks:
+                    logging.warning(f"update_progress not find any task for doc id {d['id']},kb_id {d.get('kb_id',None)},name {d.get('name',None)}")
                     continue
                 msg = []
                 prg = 0
@@ -547,6 +556,7 @@ class DocumentService(CommonService):
                     prg = -1
                     status = TaskStatus.FAIL.value
                 elif finished:
+                    #所有任务都已经完成，但是如果有raptor和graphrag，还要触发raptor和graphrag
                     if d["parser_config"].get("raptor", {}).get("use_raptor") and not has_raptor:
                         queue_raptor_o_graphrag_tasks(d, "raptor", priority)
                         prg = 0.98 * len(tsks) / (len(tsks) + 1)
@@ -563,11 +573,12 @@ class DocumentService(CommonService):
                     d["process_begin_at"].timestamp(),
                     "run": status}
                 if prg != 0:
-                    info["progress"] = prg
+                    info["progress"] = round(prg, 4)
                 if msg:
                     info["progress_msg"] = msg
                 cls.update_by_id(d["id"], info)
             except Exception as e:
+                logging.exception(f"fetch task exception {e}")
                 if str(e).find("'0'") < 0:
                     logging.exception("fetch task exception")
 
@@ -636,7 +647,7 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
     kb_id = dia.kb_ids[0]
     e, kb = KnowledgebaseService.get_by_id(kb_id)
     if not e:
-        raise LookupError("Can't find this knowledgebase!")
+        raise LookupError(f"Can't find this knowledgebase {kb_id}!")
 
     if not KnowledgebaseService.accessible(kb_id, user_id):
         raise Exception(f"You don't own the dataset {kb_id}.")
@@ -681,7 +692,12 @@ def doc_upload_and_parse(conversation_id, file_objs, user_id):
         for ck in th.result():
             d = deepcopy(doc)
             d.update(ck)
-            d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+            try:
+                d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8")).hexdigest()
+            except Exception as e:
+                content_to_encode = ck["content_with_weight"] + str(d["doc_id"])
+                logging.error(f"doc_upload_and_parse encode error for {content_to_encode},will replace and retry...")
+                d["id"] = xxhash.xxh64((ck["content_with_weight"] + str(d["doc_id"])).encode("utf-8",errors="replace")).hexdigest()
             d["create_time"] = str(datetime.now()).replace("T", " ")[:19]
             d["create_timestamp_flt"] = datetime.now().timestamp()
             if not d.get("image"):
