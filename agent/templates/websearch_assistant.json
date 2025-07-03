@@ -750,7 +750,7 @@
         {
           "data": {
             "form": {
-              "text": "Complete questions by conversation history.\nUser: What's RAGFlow?\nAssistant: RAGFlow is xxx.\nUser: How to deloy it?\n\nRefine it: How to deploy RAGFlow?"
+              "text": "Complete questions by conversation history.\nUser: What's RAGForge?\nAssistant: RAGForge is xxx.\nUser: How to deloy it?\n\nRefine it: How to deploy RAGForge?"
             },
             "label": "Note",
             "name": "N: Refine question"

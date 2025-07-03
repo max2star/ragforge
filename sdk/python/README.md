@@ -1,4 +1,4 @@
-# ragflow-sdk
+# ragforge-sdk
 
 # build and publish python SDK to pypi.org
 

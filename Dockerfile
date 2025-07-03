@@ -8,32 +8,32 @@ ARG NEED_MIRROR=1
 ARG LIGHTEN=0
 ENV LIGHTEN=${LIGHTEN}
 
-WORKDIR /ragflow
+WORKDIR /ragforge
 
 # Copy models downloaded via download_deps.py
-RUN mkdir -p /ragflow/rag/res/deepdoc /root/.ragflow
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/huggingface.co,target=/huggingface.co \
-    cp /huggingface.co/InfiniFlow/huqie/huqie.txt.trie /ragflow/rag/res/ && \
+RUN mkdir -p /ragforge/rag/res/deepdoc /root/.ragforge
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/huggingface.co,target=/huggingface.co \
+    cp /huggingface.co/InfiniFlow/huqie/huqie.txt.trie /ragforge/rag/res/ && \
     tar --exclude='.*' -cf - \
         /huggingface.co/InfiniFlow/text_concat_xgb_v1.0 \
         /huggingface.co/InfiniFlow/deepdoc \
-        | tar -xf - --strip-components=3 -C /ragflow/rag/res/deepdoc 
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/huggingface.co,target=/huggingface.co \
+        | tar -xf - --strip-components=3 -C /ragforge/rag/res/deepdoc 
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/huggingface.co,target=/huggingface.co \
     if [ "$LIGHTEN" != "1" ]; then \
         (tar -cf - \
             /huggingface.co/BAAI/bge-large-zh-v1.5 \
             /huggingface.co/maidalun1020/bce-embedding-base_v1 \
-            | tar -xf - --strip-components=2 -C /root/.ragflow) \
+            | tar -xf - --strip-components=2 -C /root/.ragforge) \
     fi
 
 # https://github.com/chrismattmann/tika-python
 # This is the only way to run python-tika without internet access. Without this set, the default is to check the tika version and pull latest every time from Apache.
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps \
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/,target=/deps \
     cp -r /deps/nltk_data /root/ && \
-    cp /deps/tika-server-standard-3.0.0.jar /deps/tika-server-standard-3.0.0.jar.md5 /ragflow/ && \
-    cp /deps/cl100k_base.tiktoken /ragflow/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
+    cp /deps/tika-server-standard-3.0.0.jar /deps/tika-server-standard-3.0.0.jar.md5 /ragforge/ && \
+    cp /deps/cl100k_base.tiktoken /ragforge/9b5ad71b2ce5302211f9c61530b329a4922fc6a4
 
-ENV TIKA_SERVER_JAR="file:///ragflow/tika-server-standard-3.0.0.jar"
+ENV TIKA_SERVER_JAR="file:///ragforge/tika-server-standard-3.0.0.jar"
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Setup apt
@@ -43,7 +43,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # python-pptx:   default-jdk                              tika-server-standard-3.0.0.jar
 # selenium:      libatk-bridge2.0-0                       chrome-linux64-121-0-6167-85
 # Building C extensions: libpython3-dev libgtk-4-1 libnss3 xdg-utils libgbm-dev
-RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
+RUN --mount=type=cache,id=ragforge_apt,target=/var/cache/apt,sharing=locked \
     if [ "$NEED_MIRROR" == "1" ]; then \
         sed -i 's|http://ports.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list; \
         sed -i 's|http://archive.ubuntu.com|http://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list; \
@@ -77,7 +77,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 ENV PATH=/root/.local/bin:$PATH
 
 # nodejs 12.22 on Ubuntu 22.04 is too old
-RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
+RUN --mount=type=cache,id=ragforge_apt,target=/var/cache/apt,sharing=locked \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt purge -y nodejs npm cargo && \
     apt autoremove -y && \
@@ -105,7 +105,7 @@ RUN cargo --version && rustc --version
 # Add msssql ODBC driver
 # macOS ARM64 environment, install msodbcsql18.
 # general x86_64 environment, install msodbcsql17.
-RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
+RUN --mount=type=cache,id=ragforge_apt,target=/var/cache/apt,sharing=locked \
     curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
     curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
     apt update && \
@@ -122,18 +122,18 @@ RUN --mount=type=cache,id=ragflow_apt,target=/var/cache/apt,sharing=locked \
 
 
 # Add dependencies of selenium
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/chrome-linux64.zip,target=/chrome-linux64.zip \
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/chrome-linux64.zip,target=/chrome-linux64.zip \
     unzip /chrome-linux64.zip && \
     mv chrome-linux64 /opt/chrome && \
     ln -s /opt/chrome/chrome /usr/local/bin/
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/chromedriver-linux64.zip,target=/chromedriver-linux64.zip \
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/chromedriver-linux64.zip,target=/chromedriver-linux64.zip \
     unzip -j /chromedriver-linux64.zip chromedriver-linux64/chromedriver && \
     mv chromedriver /usr/local/bin/ && \
     rm -f /usr/bin/google-chrome
 
 # https://forum.aspose.com/t/aspose-slides-for-net-no-usable-version-of-libssl-found-with-linux-server/271344/13
 # aspose-slides on linux/arm64 is unavailable
-RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps \
+RUN --mount=type=bind,from=infiniflow/ragforge_deps:latest,source=/,target=/deps \
     if [ "$(uname -m)" = "x86_64" ]; then \
         dpkg -i /deps/libssl1.1_1.1.1f-1ubuntu2_amd64.deb; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
@@ -145,7 +145,7 @@ RUN --mount=type=bind,from=infiniflow/ragflow_deps:latest,source=/,target=/deps 
 FROM base AS builder
 USER root
 
-WORKDIR /ragflow
+WORKDIR /ragforge
 
 COPY deps deps
 # install dependencies from uv.lock file
@@ -153,7 +153,7 @@ COPY pyproject.toml uv.lock ./
 
 # https://github.com/astral-sh/uv/issues/10462
 # uv records index url into uv.lock but doesn't failover among multiple indexes
-RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
+RUN --mount=type=cache,id=ragforge_uv,target=/root/.cache/uv,sharing=locked \
     arch="$(uname -m)"; \
     if [ "$NEED_MIRROR" == "1" ]; then \
         sed -i 's|pypi.org|mirrors.aliyun.com/pypi|g' uv.lock; \
@@ -164,7 +164,7 @@ RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
         uv sync --python 3.10 --frozen; \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
             echo "Install aclruntime";\
-            cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+            cp /ragforge/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
             uv pip install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
         else \
             echo "Not need install aclruntime";\
@@ -173,7 +173,7 @@ RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
         uv sync --python 3.10 --frozen --all-extras; \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
             echo "Install aclruntime";\
-            cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+            cp /ragforge/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
             uv pip install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
         else \
             echo "Not need install aclruntime";\
@@ -182,10 +182,10 @@ RUN --mount=type=cache,id=ragflow_uv,target=/root/.cache/uv,sharing=locked \
 
 COPY web web
 COPY docs docs
-RUN --mount=type=cache,id=ragflow_npm,target=/root/.npm,sharing=locked \
+RUN --mount=type=cache,id=ragforge_npm,target=/root/.npm,sharing=locked \
     cd web && npm install && npm run build
 
-COPY .git /ragflow/.git
+COPY .git /ragforge/.git
 
 RUN version_info=$(git describe --tags --match=v* --first-parent --always); \
     if [ "$LIGHTEN" == "1" ]; then \
@@ -193,21 +193,21 @@ RUN version_info=$(git describe --tags --match=v* --first-parent --always); \
     else \
         version_info="$version_info full"; \
     fi; \
-    echo "RAGFlow version: $version_info"; \
-    echo $version_info > /ragflow/VERSION
+    echo "RAGForge version: $version_info"; \
+    echo $version_info > /ragforge/VERSION
 
 # production stage
 FROM base AS production
 USER root
 
-WORKDIR /ragflow
+WORKDIR /ragforge
 
 # Copy Python environment and packages
-ENV VIRTUAL_ENV=/ragflow/.venv
+ENV VIRTUAL_ENV=/ragforge/.venv
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
 
-ENV PYTHONPATH=/ragflow/
+ENV PYTHONPATH=/ragforge/
 
 COPY web web
 COPY api api
@@ -230,9 +230,9 @@ COPY deps deps
 RUN chmod +x ./entrypoint*.sh
 
 # Copy compiled web pages
-COPY --from=builder /ragflow/web/dist /ragflow/web/dist
+COPY --from=builder /ragforge/web/dist /ragforge/web/dist
 
-COPY --from=builder /ragflow/VERSION /ragflow/VERSION
+COPY --from=builder /ragforge/VERSION /ragforge/VERSION
 
 RUN export http_proxy=
 RUN export https_proxy=
@@ -275,10 +275,10 @@ RUN arch="$(uname -m)" \
         echo "Using pre-downloaded mc"; \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
            echo "Using pre-downloaded mc for arm"; \
-           cp /ragflow/deps/arm/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+           cp /ragforge/deps/arm/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
         else \
            echo "Using pre-downloaded mc for amd"; \
-           cp /ragflow/deps/amd/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
+           cp /ragforge/deps/amd/mc /usr/bin/mc && chmod +x /usr/bin/mc; \
         fi; \
     fi
 RUN chmod +x  /usr/bin/mc
@@ -297,13 +297,13 @@ RUN arch="$(uname -m)" \
    else \
         if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
            mkdir -p /root/.cache/modelscope/hub/; \
-           cp  /ragflow/deps/arm/magic-pdf.json /root/.; \
-           cp -r /ragflow/deps/arm/models /root/.cache/modelscope/hub/.; \
+           cp  /ragforge/deps/arm/magic-pdf.json /root/.; \
+           cp -r /ragforge/deps/arm/models /root/.cache/modelscope/hub/.; \
         else \
            echo "Using pre-downloaded mc for amd"; \
            mkdir -p /root/.cache/modelscope/hub/; \
-           cp  /ragflow/deps/amd/magic-pdf.json /root/.; \
-           cp -r /ragflow/deps/amd/models /root/.cache/modelscope/hub/.; \
+           cp  /ragforge/deps/amd/magic-pdf.json /root/.; \
+           cp -r /ragforge/deps/amd/models /root/.cache/modelscope/hub/.; \
         fi; \
    fi
 RUN export https_proxy=
@@ -315,7 +315,7 @@ RUN arch="$(uname -m)" \
         if [ "$NEED_DOWNLOAD" = "1" ]; then \
             wget https://gitee.com/ascend/pytorch/releases/download/v6.0.rc2-pytorch2.3.1/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
         else \
-            cp /ragflow/deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
+            cp /ragforge/deps/torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl ./ ; \
         fi; \
         #pip3 install torch_npu==2.6.0rc1  -i https://mirrors.aliyun.com/pypi/simple;\
         pip3 install torch_npu-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl; \
@@ -327,17 +327,17 @@ RUN arch="$(uname -m)" \
 RUN arch="$(uname -m)" \
  && if [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then \
         echo "Arm platform, copy models and acl infer codes"; \
-        cp /ragflow/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
+        cp /ragforge/deps/arm/npu/aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl ./ ;\
         pip3 install aclruntime-0.0.2-cp310-cp310-linux_aarch64.whl; \
-        cp -r /ragflow/deps/arm/npu/deepdoc /ragflow/. ;\
-        cp -r /ragflow/deps/arm/npu/rag /ragflow/. ;\
+        cp -r /ragforge/deps/arm/npu/deepdoc /ragforge/. ;\
+        cp -r /ragforge/deps/arm/npu/rag /ragforge/. ;\
     else \
         echo "Not arm, not need to copy models and acl infer codes"; \
     fi
 
 # 达梦数据库 环境
 # 安装达梦数据库ODBC驱动依赖
-WORKDIR /ragflow
+WORKDIR /ragforge
 
 RUN apt-get update && \
     apt-get install -y unixodbc unixodbc-dev && \
@@ -416,9 +416,9 @@ RUN mkdir -p /usr/local/lib/python3.10/dist-packages/opensearchpy && \
     touch /usr/local/lib/python3.10/dist-packages/opensearchpy/__pycache__
 
 # 创建软链接目录，确保能找到opensearchpy
-RUN mkdir -p /ragflow/opensearchpy && \
-    echo "from opensearchpy import *" > /ragflow/opensearchpy/__init__.py && \
-    echo "/ragflow" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
+RUN mkdir -p /ragforge/opensearchpy && \
+    echo "from opensearchpy import *" > /ragforge/opensearchpy/__init__.py && \
+    echo "/ragforge" > /usr/local/lib/python3.10/dist-packages/opensearchpy.pth
 
 
 #ENV LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/devlib/linux/aarch64:/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/lib64:$LD_LIBRARY_PATH

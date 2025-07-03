@@ -43,7 +43,7 @@ HOST_API_KEY = ""
 MODE = ""
 
 
-class RAGFlowConnector:
+class RAGForgeConnector:
     def __init__(self, base_url: str, version="v1"):
         self.base_url = base_url
         self.version = version
@@ -108,37 +108,37 @@ class RAGFlowConnector:
         raise Exception([types.TextContent(type="text", text=res.get("message"))])
 
 
-class RAGFlowCtx:
-    def __init__(self, connector: RAGFlowConnector):
+class RAGForgeCtx:
+    def __init__(self, connector: RAGForgeConnector):
         self.conn = connector
 
 
 @asynccontextmanager
 async def server_lifespan(server: Server) -> AsyncIterator[dict]:
-    ctx = RAGFlowCtx(RAGFlowConnector(base_url=BASE_URL))
+    ctx = RAGForgeCtx(RAGForgeConnector(base_url=BASE_URL))
 
     try:
-        yield {"ragflow_ctx": ctx}
+        yield {"ragforge_ctx": ctx}
     finally:
         pass
 
 
-app = Server("ragflow-server", lifespan=server_lifespan)
+app = Server("ragforge-server", lifespan=server_lifespan)
 sse = SseServerTransport("/messages/")
 
 
 @app.list_tools()
 async def list_tools() -> list[types.Tool]:
     ctx = app.request_context
-    ragflow_ctx = ctx.lifespan_context["ragflow_ctx"]
-    if not ragflow_ctx:
-        raise ValueError("Get RAGFlow Context failed")
-    connector = ragflow_ctx.conn
+    ragforge_ctx = ctx.lifespan_context["ragforge_ctx"]
+    if not ragforge_ctx:
+        raise ValueError("Get RAGForge Context failed")
+    connector = ragforge_ctx.conn
 
     if MODE == LaunchMode.HOST:
         api_key = ctx.session._init_options.capabilities.experimental["headers"]["api_key"]
         if not api_key:
-            raise ValueError("RAGFlow API_KEY is required.")
+            raise ValueError("RAGForge API_KEY is required.")
     else:
         api_key = HOST_API_KEY
     connector.bind_api_key(api_key)
@@ -147,8 +147,8 @@ async def list_tools() -> list[types.Tool]:
 
     return [
         types.Tool(
-            name="ragflow_retrieval",
-            description="Retrieve relevant chunks from the RAGFlow retrieve interface based on the question, using the specified dataset_ids and optionally document_ids. Below is the list of all available datasets, including their descriptions and IDs. If you're unsure which datasets are relevant to the question, simply pass all dataset IDs to the function."
+            name="ragforge_retrieval",
+            description="Retrieve relevant chunks from the RAGForge retrieve interface based on the question, using the specified dataset_ids and optionally document_ids. Below is the list of all available datasets, including their descriptions and IDs. If you're unsure which datasets are relevant to the question, simply pass all dataset IDs to the function."
             + dataset_description,
             inputSchema={
                 "type": "object",
@@ -162,20 +162,20 @@ async def list_tools() -> list[types.Tool]:
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     ctx = app.request_context
-    ragflow_ctx = ctx.lifespan_context["ragflow_ctx"]
-    if not ragflow_ctx:
-        raise ValueError("Get RAGFlow Context failed")
-    connector = ragflow_ctx.conn
+    ragforge_ctx = ctx.lifespan_context["ragforge_ctx"]
+    if not ragforge_ctx:
+        raise ValueError("Get RAGForge Context failed")
+    connector = ragforge_ctx.conn
 
     if MODE == LaunchMode.HOST:
         api_key = ctx.session._init_options.capabilities.experimental["headers"]["api_key"]
         if not api_key:
-            raise ValueError("RAGFlow API_KEY is required.")
+            raise ValueError("RAGForge API_KEY is required.")
     else:
         api_key = HOST_API_KEY
     connector.bind_api_key(api_key)
 
-    if name == "ragflow_retrieval":
+    if name == "ragforge_retrieval":
         document_ids = arguments.get("document_ids", [])
         return connector.retrieval(dataset_ids=arguments["dataset_ids"], document_ids=document_ids, question=arguments["question"])
     raise ValueError(f"Tool not found: {name}")
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     """
     Launch example:
         self-host:
-            uv run mcp/server/server.py --host=127.0.0.1 --port=9382 --base_url=http://127.0.0.1:9380 --mode=self-host --api_key=ragflow-xxxxx
+            uv run mcp/server/server.py --host=127.0.0.1 --port=9382 --base_url=http://127.0.0.1:9380 --mode=self-host --api_key=ragforge-xxxxx
         host:
             uv run mcp/server/server.py --host=127.0.0.1 --port=9382 --base_url=http://127.0.0.1:9380 --mode=host
     """
@@ -226,10 +226,10 @@ if __name__ == "__main__":
 
     load_dotenv()
 
-    parser = argparse.ArgumentParser(description="RAGFlow MCP Server")
+    parser = argparse.ArgumentParser(description="RAGForge MCP Server")
     parser.add_argument("--base_url", type=str, default="http://127.0.0.1:9380", help="api_url: http://<host_address>")
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="RAGFlow MCP SERVER host")
-    parser.add_argument("--port", type=str, default="9382", help="RAGFlow MCP SERVER port")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="RAGForge MCP SERVER host")
+    parser.add_argument("--port", type=str, default="9382", help="RAGForge MCP SERVER port")
     parser.add_argument(
         "--mode",
         type=str,
@@ -239,18 +239,18 @@ if __name__ == "__main__":
         "  * host: Launches an MCP server that allows users to access their own spaces. Each request must include a header "
         "indicating the user's identification.",
     )
-    parser.add_argument("--api_key", type=str, default="", help="RAGFlow MCP SERVER HOST API KEY")
+    parser.add_argument("--api_key", type=str, default="", help="RAGForge MCP SERVER HOST API KEY")
     args = parser.parse_args()
     if args.mode not in ["self-host", "host"]:
         parser.error("--mode is only accept 'self-host' or 'host'")
     if args.mode == "self-host" and not args.api_key:
         parser.error("--api_key is required when --mode is 'self-host'")
 
-    BASE_URL = os.environ.get("RAGFLOW_MCP_BASE_URL", args.base_url)
-    HOST = os.environ.get("RAGFLOW_MCP_HOST", args.host)
-    PORT = os.environ.get("RAGFLOW_MCP_PORT", args.port)
-    MODE = os.environ.get("RAGFLOW_MCP_LAUNCH_MODE", args.mode)
-    HOST_API_KEY = os.environ.get("RAGFLOW_MCP_HOST_API_KEY", args.api_key)
+    BASE_URL = os.environ.get("RAGFORGE_MCP_BASE_URL", args.base_url)
+    HOST = os.environ.get("RAGFORGE_MCP_HOST", args.host)
+    PORT = os.environ.get("RAGFORGE_MCP_PORT", args.port)
+    MODE = os.environ.get("RAGFORGE_MCP_LAUNCH_MODE", args.mode)
+    HOST_API_KEY = os.environ.get("RAGFORGE_MCP_HOST_API_KEY", args.api_key)
 
     print(
         r"""

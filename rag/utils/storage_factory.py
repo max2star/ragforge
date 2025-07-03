@@ -17,11 +17,11 @@
 import os
 from enum import Enum
 
-from rag.utils.azure_sas_conn import RAGFlowAzureSasBlob
-from rag.utils.azure_spn_conn import RAGFlowAzureSpnBlob
-from rag.utils.minio_conn import RAGFlowMinio
-from rag.utils.s3_conn import RAGFlowS3
-from rag.utils.oss_conn import RAGFlowOSS
+from rag.utils.azure_sas_conn import RAGForgeAzureSasBlob
+from rag.utils.azure_spn_conn import RAGForgeAzureSpnBlob
+from rag.utils.minio_conn import RAGForgeMinio
+from rag.utils.s3_conn import RAGForgeS3
+from rag.utils.oss_conn import RAGForgeOSS
 
 
 class Storage(Enum):
@@ -34,11 +34,11 @@ class Storage(Enum):
 
 class StorageFactory:
     storage_mapping = {
-        Storage.MINIO: RAGFlowMinio,
-        Storage.AZURE_SPN: RAGFlowAzureSpnBlob,
-        Storage.AZURE_SAS: RAGFlowAzureSasBlob,
-        Storage.AWS_S3: RAGFlowS3,
-        Storage.OSS: RAGFlowOSS,
+        Storage.MINIO: RAGForgeMinio,
+        Storage.AZURE_SPN: RAGForgeAzureSpnBlob,
+        Storage.AZURE_SAS: RAGForgeAzureSasBlob,
+        Storage.AWS_S3: RAGForgeS3,
+        Storage.OSS: RAGForgeOSS,
     }
 
     @classmethod

@@ -26,7 +26,7 @@
                       "category_description": {
                         "product_related": {
                           "description": "The question is about the product usage, appearance and how it works.",
-                          "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGFlow image from scratch",
+                          "examples": "Why it always beaming?\nHow to install it onto the wall?\nIt leaks, what to do?\nException: Can't connect to ES cluster\nHow to build the RAGForge image from scratch",
                           "to": "retrieval:0"
                         },
                         "casual": {

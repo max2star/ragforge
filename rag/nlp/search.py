@@ -26,7 +26,7 @@ import numpy as np
 from rag.utils.doc_store_conn import DocStoreConnection, MatchDenseExpr, FusionExpr, OrderByExpr
 
 
-def index_name(uid): return f"ragflow_{uid}"
+def index_name(uid): return f"ragforge_{uid}"
 
 
 class Dealer:

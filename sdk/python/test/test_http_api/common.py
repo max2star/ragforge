@@ -143,7 +143,7 @@ def stop_parse_documnets(auth, dataset_id, payload=None):
 def bulk_upload_documents(auth, dataset_id, num, tmp_path):
     fps = []
     for i in range(num):
-        fp = create_txt_file(tmp_path / f"ragflow_test_upload_{i}.txt")
+        fp = create_txt_file(tmp_path / f"ragforge_test_upload_{i}.txt")
         fps.append(fp)
     res = upload_documnets(auth, dataset_id, fps)
     document_ids = []

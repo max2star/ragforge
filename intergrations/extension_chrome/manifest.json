@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Ragflow Extension",
-  "description": "Ragflow for Chrome",
+  "name": "Ragforge Extension",
+  "description": "Ragforge for Chrome",
   "version": "1.0",
   "options_page": "options.html",
 

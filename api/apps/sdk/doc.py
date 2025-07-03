@@ -13,6 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+import logging
 import pathlib
 import datetime
 
@@ -23,7 +24,7 @@ from api.db.services.llm_service import TenantLLMService, LLMBundle
 from api import settings
 import xxhash
 import re
-from api.utils.api_utils import token_required
+from api.utils.api_utils import token_required, get_json_result
 from api.db.db_models import Task
 from api.db.services.task_service import TaskService, queue_tasks
 from api.utils.api_utils import server_error_response
@@ -165,9 +166,10 @@ def upload(dataset_id, tenant_id):
             message=f'No authorization for kb_id {dataset_id}.',
             code=settings.RetCode.AUTHENTICATION_ERROR
         )
-
+    logging.info(f"/datasets/<{dataset_id}>/documents upload kb {kb}, file_objs {file_objs}, tenant_id {tenant_id}")
     err, files = FileService.upload_document(kb, file_objs, tenant_id)
     if err:
+        logging.error(f"Error uploading files: {err}")
         return get_result(message="\n".join(err), code=settings.RetCode.SERVER_ERROR)
     # rename key's name
     renamed_doc_list = []
@@ -245,7 +247,7 @@ def update_doc(tenant_id, dataset_id, document_id):
 
     #控制权限
     if not DocumentService.accessible(document_id, tenant_id):
-        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {document_id}.")
 
     doc = doc[0]
     if "chunk_count" in req:
@@ -404,7 +406,7 @@ def download(tenant_id, dataset_id, document_id):
         )
 
     if not DocumentService.accessible(document_id, tenant_id):
-        return get_error_data_result(message=f"You {tenant_id} don't own the doc {doc_id}.")
+        return get_error_data_result(message=f"You {tenant_id} don't own the doc {document_id}.")
 
     # The process of downloading
     doc_id, doc_location = File2DocumentService.get_storage_address(
@@ -511,6 +513,7 @@ def list_docs(dataset_id, tenant_id):
                     type: string
                     description: Processing status.
     """
+    kb_id = dataset_id
     if not KnowledgebaseService.accessible(kb_id=dataset_id, user_id=tenant_id):
         return get_error_data_result(message=f"You don't own the dataset {dataset_id}. ")
     id = request.args.get("id")
@@ -519,14 +522,14 @@ def list_docs(dataset_id, tenant_id):
         d_ = DocumentService.query(id=id, kb_id=dataset_id)
         if not d_:
             return get_error_data_result(message=f"Kb {kb_id} don't own the document {id}.")
-        if not DocumentService.accessible(d.id, tenant_id):
-            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
+        if not DocumentService.accessible(d_.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d_.id}.")
     if name:
         d_ = DocumentService.query(name=name, kb_id=dataset_id)
         if not d_:
             return get_error_data_result(message=f"Kb {kb_id} don't own the document {name}.")
-        if not DocumentService.accessible(d.id, tenant_id):
-            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d.id}.")
+        if not DocumentService.accessible(d_.id, tenant_id):
+            return get_error_data_result(message=f"You {tenant_id} don't own the doc {d_.id}.")
 
     page = int(request.args.get("page", 1))
     keywords = request.args.get("keywords", "")
@@ -1102,7 +1105,7 @@ def add_chunk(tenant_id, dataset_id, document_id):
     doc = DocumentService.query(id=document_id, kb_id=dataset_id)
     if not doc:
         return get_error_data_result(
-            message=f"Kb {kb_id} don't own the document {document_id}."
+            message=f"Kb {dataset_id} don't own the document {document_id}."
         )
 
     if not DocumentService.accessible(document_id, tenant_id):
@@ -1448,6 +1451,7 @@ def retrieval_test(tenant_id):
     req['limit_range'] = tenant_id
     req['limit_time'] = str(datetime.datetime.now()).replace("T", " ")[:19]
     req['limit_level']= req.get('limit_level',1)
+    logging.info(f"retrieval req:{req}")
     kb_ids = req["dataset_ids"]
     if not isinstance(kb_ids, list):
         return get_error_data_result("`dataset_ids` should be a list")
@@ -1459,12 +1463,14 @@ def retrieval_test(tenant_id):
     for kb in kbs:
         logging.info(f"retrieval sdk kb=={kb} kb.embd_id=={kb.embd_id}\n")
     if len(embd_nms) != 1:
+        size = len(embd_nms)
+        logging.error(f"retrieval sdk {top},page {page},size {size},embedding not same.")
         return get_result(
             message=f'Datasets {kb_ids} use different embedding models {embd_nms}."',
             code=settings.RetCode.DATA_ERROR,
         )
     if "question" not in req:
-        logging.info(f"retrieval sdk question None")
+        logging.error(f"retrieval sdk question None")
         return get_error_data_result("`question` is required.")
     page = int(req.get("page", 1))
     size = int(req.get("page_size", 30))
@@ -1472,11 +1478,24 @@ def retrieval_test(tenant_id):
     doc_ids = req.get("document_ids", [])
     use_kg = req.get("use_kg", False)
     if not isinstance(doc_ids, list):
+        logging.error(f"retrieval sdk {top},page {page},size {size},docs id {doc_ids} not list")
         return get_error_data_result("`documents` should be a list")
+    doc_not_exists = []
+    for doc_id in doc_ids:
+        e, src_d = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.error(f"retrieval sdk {top},page {page},size {size},doc_id {doc_id} not exists")
+            doc_not_exists.append(doc_id)
+    if doc_not_exists:
+        logging.error(f"retrieval sdk {top},page {page},size {size},doc_ids {doc_not_exists} not exists")
+        return get_error_data_result(
+            f"The docs {doc_not_exists} not exists."
+        )
     not_accessible_docs = []
     doc_ids_list = KnowledgebaseService.list_documents_by_ids(kb_ids)
     for doc_id in doc_ids:
         if doc_id not in doc_ids_list:
+            logging.error(f"retrieval sdk {top},page {page},size {size},doc {doc_id} not belong to {kb_ids}")
             return get_error_data_result(
                 f"The datasets don't own the document {doc_id}"
             )
@@ -1484,6 +1503,7 @@ def retrieval_test(tenant_id):
             not_accessible_docs.append(doc_id)
     not_accessible_docs = list(set(not_accessible_docs))
     if not_accessible_docs:
+        logging.error(f"retrieval sdk {top},page {page},size {size},docs not accessible {not_accessible_docs}")
         return get_result(message=f"Documents not accessible : {not_accessible_docs},please check.", code=settings.RetCode.DATA_ERROR)
 
     similarity_threshold = float(req.get("similarity_threshold", 0.2))
@@ -1498,6 +1518,7 @@ def retrieval_test(tenant_id):
     try:
         e, kb = KnowledgebaseService.get_by_id(kb_ids[0])
         if not e:
+            logging.error(f"retrieval sdk {top},page {page},size {size},datasets {kb_ids[0]} not found")
             return get_error_data_result(message="Dataset not found!")
         embd_mdl = LLMBundle(kb.tenant_id, LLMType.EMBEDDING, llm_name=kb.embd_id)
 
@@ -1508,7 +1529,7 @@ def retrieval_test(tenant_id):
         if req.get("keyword", False):
             chat_mdl = LLMBundle(kb.tenant_id, LLMType.CHAT)
             question += keyword_extraction(chat_mdl, question)
-
+        logging.info(f"retrieval sdk question {question}")
         ranks = settings.retrievaler.retrieval(
             question,
             embd_mdl,
@@ -1560,6 +1581,8 @@ def retrieval_test(tenant_id):
         if len(ranks["chunks"])>top:
             ranks["chunks"] = ranks["chunks"][:top]
         logging.info(f"retrieval sdk {top},page {page},size {size},result length {len(ranks['chunks'])}")
+        if len(ranks["chunks"])>5:
+            logging.info(f"retrieval sdk {top},page {page},size {size},result 5 examples {ranks['chunks'][:5]}")
         return get_result(data=ranks)
     except Exception as e:
         logging.error(f"retrieval exeception {e}")
@@ -1569,3 +1592,73 @@ def retrieval_test(tenant_id):
                 code=settings.RetCode.DATA_ERROR,
             )
         return server_error_response(e)
+
+
+@manager.route("/mv_kb", methods=["POST"])
+@token_required
+def mv_kb(tenant_id):
+    req = request.json
+    src_kb_id = req.get("src_kb_id")
+    dst_kb_id = req.get("dst_kb_id")
+    if not src_kb_id or not dst_kb_id:
+        return get_json_result(
+            data=False, message='Lack of "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+    if src_kb_id==dst_kb_id:
+        return get_json_result(
+            data=False, message='Same src and dst "KB ID"', code=settings.RetCode.ARGUMENT_ERROR)
+
+    e, src_kb = KnowledgebaseService.get_by_id(src_kb_id)
+    if not e:
+        raise LookupError("Can't find this src knowledgebase!")
+
+    e, dst_kb = KnowledgebaseService.get_by_id(dst_kb_id)
+    if not e:
+        raise LookupError("Can't find this dst knowledgebase!")
+
+    if not KnowledgebaseService.accessible(src_kb_id, tenant_id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization, user {tenant_id} kb {src_kb_id}',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    if not KnowledgebaseService.accessible(dst_kb_id, tenant_id):
+        return get_json_result(
+            data=False,
+            message=f'No authorization, user {tenant_id} kb {dst_kb_id}.',
+            code=settings.RetCode.AUTHENTICATION_ERROR
+        )
+
+    #如果源和目的KB的embedding模型一致，则允许复制移动(其他的解析参数可以按文档粒度)；否则不允许移动到目标知识库。
+    if src_kb.embd_id!=dst_kb.embd_id:
+        raise LookupError("Can't move between the knowledgebases using diffrent embedding model id!")
+
+    dst_kb_exist_location = []
+    doc_ids = req["doc_ids"]
+    for doc_id in doc_ids:
+        e, src_d = DocumentService.get_by_id(doc_id)
+        if not e:
+            raise LookupError("Can't find document {} !".format(doc_id))
+        exist, dst_d = DocumentService.get_by_location(dst_kb_id,src_d.location)
+        if exist:
+            logging.info('doc {} name {} dumplicate in dst kb_id {} with doc {}'.format(doc_id,src_d.name,dst_kb_id,dst_d.id))
+            dst_kb_exist_location.append(dst_d.name)
+    if dst_kb_exist_location:
+        raise LookupError("Has same-location/name documents {} in destination kb!".format(dst_kb_exist_location))
+    for doc_id in doc_ids:
+        if not DocumentService.accessible(doc_id, tenant_id):
+            return get_json_result(
+                data=False,
+                message=f'No authorization for doc_id {doc_id} for you {tenant_id}.',
+                code=settings.RetCode.AUTHENTICATION_ERROR
+            )
+    docs = DocumentService.get_by_ids(doc_ids)
+    for d in docs:
+        if d.kb_id==dst_kb_id:
+            logging.info('doc {} kb_id same with dst kb_id {}'.format(d.id,dst_kb_id))
+            continue
+        #如果是相同的tenant id，直接更新文档的kb_id Mysql数据库里更新+ES更新+Minio更新
+        #否则会做添加和删除操作
+        DocumentService.move_document(d,dst_kb_id,src_kb.tenant_id,dst_kb.tenant_id)
+    docs = DocumentService.get_by_ids(doc_ids)
+    return get_result(data=list(docs.dicts()))
