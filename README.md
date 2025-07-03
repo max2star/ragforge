@@ -1,6 +1,6 @@
 <div align="center">
 <a href="https://demo.ragforge.io/">
-<img src="web/src/assets/logo-with-text.png" width="350" alt="RAGForge logo">
+<img src="conf/logo-with-text.png" width="100" alt="RAGForge logo">
 </a>
 </div>
 
