@@ -78,7 +78,13 @@ def set_conversation():
         e, dia = DialogService.get_by_id(req["dialog_id"])
         if not e:
             return get_data_error_result(message="Dialog not found")
-        conv = {"id": conv_id, "dialog_id": req["dialog_id"], "name": req.get("name", "New conversation"),"user_id":current_user.id, "message": [{"role": "assistant", "content": dia.prompt_config["prologue"]}]}
+        
+        # 安全获取 prologue，如果没有则使用默认值
+        prologue = "您好，我是您的助手，有什么可以帮助您的吗？"
+        if hasattr(dia, 'prompt_config') and isinstance(dia.prompt_config, dict):
+            prologue = dia.prompt_config.get("prologue", prologue)
+        
+        conv = {"id": conv_id, "dialog_id": req["dialog_id"], "name": req.get("name", "New conversation"),"user_id":current_user.id, "message": [{"role": "assistant", "content": prologue}]}
         ConversationService.save(**conv)
         return get_json_result(data=conv)
     except Exception as e:
@@ -439,10 +445,10 @@ def related_questions():
     question = req["question"]
     chat_mdl = LLMBundle(current_user.id, LLMType.CHAT)
     prompt = """
-Role: You are an AI language model assistant tasked with generating 5-10 related questions based on a user’s original query. These questions should help expand the search query scope and improve search relevance.
+Role: You are an AI language model assistant tasked with generating 5-10 related questions based on a user's original query. These questions should help expand the search query scope and improve search relevance.
 
 Instructions:
-	Input: You are provided with a user’s question.
+	Input: You are provided with a user's question.
 	Output: Generate 5-10 alternative questions that are related to the original user question. These alternatives should help retrieve a broader range of relevant documents from a vector database.
 	Context: Focus on rephrasing the original question in different ways, making sure the alternative questions are diverse but still connected to the topic of the original query. Do not create overly obscure, irrelevant, or unrelated questions.
 	Fallback: If you cannot generate any relevant alternatives, do not return any questions.

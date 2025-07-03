@@ -1,13 +1,13 @@
 [project]
-name = "ragflow"
+name = "ragforge"
 version = "0.18.0"
-description = "[RAGFlow](https://ragflow.io/) is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document understanding. It offers a streamlined RAG workflow for businesses of any scale, combining LLM (Large Language Models) to provide truthful question-answering capabilities, backed by well-founded citations from various complex formatted data."
+description = "[RAGForge](https://ragforge.io/) is an open-source RAG (Retrieval-Augmented Generation) engine based on deep document understanding. It offers a streamlined RAG workflow for businesses of any scale, combining LLM (Large Language Models) to provide truthful question-answering capabilities, backed by well-founded citations from various complex formatted data."
 authors = [
     { name = "Zhichang Yu", email = "yuzhichang@gmail.com" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.12"
 dependencies = [
     "datrie==0.8.2",
     "akshare>=1.15.78,<2.0.0",
@@ -49,7 +49,7 @@ dependencies = [
     "hanziconv==0.3.2",
     "html-text==0.6.2",
     "httpx==0.27.0",
-    #ragflow 使用 huggingface-hub 主要是snapshot_download这个函数，估计版本差异不大，改成不限制上限
+    #ragforge 使用 huggingface-hub 主要是snapshot_download这个函数，估计版本差异不大，改成不限制上限
     #"huggingface-hub>=0.25.0,<0.26.0",
     "huggingface-hub>=0.25.0",
     "infinity-sdk==0.6.0-dev3",
@@ -115,7 +115,7 @@ dependencies = [
     "werkzeug==3.0.6",
     "wikipedia==1.4.0",
     "word2number==1.1",
-    "xgboost==1.5.0",
+    "xgboost==1.6.2",
     "xpinyin==0.7.6",
     "yfinance==0.1.96",
     "zhipuai==2.0.1",

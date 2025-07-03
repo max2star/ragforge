@@ -23,7 +23,7 @@ from api.db.services import duplicate_name
 from api.db.services.document_service import DocumentService
 from api.db.services.file2document_service import File2DocumentService
 from api.db.services.file_service import FileService
-from api.db.services.user_service import TenantService, UserTenantService
+from api.db.services.user_service import TenantService, UserTenantService, UserService
 from api.utils.api_utils import server_error_response, get_data_error_result, validate_request, not_allowed_parameters
 from api.utils import get_uuid
 from api.db import StatusEnum, FileSource
@@ -36,6 +36,9 @@ from api.constants import DATASET_NAME_LIMIT
 from rag.settings import PAGERANK_FLD
 import datetime
 import logging
+
+from api.db.services.dialog_service import DialogService, ask, chat
+
 @manager.route('/create', methods=['post'])  # noqa: F821
 @login_required
 @validate_request("name")
@@ -66,6 +69,29 @@ def create():
         req["embd_id"] = t.embd_id
         if not KnowledgebaseService.save(**req):
             return get_data_error_result()
+
+        #TODO:临时方案，将知识库添加到特定智能助手中
+        #dialog_id = "8a5fe1c641b211f084720aa9420e5f66"
+        # 正式环境
+        # dialog_id = "58ce279249c011f0a0c90242ac1400fe"
+        users = UserService.query(email="M@M.test")
+        if users:
+            userid = users[0].id
+            if current_user.id == userid:
+                for dialog_id in ['8a5fe1c641b211f084720aa9420e5f66','58ce279249c011f0a0c90242ac1400fe','ed1d4f484b3411f091d9cef343bd0a30']:
+                    e, dia = DialogService.get_by_id(dialog_id)
+                    if e:
+                        logging.info(f"Dialog {dialog_id} exists,will update it!")
+                        dia = dia.to_dict()
+                        dia_to_update = {}
+                        dia_to_update['kb_ids'] = dia.get('kb_ids',[])+[req["id"]]
+                        if not DialogService.update_by_id(dialog_id, dia_to_update):
+                            logging.error(f"Dialog {dialog_id} update error dia_to_update {dia_to_update}!")
+                        else:
+                            logging.info(f"Dialog {dialog_id} update success dia_to_update {dia_to_update}!")
+                    else:
+                        logging.info(f"Dialog {dialog_id} Not Exists")
+
         return get_json_result(data={"kb_id": req["id"]})
     except Exception as e:
         return server_error_response(e)
@@ -107,8 +133,14 @@ def update():
         if parser_config:
             extractor = parser_config.get('extractor',None)
             classifier= parser_config.get('classifier',None)
+            layout_recognize =  parser_config.get('layout_recognize',"")
+            parser_id  = req.get("parser_id", "")
             import logging
             logging.info('Current parser_config {}'.format(kb.parser_config))
+            if not layout_recognize:
+                if not parser_id or parser_id=='paper':
+                    parser_config['layout_recognize'] = 'MinerU'
+                    req['parser_id'] ='paper'
             if not extractor:
                 pre_configed_0 = kb.parser_config.get('extractor',None)
                 if pre_configed_0:
@@ -117,6 +149,8 @@ def update():
                 pre_configed_1 = kb.parser_config.get('classifier',None)
                 if pre_configed_1:
                     parser_config['classifier'] = pre_configed_1
+            from api.utils.api_utils import get_extractor
+            parser_config['extractor'] = get_extractor(parser_config, metadata_type="default")
 
         if req["name"].lower() != kb.name.lower() \
                 and len(

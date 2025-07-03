@@ -50,6 +50,7 @@ class PaperExtractor:
             response = re.sub(r"```json|```", "", response, flags=re.DOTALL).strip()
         logging.info(f"response clean ==>\n{response}")
         if response.find("**ERROR**") >= 0:
+            logging.error(f"request system is {system},history is {history}")
             raise Exception(response)
         #set_llm_cache(self._llm_model.llm_name, system, response, history, gen_conf)
         return response
@@ -63,14 +64,13 @@ class PaperExtractor:
             nonlocal key_to_parse
             result = None
             logging.info(f"PaperExtractor extract for {key_to_parse}")
-            # if not key_to_parse:
-            #     key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
-            key_to_parse = constant.keyvalues_mapping.get(metadata_type, "default")
+            if not key_to_parse:
+                key_to_parse = constant.keyvalues_mapping.get(metadata_type)
             # 过滤字段
             keys_to_use_list = []
             for i in key_to_parse:
-                # if i["name"] in [j["name"] for j in constant.keyvalues_mapping.get(metadata_type, "default")]:
-                keys_to_use_list.append(i['name'])
+                if i["name"] not in constant.exclude_fields:
+                    keys_to_use_list.append(i['name'])
 
             keys_to_use = "、".join(keys_to_use_list)
             logging.info(f"PaperExtractor extract for {keys_to_use}")
