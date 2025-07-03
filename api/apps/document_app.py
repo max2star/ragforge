@@ -22,7 +22,7 @@ import flask
 from flask import request
 from flask_login import login_required, current_user
 
-from deepdoc.parser.html_parser import RAGFlowHtmlParser
+from deepdoc.parser.html_parser import RAGForgeHtmlParser
 from rag.nlp import search
 
 from api.db import FileType, TaskStatus, ParserType, FileSource
@@ -38,7 +38,7 @@ from api.db.services.document_service import DocumentService, doc_upload_and_par
 from api.utils.api_utils import (
     server_error_response,
     get_data_error_result,
-    validate_request,
+    validate_request, get_extractor,
 )
 import uuid
 from api.utils import get_uuid,current_timestamp
@@ -327,16 +327,23 @@ def list_docs():
 
     page_number = int(request.args.get("page", 1))
     items_per_page = int(request.args.get("page_size", 15))
+    #过滤解析状态字段
+    # 0 未解析，1解析中，2已取消,3解析成功
+    run = request.args.get("run", None)
+    id_ = request.args.get("id", None)
     orderby = request.args.get("orderby", "create_time")
     desc = request.args.get("desc", True)
     try:
         docs, tol = DocumentService.get_by_kb_id(
-            kb_id, page_number, items_per_page, orderby, desc, keywords)
+            kb_id, page_number, items_per_page, orderby, desc, keywords, run, id_)
 
         for doc_item in docs:
             #thumbnail 是一个 ID
             if doc_item['thumbnail'] and not doc_item['thumbnail'].startswith(IMG_BASE64_PREFIX):
                 doc_item['thumbnail'] = f"/v1/document/image/{kb_id}-{doc_item['thumbnail']}"
+            if 'progress' in doc_item:
+                rounded = round(doc_item['progress'], 4)
+                doc_item['progress'] = int(rounded) if rounded == int(rounded) else rounded
 
         return get_json_result(data={"total": tol, "docs": docs})
     except Exception as e:
@@ -348,6 +355,8 @@ def list_docs():
 def docinfos():
     req = request.json
     doc_ids = req["doc_ids"]
+    logging.debug(f"Get documents infos for {doc_ids}")
+    not_exists = []
     for doc_id in doc_ids:
         try:
             uuid.UUID(str(doc_id))
@@ -357,14 +366,30 @@ def docinfos():
                 message=f'Parameter {doc_id} not uuid.',
                 code=settings.RetCode.ARGUMENT_ERROR
             )
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.error(f"Document {doc_id} not exists.")
+            not_exists.append(doc_id)
+
+    if not_exists:
+        logging.error(f"Documents {not_exists} not exists.")
+        return get_json_result(
+            data=list(not_exists),
+            message=f'Documents {not_exists} not exists.',
+            code=settings.RetCode.NOT_FOUND
+        )
+
+    for doc_id in doc_ids:
         if not DocumentService.accessible(doc_id, current_user.id):
             return get_json_result(
                 data=False,
-                message=f'No authorization,maybe doc {doc_id} not accessible for you {current_user.id}.',
+                message=f'No authorization,doc {doc_id} not accessible for you {current_user.id}.',
                 code=settings.RetCode.AUTHENTICATION_ERROR
             )
     docs = DocumentService.get_by_ids(doc_ids)
-    return get_json_result(data=list(docs.dicts()))
+    docs_result = list(docs.dicts())
+    logging.info(f"Get documents {doc_ids} infos return length {len(docs_result)},result {docs_result}")
+    return get_json_result(data=docs_result)
 
 
 @manager.route('/thumbnails', methods=['GET'])  # noqa: F821
@@ -590,16 +615,83 @@ def get(doc_id):
         b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
         response = flask.make_response(STORAGE_IMPL.get(b, n))
 
-        ext = re.search(r"\.([^.]+)$", doc.name)
-        if ext:
-            logging.info(f"get for {doc_id},type {ext.group(1)}")
-            if doc.type == FileType.VISUAL.value:
-                response.headers.set('Content-Type', 'image/%s' % ext.group(1))
-            else:
-                response.headers.set(
-                    'Content-Type',
-                    'application/%s' %
-                    ext.group(1))
+        #对于MinerU解析的，如果原文件不是PDF，则找到对应转化后的PDF返回
+        layout_recognize = None
+        parser_config = doc.parser_config
+        logging.info(f"get doc for {doc_id} parser_config is {parser_config}.")
+        if parser_config:
+            layout_recognize = parser_config.get('layout_recognize',None)
+        if layout_recognize and layout_recognize in ['MinerU','minerU']:
+            if doc.type != FileType.PDF.value:
+                logging.info(f"get doc for {doc_id} which is not pdf but will return transferred pdf.")
+                name_without_suff = n.split(".")[0]
+                name_for_file = f'minerU/{doc_id}'+'/'+name_without_suff+'.pdf'
+                response = flask.make_response(STORAGE_IMPL.get(b, name_for_file))
+            response.headers.set(
+                'Content-Type',
+                'application/%s' %
+                'pdf')
+        else:
+            ext = re.search(r"\.([^.]+)$", doc.name)
+            if ext:
+                logging.info(f"get for {doc_id},type {ext.group(1)}")
+                if doc.type == FileType.VISUAL.value:
+                    response.headers.set('Content-Type', 'image/%s' % ext.group(1))
+                else:
+                    response.headers.set(
+                        'Content-Type',
+                        'application/%s' %
+                        ext.group(1))
+        return response
+    except Exception as e:
+        return server_error_response(e)
+
+@manager.route('/get_pdf/<doc_id>', methods=['GET'])  # noqa: F821
+#@login_required
+def get_pdf(doc_id):
+    try:
+        e, doc = DocumentService.get_by_id(doc_id)
+        if not e:
+            logging.info(f"get for {doc_id},not found")
+            return get_data_error_result(message="Document not found!")
+
+        #if not DocumentService.accessible(doc_id, current_user.id):
+        #    return get_json_result(
+        #        data=False,
+        #        message=f'No authorization doc_id {doc_id} for you {current_user.id}.',
+        #        code=settings.RetCode.AUTHENTICATION_ERROR
+        #    )
+
+        b, n = File2DocumentService.get_storage_address(doc_id=doc_id)
+        response = flask.make_response(STORAGE_IMPL.get(b, n))
+
+        #对于MinerU解析的，如果原文件不是PDF，则找到对应转化后的PDF返回
+        layout_recognize = None
+        parser_config = doc.parser_config
+        logging.info(f"get doc for {doc_id} parser_config is {parser_config}.")
+        if parser_config:
+            layout_recognize = parser_config.get('layout_recognize',None)
+        if layout_recognize and layout_recognize in ['MinerU','minerU']:
+            if doc.type != FileType.PDF.value:
+                logging.info(f"get doc for {doc_id} which is not pdf but will return transferred pdf.")
+                name_without_suff = n.split(".")[0]
+                name_for_file = f'minerU/{doc_id}'+'/'+name_without_suff+'.pdf'
+                response = flask.make_response(STORAGE_IMPL.get(b, name_for_file))
+            response.headers.set(
+                'Content-Type',
+                'application/%s' %
+                'pdf')
+        else:
+            ext = re.search(r"\.([^.]+)$", doc.name)
+            if ext:
+                logging.info(f"get for {doc_id},type {ext.group(1)}")
+                if doc.type == FileType.VISUAL.value:
+                    response.headers.set('Content-Type', 'image/%s' % ext.group(1))
+                else:
+                    response.headers.set(
+                        'Content-Type',
+                        'application/%s' %
+                        ext.group(1))
         return response
     except Exception as e:
         return server_error_response(e)
@@ -765,7 +857,7 @@ def get_layout(doc_id):
 @validate_request("doc_id", "parser_id")
 def change_parser():
     req = request.json
-    logging.info(f"\n\nchange_parser =========> {req}\n\n")
+    logging.info(f"change_parser type {type(req)} req {req}")
     if not DocumentService.accessible(req["doc_id"], current_user.id):
         return get_json_result(
             data=False,
@@ -794,7 +886,11 @@ def change_parser():
         if not e:
             return get_data_error_result(message=f"Document {doc.id} not found!")
         if "parser_config" in req:
-            DocumentService.update_parser_config(doc.id, req["parser_config"])
+            logging.info(
+                f"update parser config type {type(req.get('parser_config'))} parser_config {req.get('parser_config')}")
+            parser_config = req["parser_config"]
+            parser_config["extractor"] = get_extractor(parser_config)
+            DocumentService.update_parser_config(doc.id, parser_config)
         if doc.token_num > 0:
             e = DocumentService.increment_chunk_num(doc.id, doc.kb_id, doc.token_num * -1, doc.chunk_num * -1,
                                                     doc.process_duation * -1)
@@ -835,7 +931,7 @@ def get_image(image_id):
         return server_error_response(e)
 
 
-#TODO 干啥的
+#在会话中直接上传文件的场景下进行调用
 @manager.route('/upload_and_parse', methods=['POST'])  # noqa: F821
 @login_required
 @validate_request("conversation_id")
@@ -882,7 +978,7 @@ def parse():
         driver.get(url)
         res_headers = [r.response.headers for r in driver.requests if r and r.response]
         if len(res_headers) > 1:
-            sections = RAGFlowHtmlParser().parser_txt(driver.page_source)
+            sections = RAGForgeHtmlParser().parser_txt(driver.page_source)
             driver.quit()
             return get_json_result(data="\n".join(sections))
 
@@ -1023,6 +1119,7 @@ def set_filter_fields():
     知悉范围、级别、期限等字段的过滤
     """
     req = request.json
+    logging.info(f"set_filter_fields <req>: {req}")
     #只有创建者可以设置过滤权限
     if not DocumentService.accessible4deletion(req["doc_id"], current_user.id):
         return get_json_result(
@@ -1050,6 +1147,7 @@ def set_filter_fields():
     range_ = filter_fields.get('limit_range',[])
     level_= filter_fields.get('limit_level',1)
     time_ = filter_fields.get('limit_time',0)
+    logging.info(f"<filter_fields> {filter_fields} range: {range_} level: {level_} time: {time_}")
 
     for user_id_ in range_:
      try:

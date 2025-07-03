@@ -27,8 +27,8 @@ import logging
 import copy
 from enum import Enum, IntEnum
 import importlib
-from Cryptodome.PublicKey import RSA
-from Cryptodome.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_v1_5 as Cipher_pkcs1_v1_5
 from filelock import FileLock
 from api.constants import SERVICE_CONF
 

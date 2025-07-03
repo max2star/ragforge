@@ -74,7 +74,7 @@ def get_rag_python_directory(*args):
 
 
 def get_home_cache_dir():
-    dir = os.path.join(os.path.expanduser('~'), ".ragflow")
+    dir = os.path.join(os.path.expanduser('~'), ".ragforge")
     try:
         os.mkdir(dir)
     except OSError:
@@ -243,3 +243,46 @@ def traversal_files(base):
         for f in fs:
             fullname = os.path.join(root, f)
             yield fullname
+
+
+def extract_first_json(text):
+    """
+    从文本中提取第一组完整的JSON字符串
+    :param text: 待处理的原始文本
+    :return: 第一个有效的JSON字符串（若存在），否则返回None
+    """
+    start = text.find('{')
+    if start == -1:  # 无左花括号直接退出
+        return text
+
+    brace_count = 0
+    in_string = False
+    escape = False
+    json_chars = []
+
+    for i, char in enumerate(text[start:]):
+        # 处理字符串内的转义和边界
+        if char == '"' and not escape:
+            in_string = not in_string
+        if char == '\\' and not escape:
+            escape = True
+        else:
+            escape = False
+
+        # 统计花括号（仅当不在字符串内时）
+        if not in_string:
+            if char == '{':
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0:
+                    json_chars.append(char)
+                    candidate = "".join(json_chars)
+                    try:
+                        json.loads(candidate)  # 验证JSON有效性
+                        return candidate
+                    except json.JSONDecodeError:
+                        continue  # 无效则继续扫描
+        json_chars.append(char)
+
+    return "".join(json_chars)

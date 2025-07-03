@@ -241,7 +241,7 @@ def add_llm():
                 model_name=mdl_nm,
                 base_url=llm["api_base"]
             )
-            arr, tc = mdl.similarity("Hello~ Ragflower!", ["Hi, there!", "Ohh, my friend!"])
+            arr, tc = mdl.similarity("Hello~ Ragforgeer!", ["Hi, there!", "Ohh, my friend!"])
             if len(arr) == 0:
                 raise Exception("Not known.")
         except KeyError:
@@ -273,7 +273,7 @@ def add_llm():
             key=llm["api_key"], model_name=mdl_nm, base_url=llm["api_base"]
         )
         try:
-            for resp in mdl.tts("Hello~ Ragflower!"):
+            for resp in mdl.tts("Hello~ Ragforgeer!"):
                 pass
         except RuntimeError as e:
             msg += f"\nFail to access model({mdl_nm})." + str(e)
@@ -284,9 +284,10 @@ def add_llm():
     if msg:
         return get_data_error_result(message=msg)
 
-    if not TenantLLMService.filter_update(
+    filter_update_result = TenantLLMService.filter_update(
             [TenantLLM.tenant_id == current_user.id, TenantLLM.llm_factory == factory,
-             TenantLLM.llm_name == llm["llm_name"]], llm):
+             TenantLLM.llm_name == llm["llm_name"]], llm)
+    if not filter_update_result or filter_update_result <= 0:
         TenantLLMService.save(**llm)
 
     return get_json_result(data=True)

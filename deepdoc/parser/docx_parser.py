@@ -22,7 +22,7 @@ from rag.nlp import rag_tokenizer
 from io import BytesIO
 
 
-class RAGFlowDocxParser:
+class RAGForgeDocxParser:
 
     def __extract_table_content(self, tb):
         df = []

@@ -12,9 +12,9 @@
 ## 🐳 Docker Compose
 
 - **docker-compose.yml**  
-  Sets up environment for RAGFlow and its dependencies.
+  Sets up environment for RAGForge and its dependencies.
 - **docker-compose-base.yml**  
-  Sets up environment for RAGFlow's dependencies: Elasticsearch/[Infinity](https://github.com/infiniflow/infinity), MySQL, MinIO, and Redis.
+  Sets up environment for RAGForge's dependencies: Elasticsearch/[Infinity](https://github.com/infiniflow/infinity), MySQL, MinIO, and Redis.
 
 > [!CAUTION]
 > We do not actively maintain **docker-compose-CN-oc9.yml**, **docker-compose-gpu-CN-oc9.yml**, or **docker-compose-gpu.yml**, so use them at your own risk. However, you are welcome to file a pull request to improve any of them.
@@ -71,29 +71,29 @@ The [.env](./.env) file contains important environment variables for Docker.
 - `REDIS_PASSWORD`  
   The password for Redis.
 
-### RAGFlow
+### RAGForge
 
 - `SVR_HTTP_PORT`  
-  The port used to expose RAGFlow's HTTP API service to the host machine, allowing **external** access to the service running inside the Docker container. Defaults to `9380`.
-- `RAGFLOW-IMAGE`  
+  The port used to expose RAGForge's HTTP API service to the host machine, allowing **external** access to the service running inside the Docker container. Defaults to `9380`.
+- `RAGFORGE-IMAGE`  
   The Docker image edition. Available editions:  
   
-  - `infiniflow/ragflow:v0.18.0-slim` (default): The RAGFlow Docker image without embedding models.  
-  - `infiniflow/ragflow:v0.18.0`: The RAGFlow Docker image with embedding models including:
+  - `infiniflow/ragforge:v0.18.0-slim` (default): The RAGForge Docker image without embedding models.  
+  - `infiniflow/ragforge:v0.18.0`: The RAGForge Docker image with embedding models including:
     - Built-in embedding models:
       - `BAAI/bge-large-zh-v1.5` 
       - `maidalun1020/bce-embedding-base_v1`
 
   
 > [!TIP]  
-> If you cannot download the RAGFlow Docker image, try the following mirrors.  
+> If you cannot download the RAGForge Docker image, try the following mirrors.  
 > 
 > - For the `nightly-slim` edition:  
->   - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:nightly-slim` or,
->   - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:nightly-slim`.
+>   - `RAGFORGE_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragforge:nightly-slim` or,
+>   - `RAGFORGE_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragforge:nightly-slim`.
 > - For the `nightly` edition:  
->   - `RAGFLOW_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragflow:nightly` or,
->   - `RAGFLOW_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragflow:nightly`.
+>   - `RAGFORGE_IMAGE=swr.cn-north-4.myhuaweicloud.com/infiniflow/ragforge:nightly` or,
+>   - `RAGFORGE_IMAGE=registry.cn-hangzhou.aliyuncs.com/infiniflow/ragforge:nightly`.
 
 ### Timezone
 
@@ -117,9 +117,9 @@ The [.env](./.env) file contains important environment variables for Docker.
 
 ## 🐋 Service configuration
 
-[service_conf.yaml](./service_conf.yaml) specifies the system-level configuration for RAGFlow and is used by its API server and task executor. In a dockerized setup, this file is automatically created based on the [service_conf.yaml.template](./service_conf.yaml.template) file (replacing all environment variables by their values).
+[service_conf.yaml](./service_conf.yaml) specifies the system-level configuration for RAGForge and is used by its API server and task executor. In a dockerized setup, this file is automatically created based on the [service_conf.yaml.template](./service_conf.yaml.template) file (replacing all environment variables by their values).
 
-- `ragflow`
+- `ragforge`
   - `host`: The API server's IP address inside the Docker container. Defaults to `0.0.0.0`.
   - `port`: The API server's serving port inside the Docker container. Defaults to `9380`.
 
@@ -155,11 +155,11 @@ The [.env](./.env) file contains important environment variables for Docker.
   - `prefix_path`: Optional. A prefix path to prepend to file names in the S3 bucket, which can help organize files within the bucket.
 
 - `oauth`  
-  The OAuth configuration for signing up or signing in to RAGFlow using a third-party account.  It is disabled by default. To enable this feature, uncomment the corresponding lines in **service_conf.yaml.template**.
+  The OAuth configuration for signing up or signing in to RAGForge using a third-party account.  It is disabled by default. To enable this feature, uncomment the corresponding lines in **service_conf.yaml.template**.
   - `github`: The GitHub authentication settings for your application. Visit the [Github Developer Settings page](https://github.com/settings/developers) to obtain your client_id and secret_key.
 
 - `user_default_llm`  
-  The default LLM to use for a new RAGFlow user. It is disabled by default. To enable this feature, uncomment the corresponding lines in **service_conf.yaml.template**.  
+  The default LLM to use for a new RAGForge user. It is disabled by default. To enable this feature, uncomment the corresponding lines in **service_conf.yaml.template**.  
   - `factory`: The LLM supplier. Available options:
     - `"OpenAI"`
     - `"DeepSeek"`
@@ -170,4 +170,4 @@ The [.env](./.env) file contains important environment variables for Docker.
   - `api_key`: The API key for the specified LLM. You will need to apply for your model API key online.
 
 > [!TIP]  
-> If you do not set the default LLM here, configure the default LLM on the **Settings** page in the RAGFlow UI.
+> If you do not set the default LLM here, configure the default LLM on the **Settings** page in the RAGForge UI.

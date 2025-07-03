@@ -256,7 +256,7 @@ class LocalAIRerank(Base):
         self.model_name = model_name.split("___")[0]
 
     def similarity(self, query: str, texts: list):
-        # noway to config Ragflow , use fix setting
+        # noway to config Ragforge , use fix setting
         texts = [truncate(t, 500) for t in texts]
         data = {
             "model": self.model_name,
@@ -349,7 +349,7 @@ class OpenAI_APIRerank(Base):
         self.model_name = model_name.split("___")[0]
 
     def similarity(self, query: str, texts: list):
-        # noway to config Ragflow , use fix setting
+        # noway to config Ragforge , use fix setting
         texts = [truncate(t, 500) for t in texts]
         data = {
             "model": self.model_name,

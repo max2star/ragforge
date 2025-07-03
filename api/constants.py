@@ -12,6 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
 
 NAME_LENGTH_LIMIT = 2 ** 10
 
@@ -20,7 +21,7 @@ IMG_BASE64_PREFIX = 'data:image/png;base64,'
 SERVICE_CONF = "service_conf.yaml"
 
 API_VERSION = "v1"
-RAG_FLOW_SERVICE_NAME = "ragflow"
+RAG_FLOW_SERVICE_NAME = "ragforge"
 REQUEST_WAIT_SEC = 2
 REQUEST_MAX_WAIT_SEC = 300
 

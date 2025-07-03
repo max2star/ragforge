@@ -51,7 +51,7 @@ class ExeSQLParam(GenerateParam):
         self.check_empty(self.password, "Database password")
         self.check_positive_integer(self.top_n, "Number of records")
         if self.database == "rag_flow":
-            if self.host == "ragflow-mysql":
+            if self.host == "ragforge-mysql":
                 raise ValueError("For the security reason, it dose not support database named rag_flow.")
             if self.password == "infini_rag_flow":
                 raise ValueError("For the security reason, it dose not support database named rag_flow.")

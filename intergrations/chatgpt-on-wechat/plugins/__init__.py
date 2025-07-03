@@ -17,8 +17,8 @@
 from beartype.claw import beartype_this_package
 beartype_this_package()
 
-from .ragflow_chat import RAGFlowChat
+from .ragforge_chat import RAGForgeChat
 
 __all__ = [
-    "RAGFlowChat"
+    "RAGForgeChat"
 ]
