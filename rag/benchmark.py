@@ -280,8 +280,8 @@ class Benchmark:
 
 
 if __name__ == '__main__':
-    print('*****************RAGFlow Benchmark*****************')
-    parser = argparse.ArgumentParser(usage="benchmark.py <max_docs> <kb_id> <dataset> <dataset_path> [<miracl_corpus_path>])", description='RAGFlow Benchmark')
+    print('*****************RAGForge Benchmark*****************')
+    parser = argparse.ArgumentParser(usage="benchmark.py <max_docs> <kb_id> <dataset> <dataset_path> [<miracl_corpus_path>])", description='RAGForge Benchmark')
     parser.add_argument('max_docs', metavar='max_docs', type=int, help='max docs to evaluate')
     parser.add_argument('kb_id', metavar='kb_id', help='knowledgebase id')
     parser.add_argument('dataset', metavar='dataset', help='dataset name, shall be one of ms_marco_v1.1(https://huggingface.co/datasets/microsoft/ms_marco), trivia_qa(https://huggingface.co/datasets/mandarjoshi/trivia_qa>), miracl(https://huggingface.co/datasets/miracl/miracl')

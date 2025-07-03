@@ -94,7 +94,7 @@ def list_docs(ip, host,folderId,indexingStatus=None):
 
 
 def trigger_parse(ip, host, fileId, resourceId):
-    url = f"http://{ip}:{host}/op-api/api/v1/ragflow/executeRag"
+    url = f"http://{ip}:{host}/op-api/api/v1/ragforge/executeRag"
     # [{"fileId":"93f9a3de7c504e539078207001439398","resourceId":1655,"embeddingConfigCode":""}]
     file_ = {
         "fileId": fileId,

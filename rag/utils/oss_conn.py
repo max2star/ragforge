@@ -24,7 +24,7 @@ from rag import settings
 
 
 @singleton
-class RAGFlowOSS:
+class RAGForgeOSS:
     def __init__(self):
         self.conn = None
         self.oss_config = settings.OSS

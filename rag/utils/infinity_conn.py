@@ -40,7 +40,7 @@ from rag.utils.doc_store_conn import (
     OrderByExpr,
 )
 
-logger = logging.getLogger('ragflow.infinity_conn')
+logger = logging.getLogger('ragforge.infinity_conn')
 
 
 def equivalent_condition_to_str(condition: dict, table_instance=None) -> str | None:

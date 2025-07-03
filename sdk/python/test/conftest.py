@@ -18,7 +18,7 @@ import os
 
 import pytest
 import requests
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 
 HOST_ADDRESS = os.getenv("HOST_ADDRESS", "http://127.0.0.1:9380")
 
@@ -92,7 +92,7 @@ def get_email():
 
 @pytest.fixture(scope="session")
 def get_http_api_auth(get_api_key_fixture):
-    return RAGFlowHttpApiAuth(get_api_key_fixture)
+    return RAGForgeHttpApiAuth(get_api_key_fixture)
 
 
 def get_my_llms(auth, name):

@@ -20,7 +20,7 @@ from deepdoc.parser.utils import get_text
 from rag.nlp import num_tokens_from_string
 
 
-class RAGFlowTxtParser:
+class RAGForgeTxtParser:
     def __call__(self, fnm, binary=None, chunk_token_num=128, delimiter="\n!?;。；！？"):
         txt = get_text(fnm, binary)
         return self.parser_txt(txt, chunk_token_num, delimiter)

@@ -4,11 +4,11 @@ kind: ConfigMap
 metadata:
   name: nginx-config
 data:
-  ragflow.conf: |
+  ragforge.conf: |
     server {
         listen 80;
         server_name _;
-        root /ragflow/web/dist;
+        root /ragforge/web/dist;
 
         gzip on;
         gzip_min_length 1k;
@@ -71,5 +71,5 @@ data:
         #gzip  on;
         client_max_body_size 128M;
 
-        include /etc/nginx/conf.d/ragflow.conf;
+        include /etc/nginx/conf.d/ragforge.conf;
     }

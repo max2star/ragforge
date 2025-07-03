@@ -26,12 +26,12 @@ env:
   # The password for Redis
   REDIS_PASSWORD: infini_rag_flow_helm
 
-  # The RAGFlow Docker image to download.
-  # Defaults to the v0.18.0-slim edition, which is the RAGFlow Docker image without embedding models.
-  RAGFLOW_IMAGE: infiniflow/ragflow:v0.18.0-slim
+  # The RAGForge Docker image to download.
+  # Defaults to the v0.18.0-slim edition, which is the RAGForge Docker image without embedding models.
+  RAGFORGE_IMAGE: infiniflow/ragforge:v0.18.0-slim
   #
-  # To download the RAGFlow Docker image with embedding models, uncomment the following line instead:
-  # RAGFLOW_IMAGE: infiniflow/ragflow:v0.18.0
+  # To download the RAGForge Docker image with embedding models, uncomment the following line instead:
+  # RAGFORGE_IMAGE: infiniflow/ragforge:v0.18.0
   #
   # The Docker image of the v0.18.0 edition includes:
   # - Built-in embedding models:
@@ -39,7 +39,7 @@ env:
   #   - BAAI/bge-reranker-v2-m3
   #   - maidalun1020/bce-embedding-base_v1
   #   - maidalun1020/bce-reranker-base_v1
-  # - Embedding models that will be downloaded once you select them in the RAGFlow UI:
+  # - Embedding models that will be downloaded once you select them in the RAGForge UI:
   #   - BAAI/bge-base-en-v1.5
   #   - BAAI/bge-large-en-v1.5
   #   - BAAI/bge-small-en-v1.5
@@ -62,7 +62,7 @@ env:
   # MAX_CONTENT_LENGTH: "134217728"
   # After making the change, ensure you update `client_max_body_size` in nginx/nginx.conf correspondingly.
 
-ragflow:
+ragforge:
   deployment:
     strategy:
     resources:

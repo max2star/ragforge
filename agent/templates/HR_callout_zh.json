@@ -54,7 +54,7 @@
             "output_var_name": "output",
             "parameters": [],
             "presence_penalty": 0.4,
-            "prompt": "你是公司负责招聘的HR，当你提出加微信时对方表示拒绝。你需要耐心礼貌的回应候选人，表示对于保护隐私信息给予理解，也可以询问他对该职位的看法和顾虑。并在恰当的时机再次询问微信联系方式。也可以鼓励候选人主动与你取得联系。你的微信号是weixin_kevin，E-mail是kkk@ragflow.com。说话不要重复。不要总是您好。",
+            "prompt": "你是公司负责招聘的HR，当你提出加微信时对方表示拒绝。你需要耐心礼貌的回应候选人，表示对于保护隐私信息给予理解，也可以询问他对该职位的看法和顾虑。并在恰当的时机再次询问微信联系方式。也可以鼓励候选人主动与你取得联系。你的微信号是weixin_kevin，E-mail是kkk@ragforge.com。说话不要重复。不要总是您好。",
             "query": [],
             "temperature": 0.1,
             "top_p": 0.3
@@ -120,7 +120,7 @@
             "output_var_name": "output",
             "parameters": [],
             "presence_penalty": 0.4,
-            "prompt": "你是公司负责招聘的HR，候选人表示不反感加微信，如果对方已经报了微信号，表示感谢和信任并表示马上会加上；如果没有，则问对方微信号多少。你的微信号是weixin_kevin，E-mail是kkk@ragflow.com。说话不要重复。不要总是您好。",
+            "prompt": "你是公司负责招聘的HR，候选人表示不反感加微信，如果对方已经报了微信号，表示感谢和信任并表示马上会加上；如果没有，则问对方微信号多少。你的微信号是weixin_kevin，E-mail是kkk@ragforge.com。说话不要重复。不要总是您好。",
             "query": [],
             "temperature": 0.1,
             "top_p": 0.3
@@ -233,7 +233,7 @@
             "inputs": [],
             "message_history_window_size": 22,
             "messages": [
-              "我简单介绍一下：\nRAGFlow 是一款基于深度文档理解构建的开源 RAG（Retrieval-Augmented Generation）引擎。RAGFlow 可以为各种规模的企业及个人提供一套精简的 RAG 工作流程，结合大语言模型（LLM）针对用户各类不同的复杂格式数据提供可靠的问答以及有理有据的引用。https://github.com/infiniflow/ragflow\n您那边还有什么要了解的？"
+              "我简单介绍一下：\nRAGForge 是一款基于深度文档理解构建的开源 RAG（Retrieval-Augmented Generation）引擎。RAGForge 可以为各种规模的企业及个人提供一套精简的 RAG 工作流程，结合大语言模型（LLM）针对用户各类不同的复杂格式数据提供可靠的问答以及有理有据的引用。https://github.com/infiniflow/ragforge\n您那边还有什么要了解的？"
             ],
             "output": null,
             "output_var_name": "output",
@@ -337,7 +337,7 @@
             "message_history_window_size": 22,
             "output": null,
             "output_var_name": "output",
-            "prologue": "您好！我是英飞流负责招聘的HR，了解到您是这方面的大佬，然后冒昧的就联系到您。这边有个机会想和您分享，RAGFlow正在招聘您这个岗位的资深的工程师不知道您那边是不是感兴趣？",
+            "prologue": "您好！我是英飞流负责招聘的HR，了解到您是这方面的大佬，然后冒昧的就联系到您。这边有个机会想和您分享，RAGForge正在招聘您这个岗位的资深的工程师不知道您那边是不是感兴趣？",
             "query": []
           }
         },
@@ -741,7 +741,7 @@
         {
           "data": {
             "form": {
-              "prologue": "您好！我是英飞流负责招聘的HR，了解到您是这方面的大佬，然后冒昧的就联系到您。这边有个机会想和您分享，RAGFlow正在招聘您这个岗位的资深的工程师不知道您那边是不是感兴趣？"
+              "prologue": "您好！我是英飞流负责招聘的HR，了解到您是这方面的大佬，然后冒昧的就联系到您。这边有个机会想和您分享，RAGForge正在招聘您这个岗位的资深的工程师不知道您那边是不是感兴趣？"
             },
             "label": "Begin",
             "name": "开场白"
@@ -1103,7 +1103,7 @@
           "data": {
             "form": {
               "messages": [
-                "我简单介绍一下：\nRAGFlow 是一款基于深度文档理解构建的开源 RAG（Retrieval-Augmented Generation）引擎。RAGFlow 可以为各种规模的企业及个人提供一套精简的 RAG 工作流程，结合大语言模型（LLM）针对用户各类不同的复杂格式数据提供可靠的问答以及有理有据的引用。https://github.com/infiniflow/ragflow\n您那边还有什么要了解的？"
+                "我简单介绍一下：\nRAGForge 是一款基于深度文档理解构建的开源 RAG（Retrieval-Augmented Generation）引擎。RAGForge 可以为各种规模的企业及个人提供一套精简的 RAG 工作流程，结合大语言模型（LLM）针对用户各类不同的复杂格式数据提供可靠的问答以及有理有据的引用。https://github.com/infiniflow/ragforge\n您那边还有什么要了解的？"
               ]
             },
             "label": "Message",
@@ -1221,7 +1221,7 @@
               "parameters": [],
               "presencePenaltyEnabled": true,
               "presence_penalty": 0.4,
-              "prompt": "你是公司负责招聘的HR，候选人表示不反感加微信，如果对方已经报了微信号，表示感谢和信任并表示马上会加上；如果没有，则问对方微信号多少。你的微信号是weixin_kevin，E-mail是kkk@ragflow.com。说话不要重复。不要总是您好。",
+              "prompt": "你是公司负责招聘的HR，候选人表示不反感加微信，如果对方已经报了微信号，表示感谢和信任并表示马上会加上；如果没有，则问对方微信号多少。你的微信号是weixin_kevin，E-mail是kkk@ragforge.com。说话不要重复。不要总是您好。",
               "temperature": 0.1,
               "temperatureEnabled": true,
               "topPEnabled": true,
@@ -1265,7 +1265,7 @@
               "parameters": [],
               "presencePenaltyEnabled": true,
               "presence_penalty": 0.4,
-              "prompt": "你是公司负责招聘的HR，当你提出加微信时对方表示拒绝。你需要耐心礼貌的回应候选人，表示对于保护隐私信息给予理解，也可以询问他对该职位的看法和顾虑。并在恰当的时机再次询问微信联系方式。也可以鼓励候选人主动与你取得联系。你的微信号是weixin_kevin，E-mail是kkk@ragflow.com。说话不要重复。不要总是您好。",
+              "prompt": "你是公司负责招聘的HR，当你提出加微信时对方表示拒绝。你需要耐心礼貌的回应候选人，表示对于保护隐私信息给予理解，也可以询问他对该职位的看法和顾虑。并在恰当的时机再次询问微信联系方式。也可以鼓励候选人主动与你取得联系。你的微信号是weixin_kevin，E-mail是kkk@ragforge.com。说话不要重复。不要总是您好。",
               "temperature": 0.1,
               "temperatureEnabled": true,
               "topPEnabled": true,

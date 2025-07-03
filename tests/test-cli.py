@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAGFlow CLI 测试脚本
+RAGForge CLI 测试脚本
 测试CLI工具的基本功能
 """
 
@@ -14,7 +14,7 @@ def test_cli_help():
     
     try:
         result = subprocess.run(
-            ["python", "ragflow-cli.py", "--help"], 
+            ["python", "ragforge-cli.py", "--help"], 
             capture_output=True, 
             text=True
         )
@@ -69,13 +69,13 @@ def test_cli_commands():
     print("\n🔍 测试CLI命令结构...")
     
     commands = [
-        ["python", "ragflow-cli.py", "system", "--help"],
-        ["python", "ragflow-cli.py", "dataset", "--help"],
-        ["python", "ragflow-cli.py", "document", "--help"],
-        ["python", "ragflow-cli.py", "chunk", "--help"],
-        ["python", "ragflow-cli.py", "search", "--help"],
-        ["python", "ragflow-cli.py", "token", "--help"],
-        ["python", "ragflow-cli.py", "user", "--help"],
+        ["python", "ragforge-cli.py", "system", "--help"],
+        ["python", "ragforge-cli.py", "dataset", "--help"],
+        ["python", "ragforge-cli.py", "document", "--help"],
+        ["python", "ragforge-cli.py", "chunk", "--help"],
+        ["python", "ragforge-cli.py", "search", "--help"],
+        ["python", "ragforge-cli.py", "token", "--help"],
+        ["python", "ragforge-cli.py", "user", "--help"],
     ]
     
     success_count = 0
@@ -98,9 +98,9 @@ def test_authentication_required():
     print("\n🔍 测试需要认证的命令...")
     
     commands = [
-        ["python", "ragflow-cli.py", "system", "status"],
-        ["python", "ragflow-cli.py", "dataset", "list"],
-        ["python", "ragflow-cli.py", "user", "info"],
+        ["python", "ragforge-cli.py", "system", "status"],
+        ["python", "ragforge-cli.py", "dataset", "list"],
+        ["python", "ragforge-cli.py", "user", "info"],
     ]
     
     success_count = 0
@@ -121,7 +121,7 @@ def test_authentication_required():
 
 def main():
     """主测试函数"""
-    print("🚀 RAGFlow CLI 功能测试")
+    print("🚀 RAGForge CLI 功能测试")
     print("=" * 50)
     
     tests = [

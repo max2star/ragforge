@@ -33,7 +33,7 @@ from minio.sseconfig import Rule, SSEConfig
 
 
 @singleton
-class RAGFlowMinio:
+class RAGForgeMinio:
     def __init__(self):
         self.secure = True
         self.conn = None

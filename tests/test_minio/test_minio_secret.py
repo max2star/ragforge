@@ -19,7 +19,7 @@ from minio.sse import SseCustomerKey,Sse
 
 
 import os
-os.environ['SSL_CERT_FILE']='/var/lib/gpustack/ragflow/ragflow/docker/nginx/public.crt'
+os.environ['SSL_CERT_FILE']='/var/lib/gpustack/ragforge/ragforge/docker/nginx/public.crt'
 PRIMARY_ENDPOINT = "101.52.216.178:19000"
 PRIMARY_ACCESS_KEY = "rag_flow"
 PRIMARY_SECRET_KEY = "infini_rag_flow"

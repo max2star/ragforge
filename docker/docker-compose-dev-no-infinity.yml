@@ -1,7 +1,7 @@
 services:
   # 单机模式 Elasticsearch
   elasticsearch:
-    container_name: ragflow-es-dev
+    container_name: ragforge-es-dev
     image: elasticsearch:${STACK_VERSION:-8.11.0}
     hostname: elasticsearch
     privileged: true
@@ -37,17 +37,17 @@ services:
       timeout: 10s
       retries: 120
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
 
   # MySQL 数据库
-  mysql-ragflow:
+  mysql-ragforge:
     image: mysql:8.0.39
-    container_name: ragflow-mysql-dev
+    container_name: ragforge-mysql-dev
     env_file: .env
     privileged: true
     environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-ragflow123}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-ragforge123}
       - TZ=${TIMEZONE:-Asia/Shanghai}
     command:
       --max_connections=1000
@@ -63,18 +63,18 @@ services:
       - mysql_data_dev:/var/lib/mysql
       - ./init.sql:/data/application/init.sql
     networks:
-      - ragflow
+      - ragforge
     healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${MYSQL_PASSWORD:-ragflow123}"]
+      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${MYSQL_PASSWORD:-ragforge123}"]
       interval: 10s
       timeout: 10s
       retries: 3
     restart: on-failure
 
   # MinIO 对象存储
-  minio-ragflow:
+  minio-ragforge:
     image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
-    container_name: ragflow-minio-dev
+    container_name: ragforge-minio-dev
     command: server --console-address ":9001" /data
     privileged: true
     ports:
@@ -88,7 +88,7 @@ services:
     volumes:
       - minio_data_dev:/data
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9001 || exit 1"]
@@ -97,18 +97,18 @@ services:
       retries: 120
 
   # Redis 缓存
-  redis-ragflow:
+  redis-ragforge:
     image: valkey/valkey:8
     privileged: true
-    container_name: ragflow-redis-dev
-    command: redis-server --requirepass ${REDIS_PASSWORD:-ragflow123} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    container_name: ragforge-redis-dev
+    command: redis-server --requirepass ${REDIS_PASSWORD:-ragforge123} --maxmemory 512mb --maxmemory-policy allkeys-lru
     env_file: .env
     ports:
       - ${REDIS_PORT:-6379}:6379
     volumes:
       - redis_data_dev:/data
     networks:
-      - ragflow
+      - ragforge
     ulimits:
       nofile:
         soft: 500000
@@ -131,7 +131,7 @@ volumes:
     driver: local
 
 networks:
-  ragflow:
+  ragforge:
     driver: bridge
     ipam:
        config:

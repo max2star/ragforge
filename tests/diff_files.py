@@ -85,7 +85,7 @@ def list_docs(ip, host,folderId):
 
 if __name__ == '__main__':
     NEW_DIRS = {
-            "/opt/ragflow/tests/":438,
+            "/opt/ragforge/tests/":438,
             #"D:/App/baidu/报告/自动化/子文件夹2":,
             }
     IP = "101.52.216.178"

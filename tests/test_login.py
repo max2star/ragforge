@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-测试RAGFlow登录功能
+测试RAGForge登录功能
 """
 
 import requests
@@ -69,7 +69,7 @@ def test_login(email: str, password: str):
         return False
 
 if __name__ == "__main__":
-    print("🔐 RAGFlow 登录测试")
+    print("🔐 RAGForge 登录测试")
     print("=" * 50)
     
     # 测试用户凭据
