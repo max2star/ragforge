@@ -22,7 +22,7 @@ import base64
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
-base64_image = encode_image("/var/lib/gpustack/ragflow/ragflow/tests/tmp/c5c310783e9011f0a89298039b6e4778.jpg")
+base64_image = encode_image("/var/lib/gpustack/ragforge/ragforge/tests/tmp/c5c310783e9011f0a89298039b6e4778.jpg")
 
 client = OpenAI(
     #api_key=os.getenv("DASHSCOPE_API_KEY"),

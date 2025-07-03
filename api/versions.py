@@ -17,13 +17,13 @@
 import os
 import subprocess
 
-RAGFLOW_VERSION_INFO = "unknown"
+RAGFORGE_VERSION_INFO = "unknown"
 
 
-def get_ragflow_version() -> str:
-    global RAGFLOW_VERSION_INFO
-    if RAGFLOW_VERSION_INFO != "unknown":
-        return RAGFLOW_VERSION_INFO
+def get_ragforge_version() -> str:
+    global RAGFORGE_VERSION_INFO
+    if RAGFORGE_VERSION_INFO != "unknown":
+        return RAGFORGE_VERSION_INFO
     version_path = os.path.abspath(
         os.path.join(
             os.path.dirname(os.path.realpath(__file__)), os.pardir, "VERSION"
@@ -31,12 +31,12 @@ def get_ragflow_version() -> str:
     )
     if os.path.exists(version_path):
         with open(version_path, "r") as f:
-            RAGFLOW_VERSION_INFO = f.read().strip()
+            RAGFORGE_VERSION_INFO = f.read().strip()
     else:
-        RAGFLOW_VERSION_INFO = get_closest_tag_and_count()
+        RAGFORGE_VERSION_INFO = get_closest_tag_and_count()
         LIGHTEN = int(os.environ.get("LIGHTEN", "0"))
-        RAGFLOW_VERSION_INFO += " slim" if LIGHTEN == 1 else " full"
-    return RAGFLOW_VERSION_INFO
+        RAGFORGE_VERSION_INFO += " slim" if LIGHTEN == 1 else " full"
+    return RAGFORGE_VERSION_INFO
 
 
 def get_closest_tag_and_count():

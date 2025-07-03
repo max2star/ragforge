@@ -24,7 +24,7 @@ from azure.storage.filedatalake import FileSystemClient
 
 
 @singleton
-class RAGFlowAzureSpnBlob:
+class RAGForgeAzureSpnBlob:
     def __init__(self):
         self.conn = None
         self.account_url = os.getenv('ACCOUNT_URL', settings.AZURE["account_url"])

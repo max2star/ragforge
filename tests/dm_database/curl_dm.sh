@@ -1,6 +1,6 @@
 ./disql
 conn
-RAGFLOW001
+RAGFORGE001
 Sysdba@123
 SELECT table_name FROM user_tables;
 select * from "user";

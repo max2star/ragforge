@@ -55,7 +55,7 @@ We use vision information to resolve problems as human being.
     You can look into the folder 'path_to_store_result' where has images which demonstrate the positions of results,
     txt files which contain the OCR text.
     <div align="center" style="margin-top:20px;margin-bottom:20px;">
-    <img src="https://github.com/infiniflow/ragflow/assets/12318111/f25bee3d-aaf7-4102-baf5-d5208361d110" width="900"/>
+    <img src="https://github.com/infiniflow/ragforge/assets/12318111/f25bee3d-aaf7-4102-baf5-d5208361d110" width="900"/>
     </div>
 
   - Layout recognition. Documents from different domain may have various layouts, 
@@ -81,7 +81,7 @@ We use vision information to resolve problems as human being.
     The inputs could be directory to images or PDF, or a image or PDF. 
     You can look into the folder 'path_to_store_result' where has images which demonstrate the detection results as following:
     <div align="center" style="margin-top:20px;margin-bottom:20px;">
-    <img src="https://github.com/infiniflow/ragflow/assets/12318111/07e0f625-9b28-43d0-9fbb-5bf586cd286f" width="1000"/>
+    <img src="https://github.com/infiniflow/ragforge/assets/12318111/07e0f625-9b28-43d0-9fbb-5bf586cd286f" width="1000"/>
     </div>
   
   - Table Structure Recognition(TSR). Data table is a frequently used structure to present data including numbers or text.
@@ -101,7 +101,7 @@ We use vision information to resolve problems as human being.
     The inputs could be directory to images or PDF, or a image or PDF. 
     You can look into the folder 'path_to_store_result' where has both images and html pages which demonstrate the detection results as following:
     <div align="center" style="margin-top:20px;margin-bottom:20px;">
-    <img src="https://github.com/infiniflow/ragflow/assets/12318111/cb24e81b-f2ba-49f3-ac09-883d75606f4c" width="1000"/>
+    <img src="https://github.com/infiniflow/ragforge/assets/12318111/cb24e81b-f2ba-49f3-ac09-883d75606f4c" width="1000"/>
     </div>
         
 <a name="3"></a>

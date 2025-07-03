@@ -52,7 +52,7 @@ def test_redis_connection():
 
 def main():
     """主函数"""
-    print("RAGFlow 后端API MySQL/Redis连接测试")
+    print("RAGForge 后端API MySQL/Redis连接测试")
     print("=" * 50)
     
     # 测试MySQL连接

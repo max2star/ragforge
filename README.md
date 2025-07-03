@@ -1,6 +1,6 @@
 <div align="center">
-<a href="https://demo.ragflow.io/">
-<img src="web/src/assets/logo-with-text.png" width="350" alt="NewRAGflow logo">
+<a href="https://demo.ragforge.io/">
+<img src="web/src/assets/logo-with-text.png" width="350" alt="RAGForge logo">
 </a>
 </div>
 
@@ -9,9 +9,9 @@
   <a href="./README.md">简体中文</a>
 </p>
 
-## 💡 NewRAGflow 是什么？
+## 💡 RAGForge 是什么？
 
-NewRAGflow 是基于 RAGFlow 进行功能增强的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGFlow 核心功能的基础上，新增了多项企业级功能增强，为开发人员提供更强大的 RAG 解决方案。
+RAGForge 是基于 RAGForge 进行功能增强的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGForge 核心功能的基础上，新增了多项企业级功能增强，为开发人员提供更强大的 RAG 解决方案。
 
 ## 🌟 核心功能
 
@@ -61,8 +61,8 @@ NewRAGflow 是基于 RAGFlow 进行功能增强的开源 RAG（Retrieval-Augment
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/infiniflow/ragflow.git
-   cd ragflow/docker
+   git clone https://github.com/infiniflow/ragforge.git
+   cd ragforge/docker
    ```
 
 2. **启动服务**
@@ -76,7 +76,7 @@ NewRAGflow 是基于 RAGFlow 进行功能增强的开源 RAG（Retrieval-Augment
 
 3. **验证启动**
    ```bash
-   docker logs -f ragflow-server
+   docker logs -f ragforge-server
    ```
 
 4. **访问系统**
@@ -114,7 +114,7 @@ NewRAGflow 是基于 RAGFlow 进行功能增强的开源 RAG（Retrieval-Augment
    cd ..
    
    # 设置环境变量
-   export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragflow
+   export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragforge
    
    # 启动 API 服务器
    python api/main.py
@@ -125,10 +125,10 @@ NewRAGflow 是基于 RAGFlow 进行功能增强的开源 RAG（Retrieval-Augment
 | 服务 | 地址 | 端口 | 用户名 | 密码 |
 |------|------|------|--------|------|
 | **Elasticsearch** | http://localhost | 9200 | elastic | changeme |
-| **MySQL** | localhost | 3306 | root | ragflow123 |
+| **MySQL** | localhost | 3306 | root | ragforge123 |
 | **MinIO** | http://localhost | 9000 | minioadmin | minioadmin |
 | **MinIO Console** | http://localhost | 9001 | minioadmin | minioadmin |
-| **Redis** | localhost | 6379 | - | ragflow123 |
+| **Redis** | localhost | 6379 | - | ragforge123 |
 | **Infinity** | http://localhost | 23820 | - | - |
 
 ### 🛠️ 环境变量配置
@@ -177,29 +177,29 @@ nohup python api/main.py > api.log 2>&1 &  # 后台运行
 - 重新应用配置：`cd conf && ./switch-to-dev.sh`
 
 **Python 环境问题**：
-- 设置 PYTHONPATH：`export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragflow`
+- 设置 PYTHONPATH：`export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragforge`
 - 安装依赖：`uv sync --python 3.10 --all-extras`
 
 ## 🔧 源码编译
 
 ### 轻量版本（约 2GB）
 ```bash
-docker build -f Dockerfile -t newragflow:slim .
+docker build -f Dockerfile -t newragforge:slim .
 ```
 
 ### 完整版本（约 9GB）
 ```bash
-docker build -f Dockerfile -t newragflow:full .
+docker build -f Dockerfile -t newragforge:full .
 ```
 
 ### ARM 架构支持
-如需在 ARM64 平台运行，请参考[构建指南](https://ragflow.io/docs/dev/build_docker_image)自行编译镜像。
+如需在 ARM64 平台运行，请参考[构建指南](https://ragforge.io/docs/dev/build_docker_image)自行编译镜像。
 
 ## 📚 文档资源
 
-- [API 文档](https://ragflow.io/docs/dev/category/api)
-- [配置指南](https://ragflow.io/docs/dev/category/configuration)
-- [部署指南](https://ragflow.io/docs/dev/category/deployment)
+- [API 文档](https://ragforge.io/docs/dev/category/api)
+- [配置指南](https://ragforge.io/docs/dev/category/configuration)
+- [部署指南](https://ragforge.io/docs/dev/category/deployment)
 
 ## 🤝 商务合作
 

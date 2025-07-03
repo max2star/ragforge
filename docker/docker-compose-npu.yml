@@ -3,25 +3,25 @@ include:
 
 # To ensure that the container processes the locally modified `service_conf.yaml.template` instead of the one included in its image, you need to mount the local `service_conf.yaml.template` to the container.
 services:
-  ragflow:
+  ragforge:
     depends_on:
-      mysql-ragflow:
+      mysql-ragforge:
         condition: service_healthy
-      redis-ragflow:
+      redis-ragforge:
         condition: service_healthy
       es01:
         condition: service_healthy
       es02:
         condition: service_healthy
-          #minio-ragflow:
+          #minio-ragforge:
           #condition: service_healthy
-    image: ${RAGFLOW_IMAGE}
+    image: ${RAGFORGE_IMAGE}
     user: root
     privileged: true
     ipc: host
     shm_size: '128gb'
-    container_name: ragflow-server
-    entrypoint: "/ragflow/entrypoint.sh --disable-taskexecutor --host-id=api"
+    container_name: ragforge-server
+    entrypoint: "/ragforge/entrypoint.sh --disable-taskexecutor --host-id=api"
     #deploy:
     #  resources:
     #    reservations:
@@ -40,28 +40,28 @@ services:
       - 9382:9382
     volumes:
       - /opt/coredumps:/opt/coredumps
-      - /opt/ragflow/logs:/ragflow/logs
-      - ./certs/ca.crt:/ragflow/ca.crt
-      - ../rag:/ragflow/rag
-      - ../tests:/ragflow/tests
-      - ../web:/ragflow/web
-      - ../api:/ragflow/api
-      - ../minerU:/ragflow/minerU
+      - /opt/ragforge/logs:/ragforge/logs
+      - ./certs/ca.crt:/ragforge/ca.crt
+      - ../rag:/ragforge/rag
+      - ../tests:/ragforge/tests
+      - ../web:/ragforge/web
+      - ../api:/ragforge/api
+      - ../minerU:/ragforge/minerU
        #- /root/.cache:/root/.cache
        #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/private.key:/etc/nginx/private.key
       - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragflow/history_data_agent
-      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ../history_data_agent:/ragforge/history_data_agent
+      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
       - ./s3.py:/opt/mineru_venv/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/python3.10/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/root/miniconda3/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     devices:
@@ -77,12 +77,12 @@ services:
       - DB_TYPE=dm
       - ASCEND_RT_VISIBLE_DEVICES=4
     networks:
-      ragflow:
+      ragforge:
         ipv4_address: 172.20.0.254
     restart: on-failure
     extra_hosts:
-      - "minio-ragflow:172.20.0.250"
-      - "minio-ragflow-backup:172.20.0.251"
+      - "minio-ragforge:172.20.0.250"
+      - "minio-ragforge-backup:172.20.0.251"
       - "host.docker.internal:host-gateway"
 
   executor-0:
@@ -90,29 +90,29 @@ services:
     privileged: true
     ipc: host
     shm_size: '128gb'
-    image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-0
+    image: ${RAGFORGE_IMAGE}
+    container_name: ragforge-executor-0
     volumes:
       - /opt/coredumps:/opt/coredumps
-      - /opt/ragflow/logs:/ragflow/logs
-      - ./certs/ca.crt:/ragflow/ca.crt
-      - ../rag:/ragflow/rag
-      - ../tests:/ragflow/tests
-      - ../api:/ragflow/api
-      - ../minerU:/ragflow/minerU
-      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - /opt/ragforge/logs:/ragforge/logs
+      - ./certs/ca.crt:/ragforge/ca.crt
+      - ../rag:/ragforge/rag
+      - ../tests:/ragforge/tests
+      - ../api:/ragforge/api
+      - ../minerU:/ragforge/minerU
+      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/private.key:/etc/nginx/private.key
       - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragflow/history_data_agent
-      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ../history_data_agent:/ragforge/history_data_agent
+      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
       - ./s3.py:/opt/mineru_venv/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/python3.10/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/root/miniconda3/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     env_file: .env
@@ -125,15 +125,15 @@ services:
       # 设置默认数据库类型为达梦
       - DB_TYPE=dm
       - ASCEND_RT_VISIBLE_DEVICES=4
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-0"
+    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-0"
     devices:
       - /dev/davinci4:/dev/davinci4
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
     extra_hosts:
-      - "minio-ragflow:172.20.0.250"
-      - "minio-ragflow-backup:172.20.0.251"
+      - "minio-ragforge:172.20.0.250"
+      - "minio-ragforge-backup:172.20.0.251"
       - "host.docker.internal:host-gateway"
 
   executor-1:
@@ -141,29 +141,29 @@ services:
     privileged: true
     ipc: host
     shm_size: '128gb'
-    image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-1
+    image: ${RAGFORGE_IMAGE}
+    container_name: ragforge-executor-1
     volumes:
       - /opt/coredumps:/opt/coredumps
-      - /opt/ragflow/logs:/ragflow/logs
-      - ./certs/ca.crt:/ragflow/ca.crt
-      - ../rag:/ragflow/rag
-      - ../tests:/ragflow/tests
-      - ../api:/ragflow/api
-      - ../minerU:/ragflow/minerU
-      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - /opt/ragforge/logs:/ragforge/logs
+      - ./certs/ca.crt:/ragforge/ca.crt
+      - ../rag:/ragforge/rag
+      - ../tests:/ragforge/tests
+      - ../api:/ragforge/api
+      - ../minerU:/ragforge/minerU
+      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/private.key:/etc/nginx/private.key
       - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragflow/history_data_agent
-      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ../history_data_agent:/ragforge/history_data_agent
+      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
       - ./s3.py:/opt/mineru_venv/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/python3.10/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/root/miniconda3/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     env_file: .env
@@ -176,15 +176,15 @@ services:
       # 设置默认数据库类型为达梦
       - DB_TYPE=dm
       - ASCEND_RT_VISIBLE_DEVICES=5
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
+    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
     devices:
       - /dev/davinci5:/dev/davinci5
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
     extra_hosts:
-      - "minio-ragflow:172.20.0.250"
-      - "minio-ragflow-backup:172.20.0.251"
+      - "minio-ragforge:172.20.0.250"
+      - "minio-ragforge-backup:172.20.0.251"
       - "host.docker.internal:host-gateway"
 
   executor-2:
@@ -192,29 +192,29 @@ services:
     privileged: true
     ipc: host
     shm_size: '128gb'
-    image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-2
+    image: ${RAGFORGE_IMAGE}
+    container_name: ragforge-executor-2
     volumes:
       - /opt/coredumps:/opt/coredumps
-      - /opt/ragflow/logs:/ragflow/logs
-      - ./certs/ca.crt:/ragflow/ca.crt
-      - ../rag:/ragflow/rag
-      - ../tests:/ragflow/tests
-      - ../api:/ragflow/api
-      - ../minerU:/ragflow/minerU
-      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - /opt/ragforge/logs:/ragforge/logs
+      - ./certs/ca.crt:/ragforge/ca.crt
+      - ../rag:/ragforge/rag
+      - ../tests:/ragforge/tests
+      - ../api:/ragforge/api
+      - ../minerU:/ragforge/minerU
+      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/private.key:/etc/nginx/private.key
       - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragflow/history_data_agent
-      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ../history_data_agent:/ragforge/history_data_agent
+      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
       - ./s3.py:/opt/mineru_venv/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/python3.10/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/root/miniconda3/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     env_file: .env
@@ -227,15 +227,15 @@ services:
       # 设置默认数据库类型为达梦
       - DB_TYPE=dm
       - ASCEND_RT_VISIBLE_DEVICES=6
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
+    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
     devices:
       - /dev/davinci6:/dev/davinci6
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
     extra_hosts:
-      - "minio-ragflow:172.20.0.250"
-      - "minio-ragflow-backup:172.20.0.251"
+      - "minio-ragforge:172.20.0.250"
+      - "minio-ragforge-backup:172.20.0.251"
       - "host.docker.internal:host-gateway"
 
   executor-3:
@@ -243,29 +243,29 @@ services:
     privileged: true
     ipc: host
     shm_size: '128gb'
-    image: ${RAGFLOW_IMAGE}
-    container_name: ragflow-executor-3
+    image: ${RAGFORGE_IMAGE}
+    container_name: ragforge-executor-3
     volumes:
       - /opt/coredumps:/opt/coredumps
-      - /opt/ragflow/logs:/ragflow/logs
-      - ./certs/ca.crt:/ragflow/ca.crt
-      - ../rag:/ragflow/rag
-      - ../tests:/ragflow/tests
-      - ../api:/ragflow/api
-      - ../minerU:/ragflow/minerU
-      - ./nginx/ragflow.conf:/etc/nginx/conf.d/ragflow.conf
+      - /opt/ragforge/logs:/ragforge/logs
+      - ./certs/ca.crt:/ragforge/ca.crt
+      - ../rag:/ragforge/rag
+      - ../tests:/ragforge/tests
+      - ../api:/ragforge/api
+      - ../minerU:/ragforge/minerU
+      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
       - ./nginx/proxy.conf:/etc/nginx/proxy.conf
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/private.key:/etc/nginx/private.key
       - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragflow/history_data_agent
-      - ./service_conf.yaml.template:/ragflow/conf/service_conf.yaml.template
+      - ../history_data_agent:/ragforge/history_data_agent
+      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
       - ./s3.py:/opt/mineru_venv/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/python3.10/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
       - ./s3.py:/root/miniconda3/lib/python3.10/site-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragflow/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../conf/llm_factories.json:/ragflow/conf/llm_factories.json
+      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
+      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
       - /usr/local/bin/npu-smi:/usr/local/bin/npu-smi
       - /usr/local/Ascend/driver:/usr/local/Ascend/driver
     env_file: .env
@@ -278,13 +278,13 @@ services:
       # 设置默认数据库类型为达梦
       - DB_TYPE=dm
       - ASCEND_RT_VISIBLE_DEVICES=7
-    entrypoint: "/ragflow/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
+    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
     devices:
       - /dev/davinci7:/dev/davinci7
     networks:
-      - ragflow
+      - ragforge
     restart: on-failure
     extra_hosts:
-      - "minio-ragflow:172.20.0.250"
-      - "minio-ragflow-backup:172.20.0.251"
+      - "minio-ragforge:172.20.0.250"
+      - "minio-ragforge-backup:172.20.0.251"
       - "host.docker.internal:host-gateway"

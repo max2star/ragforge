@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# RAGFlow 开发环境配置修复脚本
+# RAGForge 开发环境配置修复脚本
 # 用于快速修复常见的配置问题
 
 set -e
@@ -32,7 +32,7 @@ print_status() {
 }
 
 echo "=========================================="
-echo "RAGFlow 开发环境配置修复脚本"
+echo "RAGForge 开发环境配置修复脚本"
 echo "=========================================="
 echo
 
@@ -40,8 +40,8 @@ echo
 echo "1. 检查并修复环境变量配置..."
 if [ -f ".env" ]; then
     # 修复MYSQL_HOST
-    if grep -q "MYSQL_HOST=mysql-ragflow" .env; then
-        sed -i '' 's/MYSQL_HOST=mysql-ragflow/MYSQL_HOST=ragflow-mysql-dev/' .env
+    if grep -q "MYSQL_HOST=mysql-ragforge" .env; then
+        sed -i '' 's/MYSQL_HOST=mysql-ragforge/MYSQL_HOST=ragforge-mysql-dev/' .env
         print_status "OK" "已修复 MYSQL_HOST 配置"
     fi
     
@@ -67,7 +67,7 @@ if [ -f "$CONFIG_FILE" ]; then
     print_status "INFO" "已备份原配置文件"
     
     # 修复MySQL密码
-    sed -i '' "s/password: 'ragflow123'/password: 'infini_rag_flow'/" "$CONFIG_FILE"
+    sed -i '' "s/password: 'ragforge123'/password: 'infini_rag_flow'/" "$CONFIG_FILE"
     print_status "OK" "已修复 MySQL 密码配置"
     
     # 修复Elasticsearch端口
@@ -75,7 +75,7 @@ if [ -f "$CONFIG_FILE" ]; then
     print_status "OK" "已修复 Elasticsearch 端口配置"
     
     # 修复Redis密码
-    sed -i '' "s/password: 'ragflow123'/password: 'infini_rag_flow'/" "$CONFIG_FILE"
+    sed -i '' "s/password: 'ragforge123'/password: 'infini_rag_flow'/" "$CONFIG_FILE"
     print_status "OK" "已修复 Redis 密码配置"
     
     # 修复MySQL端口
@@ -104,14 +104,14 @@ echo "4. 验证修复结果..."
 print_status "INFO" "运行环境检查..."
 
 # 检查MySQL连接
-if docker exec ragflow-mysql-dev mysql -uroot -pinfini_rag_flow -e "SELECT 1;" >/dev/null 2>&1; then
+if docker exec ragforge-mysql-dev mysql -uroot -pinfini_rag_flow -e "SELECT 1;" >/dev/null 2>&1; then
     print_status "OK" "MySQL连接正常"
 else
     print_status "ERROR" "MySQL连接失败"
 fi
 
 # 检查Redis连接
-if docker exec ragflow-redis-dev redis-cli ping >/dev/null 2>&1; then
+if docker exec ragforge-redis-dev redis-cli ping >/dev/null 2>&1; then
     print_status "OK" "Redis连接正常"
 else
     print_status "ERROR" "Redis连接失败"
@@ -135,7 +135,7 @@ echo
 
 # 5. 显示服务状态
 echo "5. 当前服务状态..."
-docker ps --filter "name=ragflow" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+docker ps --filter "name=ragforge" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 echo
 
 echo "=========================================="
