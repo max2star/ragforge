@@ -33,7 +33,7 @@ SECONDARY_ACCESS_KEY = "rag_flow"
 SECONDARY_SECRET_KEY = "infini_rag_flow_another"
 import os
 from minio.replicationconfig import Destination
-os.environ['SSL_CERT_FILE']='/var/lib/gpustack/ragflow/ragflow/docker/nginx/public.crt'
+os.environ['SSL_CERT_FILE']='/var/lib/gpustack/ragforge/ragforge/docker/nginx/public.crt'
 
 def configure_bucket_replication(bucket_name):
     primary_client = Minio(

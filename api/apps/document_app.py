@@ -22,7 +22,7 @@ import flask
 from flask import request
 from flask_login import login_required, current_user
 
-from deepdoc.parser.html_parser import RAGFlowHtmlParser
+from deepdoc.parser.html_parser import RAGForgeHtmlParser
 from rag.nlp import search
 
 from api.db import FileType, TaskStatus, ParserType, FileSource
@@ -978,7 +978,7 @@ def parse():
         driver.get(url)
         res_headers = [r.response.headers for r in driver.requests if r and r.response]
         if len(res_headers) > 1:
-            sections = RAGFlowHtmlParser().parser_txt(driver.page_source)
+            sections = RAGForgeHtmlParser().parser_txt(driver.page_source)
             driver.quit()
             return get_json_result(data="\n".join(sections))
 

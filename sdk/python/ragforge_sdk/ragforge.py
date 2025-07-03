@@ -21,7 +21,7 @@ from .modules.dataset import DataSet
 from .modules.agent import Agent
 
 
-class RAGFlow:
+class RAGForge:
     def __init__(self, api_key, base_url, version='v1'):
         """
         api_url: http://<host_address>/api/v1

@@ -16,7 +16,7 @@
 
 import pytest
 from common import CHAT_ASSISTANT_NAME_LIMIT, INVALID_API_TOKEN, create_chat_assistant
-from libs.auth import RAGFlowHttpApiAuth
+from libs.auth import RAGForgeHttpApiAuth
 from libs.utils import encode_avatar
 from libs.utils.file_utils import create_image_file
 
@@ -28,7 +28,7 @@ class TestAuthorization:
         [
             (None, 0, "`Authorization` can't be empty"),
             (
-                RAGFlowHttpApiAuth(INVALID_API_TOKEN),
+                RAGForgeHttpApiAuth(INVALID_API_TOKEN),
                 109,
                 "Authentication error: API key is invalid!",
             ),
@@ -78,7 +78,7 @@ class TestChatAssistantCreate:
     )
     def test_dataset_ids(self, get_http_api_auth, add_chunks, dataset_ids, expected_code, expected_message):
         dataset_id, _, _ = add_chunks
-        payload = {"name": "ragflow test"}
+        payload = {"name": "ragforge test"}
         if callable(dataset_ids):
             payload["dataset_ids"] = dataset_ids(dataset_id)
         else:
@@ -92,7 +92,7 @@ class TestChatAssistantCreate:
             assert res["message"] == expected_message
 
     def test_avatar(self, get_http_api_auth, tmp_path):
-        fn = create_image_file(tmp_path / "ragflow_test.png")
+        fn = create_image_file(tmp_path / "ragforge_test.png")
         payload = {"name": "avatar_test", "avatar": encode_avatar(fn), "dataset_ids": []}
         res = create_chat_assistant(get_http_api_auth, payload)
         assert res["code"] == 0

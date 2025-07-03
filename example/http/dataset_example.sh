@@ -19,7 +19,7 @@ echo -e "\n-- Create a dataset"
 curl --request POST \
      --url http://localhost:9380/api/v1/datasets \
      --header 'Content-Type: application/json' \
-     --header 'Authorization: Bearer ragflow-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
+     --header 'Authorization: Bearer ragforge-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
      --data '{
       "name": "test"
       }'
@@ -29,7 +29,7 @@ echo -e "\n-- Update the dataset"
 curl --request PUT \
      --url http://localhost:9380/api/v1/datasets/2e898768a0bc11efb46a0242ac120006 \
      --header 'Content-Type: application/json' \
-     --header 'Authorization: Bearer ragflow-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
+     --header 'Authorization: Bearer ragforge-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
      --data '
      {
           "name": "updated_dataset"
@@ -39,14 +39,14 @@ curl --request PUT \
 echo -e "\n-- List datasets"
 curl --request GET \
      --url http://127.0.0.1:9380/api/v1/datasets \
-     --header 'Authorization: Bearer ragflow-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm'
+     --header 'Authorization: Bearer ragforge-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm'
 
 # Delete datasets
 echo -e "\n-- Delete datasets"
 curl --request DELETE \
      --url http://localhost:9380/api/v1/datasets \
      --header 'Content-Type: application/json' \
-     --header 'Authorization: Bearer ragflow-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
+     --header 'Authorization: Bearer ragforge-IzZmY1MGVhYTBhMjExZWZiYTdjMDI0Mm' \
      --data '{
      "ids": ["301298b8a0bc11efa0440242ac120006"]
      }'

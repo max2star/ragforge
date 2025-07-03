@@ -28,7 +28,7 @@ from api.db.db_models import Task, Document, Knowledgebase, Tenant
 from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.utils import current_timestamp, get_uuid
-from deepdoc.parser.excel_parser import RAGFlowExcelParser
+from deepdoc.parser.excel_parser import RAGForgeExcelParser
 from rag.settings import get_svr_queue_name
 from rag.utils.storage_factory import STORAGE_IMPL
 from rag.utils.redis_conn import REDIS_CONN
@@ -349,7 +349,7 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
 
     elif doc["parser_id"] == "table":
         file_bin = STORAGE_IMPL.get(bucket, name)
-        rn = RAGFlowExcelParser.row_number(doc["name"], file_bin)
+        rn = RAGForgeExcelParser.row_number(doc["name"], file_bin)
         for i in range(0, rn, 3000):
             task = new_task()
             task["from_page"] = i

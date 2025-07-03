@@ -14,7 +14,7 @@
 #  limitations under the License.
 #
 import sys
-sys.path.append("/var/lib/gpustack/ragflow/ragflow/")
+sys.path.append("/var/lib/gpustack/ragforge/ragforge/")
 sys.path.append("/usr/local/lib/python3.10/dist-packages/")
 import os
 import subprocess

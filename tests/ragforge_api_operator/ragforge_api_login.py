@@ -16,7 +16,7 @@
 import requests
 from  loguru import logger
 import os
-#api_key = "ragflow-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG"
+#api_key = "ragforge-RiZDg3ZjBjMzQ2MTExZjBiNTE0YmU3ZG"
 headers = {
 #    'Authorization': f'{api_key}',
     'Accept':"application/json",

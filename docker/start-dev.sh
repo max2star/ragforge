@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 开发环境启动脚本
-echo "启动 RAGFlow 开发环境..."
+echo "启动 RAGForge 开发环境..."
 
 # 检查 .env 文件是否存在
 if [ ! -f ".env" ]; then
@@ -19,7 +19,7 @@ ELASTIC_PASSWORD=changeme
 
 # MySQL 配置
 MYSQL_PORT=3306
-MYSQL_PASSWORD=ragflow123
+MYSQL_PASSWORD=ragforge123
 
 # MinIO 配置
 MINIO_PORT=9000
@@ -29,7 +29,7 @@ MINIO_PASSWORD=minioadmin
 
 # Redis 配置
 REDIS_PORT=6379
-REDIS_PASSWORD=ragflow123
+REDIS_PASSWORD=ragforge123
 
 # Infinity 配置
 INFINITY_THRIFT_PORT=23817
@@ -91,6 +91,6 @@ fi
 echo ""
 echo "默认凭据："
 echo "- Elasticsearch: 无密码 (开发模式)"
-echo "- MySQL: root/ragflow123"
+echo "- MySQL: root/ragforge123"
 echo "- MinIO: minioadmin/minioadmin"
-echo "- Redis: ragflow123" 
+echo "- Redis: ragforge123" 
