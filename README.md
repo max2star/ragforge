@@ -61,7 +61,7 @@ RAGForge 是基于 RAGForge 进行功能增强的开源 RAG（Retrieval-Augmente
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/infiniflow/ragforge.git
+   git clone https://gitee.com/wow_ai/ragforge.git
    cd ragforge/docker
    ```
 
@@ -114,7 +114,7 @@ RAGForge 是基于 RAGForge 进行功能增强的开源 RAG（Retrieval-Augmente
    cd ..
    
    # 设置环境变量
-   export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragforge
+   export PYTHONPATH={当前项目的绝对路径}/ragforge
    
    # 启动 API 服务器
    python api/main.py
