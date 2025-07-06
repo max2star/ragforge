@@ -11,7 +11,7 @@
 
 ## 💡 RAGForge 是什么？
 
-RAGForge 是基于 RAGForge 进行功能增强的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGForge 核心功能的基础上，新增了多项企业级功能增强，为开发人员提供更强大的 RAG 解决方案。
+RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGFlow 核心功能的基础上，新增了多项企业级功能增强，为开发人员提供更强大的 RAG 解决方案。
 
 ## 🌟 核心功能
 
