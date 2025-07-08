@@ -1312,17 +1312,17 @@ name = "fastembed-gpu"
 version = "0.3.6"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
-    { name = "huggingface-hub", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "loguru", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "mmh3", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "numpy", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "onnxruntime-gpu", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "pillow", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "pystemmer", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "requests", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "snowballstemmer", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "tokenizers", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "tqdm", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
+    { name = "huggingface-hub", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "loguru", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "mmh3", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "numpy", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "onnxruntime-gpu", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "pillow", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "pystemmer", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "requests", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "snowballstemmer", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "tokenizers", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "tqdm", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
 ]
 sdist = { url = "https://mirrors.aliyun.com/pypi/packages/da/07/7336c7f3d7ee47f33b407eeb50f5eeb152889de538a52a8f1cc637192816/fastembed_gpu-0.3.6.tar.gz", hash = "sha256:ee2de8918b142adbbf48caaffec0c492f864d73c073eea5a3dcd0e8c1041c50d" }
 wheels = [
@@ -3372,12 +3372,12 @@ name = "onnxruntime-gpu"
 version = "1.19.2"
 source = { registry = "https://mirrors.aliyun.com/pypi/simple" }
 dependencies = [
-    { name = "coloredlogs", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "flatbuffers", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "numpy", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "packaging", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "protobuf", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
-    { name = "sympy", marker = "platform_machine == 'armv7l' or platform_machine == 'x86_64'" },
+    { name = "coloredlogs", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "flatbuffers", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "numpy", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "packaging", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "protobuf", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
+    { name = "sympy", marker = "(platform_machine == 'armv7l' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and sys_platform != 'darwin')" },
 ]
 wheels = [
     { url = "https://mirrors.aliyun.com/pypi/packages/d0/9c/3fa310e0730643051eb88e884f19813a6c8b67d0fbafcda610d960e589db/onnxruntime_gpu-1.19.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a49740e079e7c5215830d30cde3df792e903df007aa0b0fd7aa797937061b27a" },
@@ -4468,7 +4468,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ragflow"
+name = "ragforge"
 version = "0.18.0"
 source = { virtual = "." }
 dependencies = [
