@@ -46,6 +46,44 @@ services:
       - ragforge_logs:/ragforge/logs
       - ragforge_data:/root/.ragforge
 
+  # Web 控制台 - 生产环境
+  web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - ragforge
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Web 控制台 - 开发环境（可选）
+  web-dev:
+    build:
+      context: ../web
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../web:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+    depends_on:
+      - ragforge
+    profiles:
+      - dev
+
   # MySQL 数据库
   mysql:
     image: mysql:8.0
