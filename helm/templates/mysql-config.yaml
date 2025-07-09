@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-init-script
+  name: {{ include "ragforge.fullname" . }}-mysql-config
 data:
-  init.sql: |-
-    CREATE DATABASE IF NOT EXISTS rag_flow;
-    USE rag_flow;
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS ragforge;
+    USE ragforge;

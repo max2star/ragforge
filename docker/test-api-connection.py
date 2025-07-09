@@ -1,76 +1,122 @@
 #!/usr/bin/env python3
 """
-测试后端API的数据库连接配置
+测试 API 连接
 """
 
-import sys
-import pymysql
+import mysql.connector
 import redis
+import requests
+import json
 
 def test_mysql_connection():
-    """测试MySQL连接"""
-    print("=== 测试MySQL连接 ===")
+    """测试 MySQL 连接"""
     try:
-        # 使用配置文件中的参数
-        connection = pymysql.connect(
-            host='localhost',
+        connection = mysql.connector.connect(
+            host='172.16.1.50',
             port=5455,
             user='root',
-            password='infini_rag_flow',
-            database='rag_flow',
-            charset='utf8mb4'
+            password='ragforge123',
+            database='ragforge',
         )
         
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            print(f"✓ MySQL连接成功: {result}")
-        
-        connection.close()
-        return True
+        if connection.is_connected():
+            db_info = connection.get_server_info()
+            print(f"✅ MySQL 连接成功 - 服务器版本: {db_info}")
+            
+            cursor = connection.cursor()
+            cursor.execute("select database();")
+            record = cursor.fetchone()
+            print(f"✅ 当前数据库: {record[0]}")
+            
+            cursor.close()
+            connection.close()
+            return True
+        else:
+            print("❌ MySQL 连接失败")
+            return False
+            
     except Exception as e:
-        print(f"✗ MySQL连接失败: {e}")
+        print(f"❌ MySQL 连接错误: {e}")
         return False
 
 def test_redis_connection():
-    """测试Redis连接"""
-    print("\n=== 测试Redis连接 ===")
+    """测试 Redis 连接"""
     try:
         r = redis.Redis(
-            host='localhost',
+            host='172.16.1.50',
             port=16379,
-            password='infini_rag_flow',
-            db=1,
+            password='ragforge123',
             decode_responses=True
         )
-        result = r.ping()
-        print(f"✓ Redis连接成功: {result}")
-        return True
+        
+        # 测试连接
+        response = r.ping()
+        if response:
+            print("✅ Redis 连接成功")
+            return True
+        else:
+            print("❌ Redis 连接失败")
+            return False
+            
     except Exception as e:
-        print(f"✗ Redis连接失败: {e}")
+        print(f"❌ Redis 连接错误: {e}")
+        return False
+
+def test_elasticsearch_connection():
+    """测试 Elasticsearch 连接"""
+    try:
+        response = requests.get('http://172.16.1.50:1200', timeout=5)
+        if response.status_code == 200:
+            print("✅ Elasticsearch 连接成功")
+            return True
+        else:
+            print(f"❌ Elasticsearch 连接失败 - 状态码: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Elasticsearch 连接错误: {e}")
+        return False
+
+def test_minio_connection():
+    """测试 MinIO 连接"""
+    try:
+        response = requests.get('http://172.16.1.50:19000', timeout=5)
+        if response.status_code == 200:
+            print("✅ MinIO 连接成功")
+            return True
+        else:
+            print(f"❌ MinIO 连接失败 - 状态码: {response.status_code}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ MinIO 连接错误: {e}")
         return False
 
 def main():
     """主函数"""
-    print("RAGForge 后端API MySQL/Redis连接测试")
-    print("=" * 50)
+    print("=== API 连接测试 ===")
     
-    # 测试MySQL连接
-    mysql_ok = test_mysql_connection()
-    redis_ok = test_redis_connection()
+    results = {
+        'mysql': test_mysql_connection(),
+        'redis': test_redis_connection(),
+        'elasticsearch': test_elasticsearch_connection(),
+        'minio': test_minio_connection()
+    }
     
-    # 总结
-    print("\n" + "=" * 50)
-    print("测试结果总结:")
-    print(f"MySQL: {'✓' if mysql_ok else '✗'}")
-    print(f"Redis: {'✓' if redis_ok else '✗'}")
+    print("\n=== 测试结果 ===")
+    for service, result in results.items():
+        status = "✅ 成功" if result else "❌ 失败"
+        print(f"{service}: {status}")
     
-    if mysql_ok and redis_ok:
-        print("\n🎉 MySQL/Redis连接正常！后端API应该可以正常启动。")
-        return 0
+    success_count = sum(results.values())
+    total_count = len(results)
+    
+    print(f"\n总结: {success_count}/{total_count} 个服务连接成功")
+    
+    if success_count == total_count:
+        print("🎉 所有服务连接正常！")
     else:
-        print("\n❌ MySQL或Redis连接失败，请检查配置。")
-        return 1
+        print("⚠️ 部分服务连接失败，请检查配置")
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    main() 
