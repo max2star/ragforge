@@ -57,7 +57,104 @@ def read_config(conf_name=SERVICE_CONF):
         raise ValueError(f'Invalid config file: "{global_config_path}".')
 
     global_config.update(local_config)
+    
+    # Apply environment variable overrides
+    global_config = apply_env_overrides(global_config)
+    
     return global_config
+
+
+def apply_env_overrides(config):
+    """Apply environment variable overrides to configuration"""
+    # Database configurations
+    if 'mysql' in config:
+        config['mysql'] = apply_env_to_section(config['mysql'], 'RAGFORGE_MYSQL')
+    
+    if 'dm' in config:
+        config['dm'] = apply_env_to_section(config['dm'], 'RAGFORGE_DM')
+    
+    # Storage configurations
+    if 'minio' in config:
+        config['minio'] = apply_env_to_section(config['minio'], 'RAGFORGE_MINIO')
+    
+    if 'minio_backup' in config:
+        config['minio_backup'] = apply_env_to_section(config['minio_backup'], 'RAGFORGE_MINIO_BACKUP')
+    
+    # Search engine configurations
+    if 'es' in config:
+        config['es'] = apply_env_to_section(config['es'], 'RAGFORGE_ES')
+    
+    if 'infinity' in config:
+        config['infinity'] = apply_env_to_section(config['infinity'], 'RAGFORGE_INFINITY')
+    
+    # Cache configurations
+    if 'redis' in config:
+        config['redis'] = apply_env_to_section(config['redis'], 'RAGFORGE_REDIS')
+    
+    # S3 configurations
+    if 's3' in config:
+        config['s3'] = apply_env_to_section(config['s3'], 'RAGFORGE_S3')
+    
+    # LLM configurations
+    if 'user_default_llm' in config:
+        config['user_default_llm'] = apply_env_to_section(config['user_default_llm'], 'RAGFORGE_LLM')
+    
+    return config
+
+
+def apply_env_to_section(section_config, env_prefix):
+    """Apply environment variables to a specific configuration section"""
+    if not isinstance(section_config, dict):
+        return section_config
+    
+    result = section_config.copy()
+    
+    # Common field mappings
+    field_mappings = {
+        'host': f'{env_prefix}_HOST',
+        'port': f'{env_prefix}_PORT',
+        'user': f'{env_prefix}_USER',
+        'password': f'{env_prefix}_PASSWORD',
+        'name': f'{env_prefix}_DBNAME',
+        'hosts': f'{env_prefix}_HOSTS',
+        'username': f'{env_prefix}_USERNAME',
+        'uri': f'{env_prefix}_URI',
+        'db_name': f'{env_prefix}_DB_NAME',
+        'access_key': f'{env_prefix}_ACCESS_KEY',
+        'secret_key': f'{env_prefix}_SECRET_KEY',
+        'endpoint_url': f'{env_prefix}_ENDPOINT_URL',
+        'factory': f'{env_prefix}_FACTORY',
+        'api_key': f'{env_prefix}_API_KEY',
+        'base_url': f'{env_prefix}_BASE_URL',
+        'bucket_encryption': f'{env_prefix}_BUCKET_ENCRYPTION',
+        'ca_path': f'{env_prefix}_CA_PATH',
+    }
+    
+    for field, env_var in field_mappings.items():
+        if field in result:
+            env_value = os.environ.get(env_var)
+            if env_value is not None:
+                # Handle type conversion
+                original_value = result[field]
+                if isinstance(original_value, int):
+                    try:
+                        result[field] = int(env_value)
+                    except ValueError:
+                        logging.warning(f"Environment variable {env_var}={env_value} cannot be converted to int, keeping original value {original_value}")
+                elif isinstance(original_value, bool):
+                    result[field] = env_value.lower() in ('true', '1', 'yes', 'on')
+                else:
+                    result[field] = env_value
+                logging.info(f"Overriding {field} with environment variable {env_var}={env_value}")
+    
+    # Handle nested configurations (like default_models and default_models_config)
+    if 'default_models' in result and isinstance(result['default_models'], dict):
+        result['default_models'] = apply_env_to_section(result['default_models'], f'{env_prefix}_DEFAULT_MODELS')
+    
+    if 'default_models_config' in result and isinstance(result['default_models_config'], dict):
+        result['default_models_config'] = apply_env_to_section(result['default_models_config'], f'{env_prefix}_DEFAULT_MODELS_CONFIG')
+    
+    return result
 
 
 CONFIGS = read_config()
