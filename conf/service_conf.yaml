@@ -3,7 +3,7 @@ ragforge:
   http_port: 9380
 
 mysql:
-  name: 'rag_flow'
+  name: 'ragforge'
   user: 'root'
   password: 'ragforge123'
   host: 'localhost'
@@ -13,7 +13,7 @@ mysql:
 
 # 添加达梦数据库配置
 # dm:
-#   name: 'rag_flow'
+#   name: 'ragforge'
 #   user: 'SYSDBA'
 #   password: 'Sysdba@123'
 #   host: '118.193.126.254'
@@ -72,9 +72,9 @@ s3:
   endpoint_url: 'http://localhost:9000'
 
 # postgres:
-#   name: 'rag_flow'
-#   user: 'rag_flow'
-#   password: 'infini_rag_flow'
+#   name: 'ragforge'
+#   user: 'ragforge'
+#   password: 'ragforge123'
 #   host: 'postgres'
 #   port: 5432
 #   max_connections: 100
