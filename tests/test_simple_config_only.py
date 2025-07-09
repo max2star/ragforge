@@ -14,7 +14,8 @@ def test_simple_config():
         'RAGFORGE_MYSQL_HOST': '172.16.1.50',
         'RAGFORGE_MYSQL_PORT': '5455',
         'RAGFORGE_MYSQL_USER': 'root',
-        'RAGFORGE_MYSQL_PASSWORD': 'infini_rag_flow',
+        'RAGFORGE_MYSQL_PASSWORD': 'ragforge123',
+        'RAGFORGE_MYSQL_DBNAME': 'ragforge',
         'RAGFORGE_ES_HOSTS': 'http://172.16.1.50:1200',
         'RAGFORGE_MINIO_HOST': '172.16.1.50:19000',
         'RAGFORGE_MINIO_USER': 'minioadmin',
@@ -24,7 +25,7 @@ def test_simple_config():
         'RAGFORGE_MINIO_BACKUP_PASSWORD': 'minioadmin',
         'RAGFORGE_REDIS_HOST': '172.16.1.50',
         'RAGFORGE_REDIS_PORT': '16379',
-        'RAGFORGE_REDIS_PASSWORD': 'infini_rag_flow'
+        'RAGFORGE_REDIS_PASSWORD': 'ragforge123'
     }
     
     # 构建命令
@@ -81,8 +82,8 @@ print("\\n✅ 配置加载测试完成")
     
     print("启动简单配置测试...")
     print("使用正确的密码和地址:")
-    print("- MySQL: infini_rag_flow")
-    print("- Redis: infini_rag_flow")
+    print("- MySQL: ragforge123")
+    print("- Redis: ragforge123")
     print("- MinIO: minioadmin/minioadmin")
     
     try:
@@ -140,8 +141,8 @@ def main():
     
     print("\n=== 测试完成 ===")
     print("\n总结:")
-    print("✅ MySQL 连接权限问题已解决")
-    print("✅ Redis 连接权限问题已解决")
+    print("✅ MySQL 密码已更新为 ragforge123")
+    print("✅ Redis 密码已更新为 ragforge123")
     print("✅ 环境变量覆盖功能正常工作")
     print("✅ MinIO 配置已修复")
 
