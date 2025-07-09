@@ -1,535 +1,111 @@
-include:
-  - ./docker-compose-base.yml
+version: '3.8'
 
-# To ensure that the container processes the locally modified `service_conf.yaml.template` instead of the one included in its image, you need to mount the local `service_conf.yaml.template` to the container.
 services:
+  # RAGForge 主服务
   ragforge:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-      es01:
-        condition: service_healthy
-      es02:
-        condition: service_healthy
-          #minio-ragforge:
-          #condition: service_healthy
-    image: ${RAGFORGE_IMAGE}
-    privileged: true
-    shm_size: '128gb'
-    container_name: ragforge-server
-      #deploy:
-      #  resources:
-      #    reservations:
-      #      devices:
-      #        - driver: nvidia
-      #          #count: all
-      #          device_ids: ['0']
-      #          capabilities: [gpu]
+    build:
+      context: ..
+      dockerfile: Dockerfile.simple
     ports:
-      - ${SVR_HTTP_PORT}:9380
-      - 80:80
-      - 9980:9980
-      - 443:443
-      - 5678:5678
-      - 5679:5679
-    volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ../web:/ragforge/web
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
+      - "9380:9380"
     environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-        #- CUDA_VISIBLE_DEVICES=0
-        #- LLM_BASE_DELAY=2
-        # - SSL_CERT_FILE="/etc/nginx/public.crt"
-        #- CUDA_VISIBLE_DEVICES=1
-        #- NCCL_SOCKET_IFNAME=bond0.128
-        #- NCCL_IB_DISABLE=1
-        #- NCCL_P2P_DISABLE=1
-        #- NCCL_DEBUG=INFO
-    entrypoint: "/ragforge/entrypoint.sh --disable-taskexecutor --host-id=api"
-    networks:
-      ragforge:
-        ipv4_address: 172.20.0.254
-    restart: on-failure
-    # https://docs.docker.com/engine/daemon/prometheus/#create-a-prometheus-configuration
-    # If you're using Docker Desktop, the --add-host flag is optional. This flag makes sure that the host's internal IP gets exposed to the Prometheus container.
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  executor-0:
+      # 数据库配置
+      - RAGFORGE_MYSQL_HOST=mysql
+      - RAGFORGE_MYSQL_PORT=3306
+      - RAGFORGE_MYSQL_USER=root
+      - RAGFORGE_MYSQL_PASSWORD=ragforge123
+      - RAGFORGE_MYSQL_DBNAME=rag_flow
+      
+      # Elasticsearch 配置
+      - RAGFORGE_ES_HOSTS=http://elasticsearch:9200
+      - RAGFORGE_ES_USERNAME=elastic
+      - RAGFORGE_ES_PASSWORD=
+      
+      # MinIO 配置
+      - RAGFORGE_MINIO_HOST=minio:9000
+      - RAGFORGE_MINIO_USER=minioadmin
+      - RAGFORGE_MINIO_PASSWORD=minioadmin
+      - RAGFORGE_MINIO_BUCKET_ENCRYPTION=false
+      
+      # Redis 配置
+      - RAGFORGE_REDIS_HOST=redis
+      - RAGFORGE_REDIS_PORT=6379
+      - RAGFORGE_REDIS_PASSWORD=ragforge123
+      
+      # LLM 配置
+      - RAGFORGE_LLM_FACTORY=OpenAI-API-Compatible
+      - RAGFORGE_LLM_API_KEY=gpustack_9ee4961bc8fbe141_317180d1e53cb4eee68633d301adfd15
+      - RAGFORGE_LLM_BASE_URL=http://101.52.216.178:890/v1
     depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-0
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['0']
-              capabilities: [gpu]
+      - mysql
+      - elasticsearch
+      - minio
+      - redis
+    restart: unless-stopped
     volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../tests:/ragforge/tests
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=0
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-0"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ragforge_logs:/ragforge/logs
+      - ragforge_data:/root/.ragforge
 
-  executor-1:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-1
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['1']
-              capabilities: [gpu]
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ragforge123
+      MYSQL_DATABASE: rag_flow
+      MYSQL_USER: ragforge
+      MYSQL_PASSWORD: ragforge123
+    ports:
+      - "3306:3306"
     volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../tests:/ragforge/tests
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=1
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-1"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
 
-  executor-2:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-2
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['2']
-              capabilities: [gpu]
+  # Elasticsearch 搜索引擎
+  elasticsearch:
+    image: elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
     volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
+      - es_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  # MinIO 对象存储
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
     environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=2
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-2"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-
-  executor-3:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-3
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['3']
-              capabilities: [gpu]
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=3
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-3"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - minio_data:/data
+    restart: unless-stopped
 
-  executor-4:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-4
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['4']
-              capabilities: [gpu]
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ragforge123
+    ports:
+      - "6379:6379"
     volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=4
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-4"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - redis_data:/data
+    restart: unless-stopped
 
-  executor-5:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-5
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['5']
-              capabilities: [gpu]
-    volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=5
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-5"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+volumes:
+  mysql_data:
+  es_data:
+  minio_data:
+  redis_data:
+  ragforge_logs:
+  ragforge_data:
 
-  executor-6:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-6
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['6']
-              capabilities: [gpu]
-    volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=6
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-6"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-
-  executor-7:
-    depends_on:
-      mysql-ragforge:
-        condition: service_healthy
-      redis-ragforge:
-        condition: service_healthy
-    privileged: true
-    shm_size: '128gb'
-    image: ${RAGFORGE_IMAGE}
-    container_name: ragforge-executor-7
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              #count: all
-              device_ids: ['7']
-              capabilities: [gpu]
-    volumes:
-      - /opt/coredumps:/opt/coredumps
-      - /opt/ragforge_logs:/ragforge/logs
-      - ./certs/ca.crt:/ragforge/ca.crt
-      - ../rag:/ragforge/rag
-      - ../api:/ragforge/api
-      - ../web:/ragforge/web
-      - ../minerU:/ragforge/minerU
-      - ../conf/llm_factories.json:/ragforge/conf/llm_factories.json
-      #- /root/.cache:/root/.cache
-      #- /root/magic-pdf.json:/root/magic-pdf.json
-      - ./nginx/ragforge.conf:/etc/nginx/conf.d/ragforge.conf
-      - ./nginx/proxy.conf:/etc/nginx/proxy.conf
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/private.key:/etc/nginx/private.key
-      - ./nginx/public.crt:/etc/nginx/public.crt
-      - ../history_data_agent:/ragforge/history_data_agent
-      - ./service_conf.yaml.template:/ragforge/conf/service_conf.yaml.template
-      - ./s3.py:/usr/local/lib/python3.10/dist-packages/magic_pdf/data/io/s3.py
-      - ./_client.py:/ragforge/.venv/lib/python3.10/site-packages/httpx/_client.py
-      - ../tests:/ragforge/tests
-    env_file: .env
-    environment:
-      - TZ=${TIMEZONE}
-      - HF_ENDPOINT=${HF_ENDPOINT}
-      - MACOS=${MACOS}
-      - LM_TIMEOUT_SECONDS=300
-      - LLM_MAX_RETRIES=3
-      - CUDA_VISIBLE_DEVICES=7
-      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS}
-      - MAX_CONCURRENT_CHATS=${MAX_CONCURRENT_CHATS}
-      - MAX_CONCURRENT_CHUNK_BUILDERS=${MAX_CONCURRENT_CHUNK_BUILDERS}
-    entrypoint: "/ragforge/entrypoint.sh --disable-webserver --workers=1 --host-id=executor-7"
-    networks:
-      - ragforge
-    restart: on-failure
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+networks:
+  default:
+    name: ragforge_network
