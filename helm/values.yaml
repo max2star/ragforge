@@ -1,159 +1,129 @@
-# Based on docker compose .env file
-env:
-  # The type of doc engine to use.
-  # Available options:
-  # - `elasticsearch` (default)
-  # - `infinity` (https://github.com/infiniflow/infinity)
-  # DOC_ENGINE: elasticsearch
-  DOC_ENGINE: infinity
+# Default values for ragforge.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-  # The version of Elasticsearch.
-  STACK_VERSION: "8.11.3"
+replicaCount: 1
 
-  # The password for Elasticsearch
-  ELASTIC_PASSWORD: infini_rag_flow_helm
+image:
+  repository: ragforge
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
 
-  # The password for MySQL
-  MYSQL_PASSWORD: infini_rag_flow_helm
-  # The database of the MySQL service to use
-  MYSQL_DBNAME: rag_flow
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
 
-  # The username for MinIO.
-  MINIO_ROOT_USER: rag_flow
-  # The password for MinIO
-  MINIO_PASSWORD: infini_rag_flow_helm
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
-  # The password for Redis
-  REDIS_PASSWORD: infini_rag_flow_helm
+podAnnotations: {}
 
-  # The RAGForge Docker image to download.
-  # Defaults to the v0.18.0-slim edition, which is the RAGForge Docker image without embedding models.
-  RAGFORGE_IMAGE: infiniflow/ragforge:v0.18.0-slim
-  #
-  # To download the RAGForge Docker image with embedding models, uncomment the following line instead:
-  # RAGFORGE_IMAGE: infiniflow/ragforge:v0.18.0
-  #
-  # The Docker image of the v0.18.0 edition includes:
-  # - Built-in embedding models:
-  #   - BAAI/bge-large-zh-v1.5
-  #   - BAAI/bge-reranker-v2-m3
-  #   - maidalun1020/bce-embedding-base_v1
-  #   - maidalun1020/bce-reranker-base_v1
-  # - Embedding models that will be downloaded once you select them in the RAGForge UI:
-  #   - BAAI/bge-base-en-v1.5
-  #   - BAAI/bge-large-en-v1.5
-  #   - BAAI/bge-small-en-v1.5
-  #   - BAAI/bge-small-zh-v1.5
-  #   - jinaai/jina-embeddings-v2-base-en
-  #   - jinaai/jina-embeddings-v2-small-en
-  #   - nomic-ai/nomic-embed-text-v1.5
-  #   - sentence-transformers/all-MiniLM-L6-v2
-  #
-  #
+podSecurityContext: {}
 
-  # The local time zone.
-  TIMEZONE: "Asia/Shanghai"
+securityContext: {}
 
-  # Uncomment the following line if you have limited access to huggingface.co:
-  # HF_ENDPOINT: https://hf-mirror.com
+service:
+  type: ClusterIP
+  port: 80
 
-  # The maximum file size for each uploaded file, in bytes.
-  # You can uncomment this line and update the value if you wish to change 128M file size limit
-  # MAX_CONTENT_LENGTH: "134217728"
-  # After making the change, ensure you update `client_max_body_size` in nginx/nginx.conf correspondingly.
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces surrounding '{}'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 64Mi
 
-ragforge:
-  deployment:
-    strategy:
-    resources:
-  service:
-    # Use LoadBalancer to expose the web interface externally
-    type: ClusterIP
-  api:
-    service:
-      enabled: true
-      type: ClusterIP
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
 
-infinity:
-  image:
-    repository: infiniflow/infinity
-    tag: v0.6.0-dev3
-  storage:
-    className:
-    capacity: 5Gi
-  deployment:
-    strategy:
-    resources:
-  service:
-    type: ClusterIP
+nodeSelector: {}
 
+tolerations: []
+
+affinity: {}
+
+# Elasticsearch configuration
 elasticsearch:
-  storage:
-    className:
-    capacity: 20Gi
-  deployment:
-    strategy:
-    resources:
-      requests:
-        cpu: "4"
-        memory: "16Gi"
-  service:
-    type: ClusterIP
-
-minio:
+  enabled: true
   image:
-    repository: quay.io/minio/minio
-    tag: RELEASE.2023-12-20T01-00-02Z
-  storage:
-    className:
-    capacity: 5Gi
-  deployment:
-    strategy:
-    resources:
-  service:
-    type: ClusterIP
+    repository: docker.elastic.co/elasticsearch/elasticsearch
+    tag: "8.11.3"
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  env:
+    ELASTIC_PASSWORD: infini_rag_flow_helm
+    discovery.type: single-node
+    xpack.security.enabled: false
 
+# MySQL configuration
 mysql:
+  enabled: true
   image:
     repository: mysql
-    tag: 8.0.39
-  storage:
-    className:
-    capacity: 5Gi
-  deployment:
-    strategy:
-    resources:
-  service:
-    type: ClusterIP
+    tag: "8.0.39"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  env:
+    MYSQL_ROOT_PASSWORD: infini_rag_flow_helm
+    MYSQL_DATABASE: ragforge
+    MYSQL_USER: ragforge
+    MYSQL_PASSWORD: infini_rag_flow_helm
 
-redis:
+# MinIO configuration
+minio:
+  enabled: true
   image:
-    repository: valkey/valkey
-    tag: 8
-  storage:
-    className:
-    capacity: 5Gi
-  deployment:
-    strategy:
-    resources:
-  service:
-    type: ClusterIP
+    repository: quay.io/minio/minio
+    tag: "RELEASE.2023-12-20T01-00-02Z"
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+  env:
+    MINIO_ROOT_USER: ragforge
+    MINIO_ROOT_PASSWORD: infini_rag_flow_helm
 
-
-# This block is for setting up web service ingress. For more information, see:
-# https://kubernetes.io/docs/concepts/services-networking/ingress/
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+# Redis configuration
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "100m"
+  env:
+    REDIS_PASSWORD: infini_rag_flow_helm

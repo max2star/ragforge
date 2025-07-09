@@ -14,7 +14,7 @@ services:
       - RAGFORGE_MYSQL_PORT=3306
       - RAGFORGE_MYSQL_USER=root
       - RAGFORGE_MYSQL_PASSWORD=ragforge123
-      - RAGFORGE_MYSQL_DBNAME=rag_flow
+      - RAGFORGE_MYSQL_DBNAME=ragforge
       
       # Elasticsearch 配置
       - RAGFORGE_ES_HOSTS=http://elasticsearch:9200
@@ -51,7 +51,7 @@ services:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: ragforge123
-      MYSQL_DATABASE: rag_flow
+      MYSQL_DATABASE: ragforge
       MYSQL_USER: ragforge
       MYSQL_PASSWORD: ragforge123
     ports:
