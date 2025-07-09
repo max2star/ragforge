@@ -56,6 +56,7 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
+      - BACKEND_API_URL=http://ragforge:9380
     depends_on:
       - ragforge
     restart: unless-stopped
@@ -78,6 +79,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - BACKEND_API_URL=http://localhost:9380
+      - PORT=3000
     command: npm run dev
     depends_on:
       - ragforge
