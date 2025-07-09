@@ -15,7 +15,7 @@
 #
 import os
 import logging
-from api.utils import get_base_config, decrypt_database_config
+from api.utils import get_base_config, decrypt_database_config, apply_env_to_section
 from api.utils.file_utils import get_project_base_directory
 
 # Server
@@ -47,11 +47,17 @@ elif STORAGE_IMPL_TYPE == 'MINIO':
     MINIO = decrypt_database_config(name="minio")
     MINIO_BACKUP = decrypt_database_config(name="minio_backup")
     S3 = get_base_config("s3", {})
+    
+    # Apply environment variable overrides to MINIO and MINIO_BACKUP
+    MINIO = apply_env_to_section(MINIO, 'RAGFORGE_MINIO')
+    MINIO_BACKUP = apply_env_to_section(MINIO_BACKUP, 'RAGFORGE_MINIO_BACKUP')
 elif STORAGE_IMPL_TYPE == 'OSS':
     OSS = get_base_config("oss", {})
 
 try:
     REDIS = decrypt_database_config(name="redis")
+    # Apply environment variable overrides to REDIS
+    REDIS = apply_env_to_section(REDIS, 'RAGFORGE_REDIS')
 except Exception:
     REDIS = {}
     pass
