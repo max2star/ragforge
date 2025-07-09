@@ -1,244 +1,85 @@
 #!/bin/bash
 
-# RAGForge Docker 快速启动脚本
-# 使用方法: ./start.sh [选项]
+# RAGForge 完整服务启动脚本
 
 set -e
 
-# 颜色定义
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+echo "=== RAGForge 服务启动脚本 ==="
+echo "1. 启动所有服务（生产环境）"
+echo "2. 启动所有服务（开发环境）"
+echo "3. 仅启动后端服务"
+echo "4. 仅启动数据库服务"
+echo "5. 停止所有服务"
+echo "6. 查看服务状态"
+echo "7. 查看服务日志"
+echo "8. 重新构建并启动"
+echo ""
 
-# 打印带颜色的消息
-print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
+read -p "请选择操作 (1-8): " choice
 
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# 显示帮助信息
-show_help() {
-    echo "RAGForge Docker 快速启动脚本"
-    echo ""
-    echo "使用方法:"
-    echo "  $0 [选项]"
-    echo ""
-    echo "选项:"
-    echo "  -h, --help              显示此帮助信息"
-    echo "  -b, --build             构建 Docker 镜像"
-    echo "  -u, --up                启动所有服务"
-    echo "  -d, --down              停止所有服务"
-    echo "  -r, --restart           重启所有服务"
-    echo "  -l, --logs              查看服务日志"
-    echo "  -c, --clean             清理所有容器和卷"
-    echo "  -f, --full              完整部署 (构建 + 启动)"
-    echo ""
-    echo "示例:"
-    echo "  $0 -f                   完整部署"
-    echo "  $0 -u                   仅启动服务"
-    echo "  $0 -l                   查看日志"
-    echo "  $0 -d                   停止服务"
-}
-
-# 检查 Docker 是否安装
-check_docker() {
-    if ! command -v docker &> /dev/null; then
-        print_error "Docker 未安装，请先安装 Docker"
+case $choice in
+    1)
+        echo "启动所有服务（生产环境）..."
+        docker-compose up -d
+        echo "✅ 所有服务已启动"
+        echo "🌐 Web控制台: http://localhost"
+        echo "🔧 API服务: http://localhost:9380"
+        echo "🗄️ MySQL: localhost:3306"
+        echo "🔍 Elasticsearch: localhost:9200"
+        echo "📦 MinIO: localhost:9000"
+        echo "💾 Redis: localhost:6379"
+        ;;
+    2)
+        echo "启动所有服务（开发环境）..."
+        docker-compose --profile dev up -d
+        echo "✅ 所有服务已启动（开发模式）"
+        echo "🌐 Web控制台: http://localhost:3000"
+        echo "🔧 API服务: http://localhost:9380"
+        ;;
+    3)
+        echo "仅启动后端服务..."
+        docker-compose up -d ragforge mysql elasticsearch minio redis
+        echo "✅ 后端服务已启动"
+        echo "🔧 API服务: http://localhost:9380"
+        ;;
+    4)
+        echo "仅启动数据库服务..."
+        docker-compose up -d mysql elasticsearch minio redis
+        echo "✅ 数据库服务已启动"
+        ;;
+    5)
+        echo "停止所有服务..."
+        docker-compose down
+        echo "✅ 所有服务已停止"
+        ;;
+    6)
+        echo "查看服务状态..."
+        docker-compose ps
+        ;;
+    7)
+        echo "查看服务日志..."
+        docker-compose logs -f
+        ;;
+    8)
+        echo "重新构建并启动..."
+        docker-compose down
+        docker-compose build --no-cache
+        docker-compose up -d
+        echo "✅ 服务已重新构建并启动"
+        ;;
+    *)
+        echo "❌ 无效选择"
         exit 1
-    fi
-    
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose 未安装，请先安装 Docker Compose"
-        exit 1
-    fi
-}
+        ;;
+esac
 
-# 构建镜像
-build_image() {
-    print_info "构建 RAGForge Docker 镜像..."
-    cd ..
-    docker build -f Dockerfile.simple -t ragforge-simple:latest .
-    cd docker
-    print_success "镜像构建完成"
-}
-
-# 启动服务
-start_services() {
-    print_info "启动 RAGForge 服务..."
-    docker-compose up -d
-    print_success "服务启动完成"
-    
-    print_info "等待服务启动..."
-    sleep 10
-    
-    # 检查服务状态
-    check_services_status
-}
-
-# 停止服务
-stop_services() {
-    print_info "停止 RAGForge 服务..."
-    docker-compose down
-    print_success "服务已停止"
-}
-
-# 重启服务
-restart_services() {
-    print_info "重启 RAGForge 服务..."
-    docker-compose restart
-    print_success "服务重启完成"
-}
-
-# 查看日志
-show_logs() {
-    print_info "显示服务日志..."
-    docker-compose logs -f
-}
-
-# 清理所有容器和卷
-clean_all() {
-    print_warning "这将删除所有容器、网络和卷，数据将丢失！"
-    read -p "确定要继续吗？(y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_info "清理所有容器和卷..."
-        docker-compose down -v --remove-orphans
-        docker system prune -f
-        print_success "清理完成"
-    else
-        print_info "取消清理操作"
-    fi
-}
-
-# 检查服务状态
-check_services_status() {
-    print_info "检查服务状态..."
-    
-    # 检查 MySQL
-    if docker-compose ps mysql | grep -q "Up"; then
-        print_success "MySQL: 运行中"
-    else
-        print_error "MySQL: 未运行"
-    fi
-    
-    # 检查 Elasticsearch
-    if docker-compose ps elasticsearch | grep -q "Up"; then
-        print_success "Elasticsearch: 运行中"
-    else
-        print_error "Elasticsearch: 未运行"
-    fi
-    
-    # 检查 MinIO
-    if docker-compose ps minio | grep -q "Up"; then
-        print_success "MinIO: 运行中"
-    else
-        print_error "MinIO: 未运行"
-    fi
-    
-    # 检查 Redis
-    if docker-compose ps redis | grep -q "Up"; then
-        print_success "Redis: 运行中"
-    else
-        print_error "Redis: 未运行"
-    fi
-    
-    # 检查 RAGForge
-    if docker-compose ps ragforge | grep -q "Up"; then
-        print_success "RAGForge: 运行中"
-    else
-        print_error "RAGForge: 未运行"
-    fi
-    
-    echo ""
-    print_info "服务访问地址："
-    echo "  - RAGForge API: http://localhost:9380"
-    echo "  - MySQL: localhost:3306"
-    echo "  - Elasticsearch: http://localhost:9200"
-    echo "  - MinIO: http://localhost:9000"
-    echo "  - MinIO Console: http://localhost:9001"
-    echo "  - Redis: localhost:6379"
-    echo ""
-    print_info "默认凭据："
-    echo "  - MySQL: root/ragforge123"
-    echo "  - MinIO: minioadmin/minioadmin"
-    echo "  - Redis: ragforge123"
-    echo "  - Elasticsearch: elastic/(无密码)"
-}
-
-# 完整部署
-full_deploy() {
-    print_info "开始完整部署..."
-    build_image
-    start_services
-}
-
-# 主函数
-main() {
-    # 检查是否在正确的目录
-    if [ ! -f "docker-compose.yml" ]; then
-        print_error "请在 docker 目录下运行此脚本"
-        exit 1
-    fi
-    
-    # 检查 Docker
-    check_docker
-    
-    # 如果没有参数，显示帮助
-    if [ $# -eq 0 ]; then
-        show_help
-        exit 0
-    fi
-    
-    # 处理参数
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            -b|--build)
-                build_image
-                ;;
-            -u|--up)
-                start_services
-                ;;
-            -d|--down)
-                stop_services
-                ;;
-            -r|--restart)
-                restart_services
-                ;;
-            -l|--logs)
-                show_logs
-                ;;
-            -c|--clean)
-                clean_all
-                ;;
-            -f|--full)
-                full_deploy
-                ;;
-            *)
-                print_error "未知选项: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-        shift
-    done
-}
-
-# 运行主函数
-main "$@" 
+echo ""
+echo "=== 服务信息 ==="
+echo "数据库名称: ragforge"
+echo "MySQL密码: ragforge123"
+echo "Redis密码: ragforge123"
+echo "MinIO用户: minioadmin"
+echo "MinIO密码: minioadmin"
+echo ""
+echo "使用 'docker-compose logs -f' 查看实时日志"
+echo "使用 'docker-compose down' 停止所有服务" 
