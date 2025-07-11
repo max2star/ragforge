@@ -146,6 +146,6 @@ volumes:
   ragforge_logs:
   ragforge_data:
 
-networks:
+    networks:
   default:
     name: ragforge_network

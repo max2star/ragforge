@@ -27,10 +27,10 @@ def test_mysql_connection():
             cursor.execute("select database();")
             record = cursor.fetchone()
             print(f"✅ 当前数据库: {record[0]}")
-            
+        
             cursor.close()
-            connection.close()
-            return True
+        connection.close()
+        return True
         else:
             print("❌ MySQL 连接失败")
             return False
@@ -83,7 +83,7 @@ def test_minio_connection():
         response = requests.get('http://172.16.1.50:19000', timeout=5)
         if response.status_code == 200:
             print("✅ MinIO 连接成功")
-            return True
+        return True
         else:
             print(f"❌ MinIO 连接失败 - 状态码: {response.status_code}")
             return False
