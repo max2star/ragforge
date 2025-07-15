@@ -53,9 +53,9 @@ COPY tests/ ./tests/
 COPY graphrag/ ./graphrag/
 COPY agentic_reasoning/ ./agentic_reasoning/
 COPY mcp/ ./mcp/
-COPY sdk/ ./sdk/
-COPY helm/ ./helm/
-COPY intergrations/ ./intergrations/
+# COPY sdk/ ./sdk/  # 已删除
+# COPY helm/ ./helm/  # 已删除
+# COPY intergrations/ ./intergrations/  # 已删除
 COPY flask_session/ ./flask_session/
 
 # 安装Python依赖
