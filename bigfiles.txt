@@ -1,0 +1,2 @@
+deps/arm/npu/rag/res/deepdoc/layout.laws.onnx
+deps/docker-compose
