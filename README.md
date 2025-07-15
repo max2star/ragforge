@@ -5,7 +5,6 @@
 </div>
 
 <p align="center">
-  <a href="./README_en.md">English</a> |
   <a href="./README.md">简体中文</a>
 </p>
 
