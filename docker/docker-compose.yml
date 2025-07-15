@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # RAGForge 主服务
   ragforge:
@@ -78,7 +76,7 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-      - RAGFORGE_BACKEND_API_URL=http://localhost:9380
+      - RAGFORGE_BACKEND_API_URL=http://ragforge:9380
       - PORT=3000
     command: npm run dev
     depends_on:
@@ -148,4 +146,4 @@ volumes:
 
 networks:
   default:
-    name: ragforge_network
+    driver: bridge
