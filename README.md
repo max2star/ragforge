@@ -91,23 +91,27 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
    cd ragforge/docker
    ```
 
-2. **启动服务**
+2. **一键启动服务**
    ```bash
-   # CPU 版本
-   docker compose -f docker-compose.yml up -d
-   
-   # GPU 版本（加速 embedding 和 DeepDoc 任务）
-   # docker compose -f docker-compose-gpu.yml up -d
+   # 启动脚本，按提示选择生产环境或开发环境
+   ./start.sh
    ```
+   - 选择【1】启动所有服务（生产环境，Web 控制台端口 80）
+   - 选择【2】启动所有服务（开发环境，Web 控制台端口 3000，支持热更新）
 
-3. **验证启动**
+3. **停止服务**
    ```bash
-   docker logs -f ragforge-server
+   ./stop.sh
    ```
+   - 按提示选择停止/清理服务的方式
 
 4. **访问系统**
-   - 浏览器访问：`http://YOUR_SERVER_IP`
-   - 配置 LLM API Key：编辑 `service_conf.yaml.template`
+   - 生产环境 Web 控制台：http://localhost
+   - 开发环境 Web 控制台：http://localhost:3000
+   - API 服务：http://localhost:9380
+
+5. **配置 LLM API Key**
+   - 编辑 `service_conf.yaml.template`
 
 ### ⚙️ 配置说明
 
@@ -117,45 +121,27 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
 
 ## 🔧 开发环境设置
 
-### 🚀 快速启动开发环境
+### 🚀 推荐开发流程
 
-1. **启动 Docker 服务**
+1. **进入 docker 目录，使用脚本启动开发环境**
    ```bash
    cd docker
-   ./start-dev.sh
+   ./start.sh   # 选择 2 启动开发环境
    ```
-   选择启动模式：
-   - **选项 1**: 完整模式（包含 Infinity 向量数据库）
-   - **选项 2**: 简化模式（推荐给 ARM64 Mac 用户）
+   - 开发环境 Web 控制台：http://localhost:3000
+   - 支持热更新，适合前后端联调
 
-2. **切换 API 配置**
+2. **停止服务**
    ```bash
-   cd conf
-   ./switch-to-dev.sh
+   ./stop.sh
    ```
 
-3. **启动 API 服务器**
+3. **常用 Docker 命令**
    ```bash
-   # 回到项目根目录
-   cd ..
-   
-   # 设置环境变量
-   export PYTHONPATH={当前项目的绝对路径}/ragforge
-   
-   # 启动 API 服务器
-   python api/main.py
+   docker-compose ps         # 查看服务状态
+   docker-compose logs -f    # 查看实时日志
+   docker-compose down       # 停止并移除所有服务
    ```
-
-### 🔧 服务配置详情
-
-| 服务 | 地址 | 端口 | 用户名 | 密码 |
-|------|------|------|--------|------|
-| **Elasticsearch** | http://localhost | 9200 | elastic | changeme |
-| **MySQL** | localhost | 3306 | root | ragforge123 |
-| **MinIO** | http://localhost | 9000 | minioadmin | minioadmin |
-| **MinIO Console** | http://localhost | 9001 | minioadmin | minioadmin |
-| **Redis** | localhost | 6379 | - | ragforge123 |
-| **Infinity** | http://localhost | 23820 | - | - |
 
 ### 🛠️ 环境变量配置
 
@@ -173,37 +159,18 @@ export STORAGE_IMPL=MINIO  # 默认使用 MinIO
 # export STORAGE_IMPL=AWS_S3  # 使用 AWS S3
 ```
 
-### 📝 常用开发命令
-
-```bash
-# Docker 管理
-cd docker
-./start-dev.sh          # 启动服务
-./stop-dev.sh           # 停止服务
-docker-compose -f docker-compose-dev.yml ps  # 查看状态
-
-# 配置管理
-cd conf
-./switch-to-dev.sh      # 切换到开发配置
-./restore-original.sh   # 恢复原配置
-
-# API 管理
-python api/main.py      # 启动 API 服务器
-nohup python api/main.py > api.log 2>&1 &  # 后台运行
-```
-
 ### 🔍 故障排除
 
 **Docker 服务启动失败**：
-- Infinity 镜像不支持 ARM64：使用简化模式（选项 2）
 - 端口冲突：修改 `.env` 文件中的端口配置
+- 镜像拉取失败：检查网络或更换镜像源
 
 **API 连接失败**：
-- 检查 Docker 服务状态：`docker-compose -f docker-compose-dev.yml ps`
-- 重新应用配置：`cd conf && ./switch-to-dev.sh`
+- 检查 Docker 服务状态：`docker-compose ps`
+- 检查端口映射和防火墙
 
 **Python 环境问题**：
-- 设置 PYTHONPATH：`export PYTHONPATH=/Users/zhaozhilong/Desktop/cursor/Test/ragforge`
+- 设置 PYTHONPATH：`export PYTHONPATH=/path/to/ragforge`
 - 安装依赖：`uv sync --python 3.10 --all-extras`
 
 ## 🔧 源码编译
