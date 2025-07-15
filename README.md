@@ -175,18 +175,26 @@ export STORAGE_IMPL=MINIO  # 默认使用 MinIO
 
 ## 🔧 源码编译
 
-### 轻量版本（约 2GB）
+### 构建 RAGForge 镜像
 ```bash
-docker build -f Dockerfile -t newragforge:slim .
+# 在项目根目录执行
+docker build -f Dockerfile -t ragforge:latest .
 ```
 
-### 完整版本（约 9GB）
+### 构建 Web 控制台镜像
 ```bash
-docker build -f Dockerfile -t newragforge:full .
+# 在 web 目录执行
+cd web
+docker build -f Dockerfile -t ragforge-web:latest .
 ```
 
-### ARM 架构支持
-如需在 ARM64 平台运行，请参考[构建指南](https://ragforge.io/docs/dev/build_docker_image)自行编译镜像。
+### 多架构支持
+项目支持 x86_64 和 ARM64 架构。在 ARM64 平台（如 Apple Silicon Mac）上构建时，Docker 会自动使用适合的架构。
+
+### 构建优化
+- 使用 `--no-cache` 参数强制重新构建：`docker build --no-cache -f Dockerfile -t ragforge:latest .`
+- 使用多阶段构建减少镜像大小（可选）
+- 构建时间约 10-15 分钟，取决于网络和硬件性能
 
 ## 📚 文档资源
 
