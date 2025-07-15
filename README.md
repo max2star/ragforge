@@ -77,6 +77,12 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
 
 ## 🎬 快速开始
 
+### 🖼️ 系统预览
+
+![RAGForge 登录页面](https://ragforge-bucket.oss-cn-hangzhou.aliyuncs.com/login.png?Expires=1752564947&OSSAccessKeyId=TMP.3KmX5dkiSwLfwhG4SCRTxoATUNTY49pt3xQ5ZwCRHKDJAERab8tRWLm3PCsFeMZDt3zLiEYfSj7UpyQd44HCTjrQvWe2sx&Signature=LT9Vw3cI7xxwx3LCHsbLFMTawlo%3D)
+
+![RAGForge 知识库管理](https://ragforge-bucket.oss-cn-hangzhou.aliyuncs.com/knowledge.png?Expires=1752564991&OSSAccessKeyId=TMP.3KmX5dkiSwLfwhG4SCRTxoATUNTY49pt3xQ5ZwCRHKDJAERab8tRWLm3PCsFeMZDt3zLiEYfSj7UpyQd44HCTjrQvWe2sx&Signature=Rp61R%2BSB43LCC6FKYX%2BVl5XWkCQ%3D)
+
 ### 📋 系统要求
 - CPU >= 4 核
 - RAM >= 16 GB
