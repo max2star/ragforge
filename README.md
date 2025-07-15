@@ -196,15 +196,10 @@ docker build -f Dockerfile -t ragforge-web:latest .
 - 使用多阶段构建减少镜像大小（可选）
 - 构建时间约 10-15 分钟，取决于网络和硬件性能
 
-## 📚 文档资源
-
-- [API 文档](https://ragforge.io/docs/dev/category/api)
-- [配置指南](https://ragforge.io/docs/dev/category/configuration)
-- [部署指南](https://ragforge.io/docs/dev/category/deployment)
 
 ## 🤝 商务合作
 
-如有商务合作需求，请联系：business@infiniflow.com
+如有商务合作需求，请联系：business@btdata.com.cn
 
 ---
 
