@@ -128,6 +128,8 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
 
 ### 🚀 推荐开发流程
 
+#### 方式一：Docker 开发环境（推荐）
+
 1. **进入 docker 目录，使用脚本启动开发环境**
    ```bash
    cd docker
@@ -147,6 +149,46 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
    docker-compose logs -f    # 查看实时日志
    docker-compose down       # 停止并移除所有服务
    ```
+
+#### 方式二：Python 源码启动
+
+1. **安装依赖**
+   ```bash
+   # 安装 uv
+   pip install uv
+   
+   # 安装 Python 依赖
+   uv sync --python 3.10 --all-extras
+   ```
+
+2. **启动数据库服务**
+   ```bash
+   # 启动基础服务 (MySQL, Redis, Elasticsearch, MinIO)
+   docker compose -f docker/docker-compose-base.yml up -d
+   ```
+
+3. **启动 RAGForge 服务器**
+   ```bash
+   # 方式一：使用启动脚本（推荐）
+   ./start.sh
+   
+   # 方式二：手动启动
+   source .venv/bin/activate
+   export PYTHONPATH=$(pwd)
+   python api/ragforge_server.py
+   ```
+
+4. **启动前端服务（可选）**
+   ```bash
+   cd web
+   npm install
+   npm run dev
+   ```
+
+5. **访问服务**
+   - 后端 API：http://localhost:9380
+   - API 文档：http://localhost:9380/apidocs/
+   - 前端控制台：http://localhost:3000（如果启动了前端）
 
 ### 🛠️ 环境变量配置
 
