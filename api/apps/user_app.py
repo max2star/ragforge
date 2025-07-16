@@ -628,6 +628,142 @@ def user_add():
         )
 
 
+@manager.route("/change_password", methods=["POST"])  # noqa: F821
+@login_required
+@validate_request("old_password", "new_password")
+def change_password():
+    """
+    Change user password.
+    ---
+    tags:
+      - User
+    security:
+      - ApiKeyAuth: []
+    parameters:
+      - in: body
+        name: body
+        description: Password change details.
+        required: true
+        schema:
+          type: object
+          properties:
+            old_password:
+              type: string
+              description: Current password (encrypted).
+            new_password:
+              type: string
+              description: New password (encrypted).
+    responses:
+      200:
+        description: Password changed successfully.
+        schema:
+          type: object
+      401:
+        description: Authentication failed.
+        schema:
+          type: object
+    """
+    request_data = request.json
+    old_password = request_data.get("old_password")
+    new_password = request_data.get("new_password")
+    
+    try:
+        # 解密旧密码
+        old_password_decrypted = decrypt(old_password)
+        # 验证旧密码
+        if not check_password_hash(current_user.password, old_password_decrypted):
+            return get_json_result(
+                data=False,
+                code=settings.RetCode.AUTHENTICATION_ERROR,
+                message="Current password is incorrect!"
+            )
+        
+        # 解密新密码
+        new_password_decrypted = decrypt(new_password)
+        # 生成新密码哈希
+        new_password_hash = generate_password_hash(new_password_decrypted)
+        
+        # 更新密码
+        UserService.update_by_id(current_user.id, {"password": new_password_hash})
+        
+        return get_json_result(data=True, message="Password changed successfully!")
+        
+    except Exception as e:
+        logging.exception(e)
+        return get_json_result(
+            data=False,
+            message="Failed to change password!",
+            code=settings.RetCode.EXCEPTION_ERROR
+        )
+
+
+@manager.route("/reset_password", methods=["POST"])  # noqa: F821
+@validate_request("email", "new_password")
+def reset_password():
+    """
+    Reset user password (for forgotten password).
+    ---
+    tags:
+      - User
+    parameters:
+      - in: body
+        name: body
+        description: Password reset details.
+        required: true
+        schema:
+          type: object
+          properties:
+            email:
+              type: string
+              description: User email.
+            new_password:
+              type: string
+              description: New password (encrypted).
+    responses:
+      200:
+        description: Password reset successfully.
+        schema:
+          type: object
+      404:
+        description: User not found.
+        schema:
+          type: object
+    """
+    request_data = request.json
+    email = request_data.get("email")
+    new_password = request_data.get("new_password")
+    
+    try:
+        # 查找用户
+        users = UserService.query(email=email)
+        if not users:
+            return get_json_result(
+                data=False,
+                code=settings.RetCode.OPERATING_ERROR,
+                message=f"User with email {email} not found!"
+            )
+        
+        user = users[0]
+        
+        # 解密新密码
+        new_password_decrypted = decrypt(new_password)
+        # 生成新密码哈希
+        new_password_hash = generate_password_hash(new_password_decrypted)
+        
+        # 更新密码
+        UserService.update_by_id(user.id, {"password": new_password_hash})
+        
+        return get_json_result(data=True, message="Password reset successfully!")
+        
+    except Exception as e:
+        logging.exception(e)
+        return get_json_result(
+            data=False,
+            message="Failed to reset password!",
+            code=settings.RetCode.EXCEPTION_ERROR
+        )
+
+
 @manager.route("/tenant_info", methods=["GET"])  # noqa: F821
 @login_required
 def tenant_info():
