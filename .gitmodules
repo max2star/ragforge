@@ -4,3 +4,6 @@
 [submodule "web"]
 	path = web
 	url = https://github.com/zhaozhilong1993/ragforge-webconsole.git
+[submodule "ragforge-shell"]
+	path = ragforge-shell
+	url = https://github.com/zhaozhilong1993/ragforge-shell.git
