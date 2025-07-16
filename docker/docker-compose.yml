@@ -143,7 +143,3 @@ volumes:
   redis_data:
   ragforge_logs:
   ragforge_data:
-
-networks:
-  default:
-    driver: bridge
