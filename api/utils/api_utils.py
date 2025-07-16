@@ -146,7 +146,11 @@ def validate_request(*args, **kwargs):
     def wrapper(func):
         @wraps(func)
         def decorated_function(*_args, **_kwargs):
-            input_arguments = flask_request.json or flask_request.form.to_dict()
+            # 只在 application/json 时解析 json，否则用 form
+            if flask_request.content_type and flask_request.content_type.startswith('application/json'):
+                input_arguments = flask_request.get_json(silent=True) or {}
+            else:
+                input_arguments = flask_request.form.to_dict()
             no_arguments = []
             error_arguments = []
             for arg in args:
@@ -178,7 +182,13 @@ def validate_request(*args, **kwargs):
 def not_allowed_parameters(*params):
     def decorator(f):
         def wrapper(*args, **kwargs):
-            input_arguments = flask_request.json or flask_request.form.to_dict()
+            # 修复 multipart/form-data 处理
+            try:
+                input_arguments = flask_request.json
+            except Exception:
+                # 如果 JSON 解析失败（比如 multipart/form-data），使用 form 数据
+                input_arguments = flask_request.form.to_dict()
+            
             for param in params:
                 if param in input_arguments:
                     return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, message=f"Parameter {param} isn't allowed")
