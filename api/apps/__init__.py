@@ -38,7 +38,7 @@ from api.constants import API_VERSION
 
 __all__ = ["app"]
 
-Request.json = property(lambda self: self.get_json(force=True, silent=True))
+# Request.json = property(lambda self: self.get_json(force=True, silent=True))
 
 app = Flask(__name__)
 
@@ -174,7 +174,12 @@ def load_user(web_request):
 
     if authorization:
         try:
-            access_token = str(jwt.loads(authorization))
+            # 首先尝试解析为签名token
+            try:
+                access_token = str(jwt.loads(authorization))
+            except Exception:
+                # 如果解析失败，直接使用原始token
+                access_token = authorization
 
             # 添加重试机制处理数据库连接问题
             max_retries = 3
@@ -309,8 +314,14 @@ def not_found(error):
 def log_request_info():
     """记录每个请求的详细信息"""
     logging.debug(f"Request: {request.method} {request.url}")
-    if request.is_json and request.get_json():
-        logging.debug(f"Request JSON: {request.get_json()}")
+    # 只在 POST/PUT/PATCH 并且 Content-Type 为 application/json 时尝试解析 JSON
+    if request.method in ["POST", "PUT", "PATCH"] and request.headers.get('Content-Type', '').startswith('application/json'):
+        try:
+            json_data = request.get_json()
+            if json_data:
+                logging.debug(f"Request JSON: {json_data}")
+        except Exception as e:
+            logging.debug(f"Request JSON parsing failed: {e}")
 
 # 添加认证调试端点
 @app.route('/debug/auth', methods=['GET'])
