@@ -450,8 +450,11 @@ def decrypt(line):
         "private.pem")
     rsa_key = RSA.importKey(open(file_path).read(), "Welcome")
     cipher = Cipher_pkcs1_v1_5.new(rsa_key)
-    return cipher.decrypt(base64.b64decode(
-        line), "Fail to decrypt password!").decode('utf-8')
+    decrypted = cipher.decrypt(base64.b64decode(line), "Fail to decrypt password!")
+    if isinstance(decrypted, bytes):
+        return decrypted.decode('utf-8')
+    else:
+        return decrypted
 
 
 def decrypt2(crypt_text):
