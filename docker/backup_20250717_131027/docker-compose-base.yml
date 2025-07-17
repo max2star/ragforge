@@ -1,0 +1,357 @@
+services:
+  es01:
+    container_name: ragforge-es-01
+    profiles:
+      - elasticsearch
+    image: elasticsearch:${STACK_VERSION}
+    hostname: es01
+    privileged: true
+    volumes:
+      - ./certs:/usr/share/elasticsearch/config/certs
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    env_file: .env
+    environment:
+      #默认逻辑是按照内存最大限制取1/2，并且不超过32G；大于32G需要覆盖
+      - "ES_JAVA_OPTS=-Xms64g -Xmx64g"
+      - node.name=es01
+      - cluster.name=docker-cluster
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+        #- discovery.type=single-node
+      - network.host=0.0.0.0
+      - node.roles=["master","data","ingest"]
+      - discovery.seed_hosts=["es01","es02"]
+      - cluster.initial_master_nodes=["es01"]
+      - http.max_initial_line_length="16K"
+      - indices.query.bool.max_clause_count=10240
+        #8.x以上这些配置已经是根据内存自动计算了,需要提升内存，否则无法真正生效
+        #- indices.query.bool.max_clause_count="20000"
+        #- index.max_clause_count="20000"
+      - bootstrap.memory_lock=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - search.max_buckets=50000000
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.http.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.http.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.transport.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - cluster.routing.allocation.disk.watermark.low=5gb
+      - cluster.routing.allocation.disk.watermark.high=3gb
+      - cluster.routing.allocation.disk.watermark.flood_stage=2gb
+      - TZ=${TIMEZONE}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl --insecure --user elastic:$ELASTIC_PASSWORD https://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.252
+    extra_hosts:
+        - "es01:172.20.0.252"
+        - "es02:172.20.0.253"
+    restart: on-failure
+
+  es02:
+    container_name: ragforge-es-02
+    profiles:
+      - elasticsearch
+    image: elasticsearch:${STACK_VERSION}
+    hostname: es02
+    privileged: true
+    volumes:
+      - ./certs:/usr/share/elasticsearch/config/certs
+      - esdata02:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT_2}:9200
+    env_file: .env
+    environment:
+      #默认逻辑是按照内存最大限制取1/2，并且不超过32G；大于32G需要覆盖
+      - "ES_JAVA_OPTS=-Xms64g -Xmx64g"
+      - node.name=es02
+      - cluster.name=docker-cluster
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - network.host=0.0.0.0
+      - node.roles=["master","data","ingest"]
+      - discovery.seed_hosts=["es01","es02"]
+      - http.max_initial_line_length="16K"
+      - search.max_bool_clause_count="20000"
+      - indices.query.bool.max_clause_count=10240
+        #8.x以上这些配置已经是根据内存自动计算了,需要提升内存，否则无法真正生效
+        #- indices.query.bool.max_clause_count="20000"
+        #- index.max_clause_count="20000"
+        #- indices.query.bool.max_clause_count=10240
+      - cluster.initial_master_nodes=["es01"]
+      - bootstrap.memory_lock=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - search.max_buckets=50000000
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.http.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.http.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.keystore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - xpack.security.transport.ssl.truststore.path=/usr/share/elasticsearch/config/certs/elastic-certificates.p12
+      - cluster.routing.allocation.disk.watermark.low=5gb
+      - cluster.routing.allocation.disk.watermark.high=3gb
+      - cluster.routing.allocation.disk.watermark.flood_stage=2gb
+      - TZ=${TIMEZONE}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: ["CMD-SHELL", "curl --insecure --user elastic:$ELASTIC_PASSWORD https://localhost:9200"]
+        #test: ["CMD-SHELL", "curl http://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.253
+    extra_hosts:
+        - "es01:172.20.0.252"
+        - "es02:172.20.0.253"
+    restart: on-failure
+
+  infinity:
+    container_name: ragforge-infinity
+    profiles:
+      - infinity
+    image: infiniflow/infinity:v0.6.0-dev3
+    privileged: true
+    volumes:
+      - infinity_data:/var/infinity
+      - ./infinity_conf.toml:/infinity_conf.toml
+    command: ["-f", "/infinity_conf.toml"]
+    ports:
+      - ${INFINITY_THRIFT_PORT}:23817
+      - ${INFINITY_HTTP_PORT}:23820
+      - ${INFINITY_PSQL_PORT}:5432
+    env_file: .env
+    environment:
+      - TZ=${TIMEZONE}
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
+    networks:
+      - ragforge
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:23820/admin/node/current"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: on-failure
+
+
+  mysql-ragforge:
+    # mysql:5.7 linux/arm64 image is unavailable.
+    image: mysql:8.0.39
+    container_name: ragforge-mysql
+    env_file: .env
+    privileged: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - TZ=${TIMEZONE}
+    command:
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --tls_version="TLSv1.2,TLSv1.3"
+      --init-file /data/application/init.sql
+      --binlog_expire_logs_seconds=604800
+    ports:
+      - ${MYSQL_PORT}:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/data/application/init.sql
+    networks:
+      - ragforge
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-uroot", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    restart: on-failure
+
+  minio-ragforge:
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+    container_name: ragforge-minio
+    command: server --console-address ":9001" /data --certs-dir /etc/.minio/certs/
+    privileged: true
+    ports:
+      - ${MINIO_PORT}:9000
+      - ${MINIO_CONSOLE_PORT}:9001
+    env_file: .env
+    environment:
+      - MINIO_SERVER_URL=${MINIO_SERVER_URL}
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+      - TZ=${TIMEZONE}
+        #- MINIO_KMS_KES_ENDPOINT=https://kes:7373
+        #- MINIO_KMS_KES_CERT_FILE=/etc/.minio/certs/public.crt
+        #- MINIO_KMS_KES_KEY_FILE=/etc/.minio/certs/private.key
+        #- MINIO_KMS_KES_CAPATH=/etc/.minio/certs/public.crt
+        #- MINIO_KMS_KES_KEY_NAME=my-key-1 #minio-default-key
+    volumes:
+      - minio_data:/data
+      - ./nginx/public.crt:/etc/.minio/certs/public.crt
+      - ./nginx/private.key:/etc/.minio/certs/private.key
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.250
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k https://localhost:9001"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  minio-ragforge-backup:
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+    container_name: ragforge-minio-backup
+    privileged: true
+    command: server --console-address ":9001" /data --certs-dir /etc/.minio/certs/
+    ports:
+      - ${MINIO_PORT_BACKUP}:9000
+      - ${MINIO_CONSOLE_PORT_BACKUP}:9001
+    env_file: .env
+    environment:
+      - MINIO_SERVER_URL=${MINIO_SERVER_URL_BACKUP}
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD_BACKUP}
+      - TZ=${TIMEZONE}
+        #- MINIO_KMS_KES_ENDPOINT=https://kes:7373
+        #- MINIO_KMS_KES_CERT_FILE=/etc/.minio/certs/public.crt
+        #- MINIO_KMS_KES_KEY_FILE=/etc/.minio/certs/private.key
+        #- MINIO_KMS_KES_CAPATH=/etc/.minio/certs/public.crt
+        #- MINIO_KMS_KES_KEY_NAME=my-key-1 #minio-default-key
+
+    volumes:
+      - minio_data_backup:/data
+      - ./nginx/public.crt:/etc/.minio/certs/public.crt
+      - ./nginx/private.key:/etc/.minio/certs/private.key
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.251
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k https://localhost:9001"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  redis-ragforge:
+    # swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/valkey/valkey:8
+    image: valkey/valkey:8
+    privileged: true
+    container_name: ragforge-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    env_file: .env
+    ports:
+      - ${REDIS_PORT}:6379
+    volumes:
+      - redis_data:/data
+    networks:
+      - ragforge
+    ulimits:
+      nofile:
+        soft: 500000
+        hard: 500000
+    healthcheck:
+      test: ["CMD", "redis-cli" ,"ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    restart: on-failure
+
+  # HashiCorp Vault 服务
+  vault:
+    image: hashicorp/vault:1.15.5
+    container_name: ragforge-vault
+    privileged: true
+    environment:
+      #VAULT_DEV_ROOT_TOKEN_ID: "minio-kes-token"  # 预置根令牌（仅用于开发）
+      #VAULT_TOKEN: 'hvs.O6QNQB33ksXtMxtlRKlRZL0R'
+      VAULT_API_ADDR: "https://vault:8200"
+      VAULT_ADDR: "https://vault:8201"
+      VAULT_CACERT: "/vault/config/public.crt"
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./vault.json:/vault/config/vault.json:rw
+      - ./nginx/public.crt:/vault/config/public.crt
+      - ./nginx/private.key:/vault/config/private.key
+      - ./file:/vault/file:rw
+      - ./logs:/vault/logs
+      - vault_data:/vault/data
+    cap_add:
+      - IPC_LOCK
+    command: server
+    restart: on-failure
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.231
+
+  #KES 服务
+  kes:
+    image: minio/kes:v0.22.0
+    container_name: ragforge-kes
+    privileged: true
+    depends_on:
+      - vault
+    environment:
+      KES_SERVER_TLS_KEY_FILE: /certs/private.key
+      KES_SERVER_TLS_CERT_FILE: /certs/public.crt
+      SSL_CERT_FILE: /certs/public.crt
+    volumes:
+      - ./nginx/public.crt:/certs/public.crt # 挂载 TLS 证书目录
+      - ./nginx/private.key:/certs/private.key
+      - ./kes-config.yaml:/etc/kes-config.yaml:ro
+    command: server --config=/etc/kes-config.yaml --auth=off
+    ports:
+      - "7373:7373"  # KES API 端口
+    networks:
+      ragforge:
+        ipv4_address: 172.20.0.230
+
+volumes:
+  esdata01:
+    driver: local
+  esdata02:
+    driver: local
+  infinity_data:
+    driver: local
+  mysql_data:
+    driver: local
+  minio_data:
+    driver: local
+  minio_data_backup:
+    driver: local
+  redis_data:
+    driver: local
+  vault_data:
+    driver: local
+
+networks:
+  ragforge:
+    driver: bridge
+    ipam:
+       config:
+       - subnet: 172.20.0.0/16
