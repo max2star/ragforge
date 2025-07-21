@@ -31,27 +31,20 @@
 
 ## 使用方法
 
-### 方法 1：使用隔离启动脚本（推荐）
-
-```bash
-cd docker
-./start-isolated.sh
-```
-
-这个脚本提供了以下功能：
-- 使用 `ragforge` 作为 Docker Compose 项目名
-- 自动清理孤立的容器和网络
-- 提供完整的服务管理功能
-- 避免与其他项目的容器冲突
-
-### 方法 2：使用更新后的原始脚本
+### 使用启动脚本（推荐）
 
 ```bash
 cd docker
 ./start.sh
 ```
 
-### 方法 3：手动使用 Docker Compose
+这个脚本提供了以下功能：
+- 使用 `ragforge` 作为 Docker Compose 项目名
+- 只管理 ragforge 相关容器，不影响其他项目
+- 提供完整的服务管理功能
+- 避免与其他项目的容器冲突
+
+### 手动使用 Docker Compose
 
 ```bash
 cd docker
@@ -70,9 +63,9 @@ docker-compose -p ragforge down
 
 ## 脚本说明
 
-### start-isolated.sh
-- **功能**：隔离环境启动脚本
-- **特点**：使用项目前缀，避免容器冲突
+### start.sh
+- **功能**：RAGForge 服务启动脚本
+- **特点**：只管理 ragforge 相关容器，不影响其他项目
 - **选项**：
   1. 启动所有服务（生产环境）
   2. 启动所有服务（开发环境）
@@ -82,7 +75,6 @@ docker-compose -p ragforge down
   6. 查看服务状态
   7. 查看服务日志
   8. 重新构建并启动
-  9. 清理所有 ragforge 相关容器
 
 ### update-container-names.sh
 - **功能**：自动更新容器名称
