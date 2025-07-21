@@ -53,7 +53,9 @@ class RAGForgeMinio:
             
             # Use HTTP for localhost/development environment, HTTPS for production
             is_localhost = settings.MINIO["host"].startswith("localhost") or settings.MINIO["host"].startswith("127.0.0.1")
-            secure_connection = not is_localhost
+            # For Docker environment, also use HTTP for internal container names
+            is_docker_internal = ":" in settings.MINIO["host"] and not is_localhost
+            secure_connection = not (is_localhost or is_docker_internal)
             self.secure = secure_connection  # Update the instance variable
             
             self.conn = Minio(settings.MINIO["host"],
