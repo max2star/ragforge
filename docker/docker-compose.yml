@@ -8,25 +8,25 @@ services:
       - "9380:9380"
     environment:
       # 数据库配置
-      - RAGFORGE_MYSQL_HOST=mysql
+      - RAGFORGE_MYSQL_HOST=ragforge-mysql
       - RAGFORGE_MYSQL_PORT=3306
       - RAGFORGE_MYSQL_USER=root
       - RAGFORGE_MYSQL_PASSWORD=ragforge123
       - RAGFORGE_MYSQL_DBNAME=ragforge
       
       # Elasticsearch 配置
-      - RAGFORGE_ES_HOSTS=http://elasticsearch:9200
+      - RAGFORGE_ES_HOSTS=http://ragforge-elasticsearch:9200
       - RAGFORGE_ES_USERNAME=elastic
       - RAGFORGE_ES_PASSWORD=
       
       # MinIO 配置
-      - RAGFORGE_MINIO_HOST=minio:9000
+      - RAGFORGE_MINIO_HOST=ragforge-minio:9000
       - RAGFORGE_MINIO_USER=minioadmin
       - RAGFORGE_MINIO_PASSWORD=minioadmin
       - RAGFORGE_MINIO_BUCKET_ENCRYPTION=false
       
       # Redis 配置
-      - RAGFORGE_REDIS_HOST=redis
+      - RAGFORGE_REDIS_HOST=ragforge-redis
       - RAGFORGE_REDIS_PORT=6379
       - RAGFORGE_REDIS_PASSWORD=ragforge123
       
