@@ -28,8 +28,8 @@ read -p "请选择操作 (1-8): " choice
 
 case $choice in
     1)
-        docker-compose down --remove-orphans
-        docker network prune -f
+        # 只停止 ragforge 相关的容器，不影响其他项目
+        docker-compose down
         check_port 80
         check_port 9380
         echo "启动所有服务（生产环境）..."
@@ -37,7 +37,7 @@ case $choice in
           echo "❌ 启动失败。常见原因："
           echo "- 端口被占用"
           echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down --remove-orphans && docker container prune -f && docker network prune -f"
+          echo "建议执行：docker-compose down && docker container prune -f"
           exit 1
         fi
         echo "✅ 所有服务已启动"
@@ -49,8 +49,8 @@ case $choice in
         echo "💾 Redis: localhost:6379"
         ;;
     2)
-        docker-compose down --remove-orphans
-        docker network prune -f
+        # 只停止 ragforge 相关的容器，不影响其他项目
+        docker-compose down
         check_port 3000
         check_port 9380
         echo "启动所有服务（开发环境）..."
@@ -58,7 +58,7 @@ case $choice in
           echo "❌ 启动失败。常见原因："
           echo "- 端口被占用"
           echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down --remove-orphans && docker container prune -f && docker network prune -f"
+          echo "建议执行：docker-compose down && docker container prune -f"
           exit 1
         fi
         echo "✅ 所有服务已启动（开发模式）"
@@ -66,29 +66,29 @@ case $choice in
         echo "🔧 API服务: http://localhost:9380"
         ;;
     3)
-        docker-compose down --remove-orphans
-        docker network prune -f
+        # 只停止 ragforge 相关的容器，不影响其他项目
+        docker-compose down
         check_port 9380
         echo "仅启动后端服务..."
         if ! docker-compose up -d ragforge-ragforge ragforge-mysql ragforge-elasticsearch ragforge-minio ragforge-redis; then
           echo "❌ 启动失败。常见原因："
           echo "- 端口被占用"
           echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down --remove-orphans && docker container prune -f && docker network prune -f"
+          echo "建议执行：docker-compose down && docker container prune -f"
           exit 1
         fi
         echo "✅ 后端服务已启动"
         echo "🔧 API服务: http://localhost:9380"
         ;;
     4)
-        docker-compose down --remove-orphans
-        docker network prune -f
+        # 只停止 ragforge 相关的容器，不影响其他项目
+        docker-compose down
         echo "仅启动数据库服务..."
         if ! docker-compose up -d ragforge-mysql ragforge-elasticsearch ragforge-minio ragforge-redis; then
           echo "❌ 启动失败。常见原因："
           echo "- 端口被占用"
           echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down --remove-orphans && docker container prune -f && docker network prune -f"
+          echo "建议执行：docker-compose down && docker container prune -f"
           exit 1
         fi
         echo "✅ 数据库服务已启动"
@@ -107,10 +107,9 @@ case $choice in
         docker-compose logs -f
         ;;
     8)
-        docker-compose down --remove-orphans
-        docker network prune -f
-        echo "重新构建并启动..."
+        # 只停止 ragforge 相关的容器，不影响其他项目
         docker-compose down
+        echo "重新构建并启动..."
         if ! docker-compose build --no-cache; then
           echo "❌ 构建失败，请检查Dockerfile和依赖。"
           exit 1
@@ -119,7 +118,7 @@ case $choice in
           echo "❌ 启动失败。常见原因："
           echo "- 端口被占用"
           echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down --remove-orphans && docker container prune -f && docker network prune -f"
+          echo "建议执行：docker-compose down && docker container prune -f"
           exit 1
         fi
         echo "✅ 服务已重新构建并启动"

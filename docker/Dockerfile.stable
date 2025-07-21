@@ -1,15 +1,9 @@
 # 使用Python 3.10作为基础镜像
 FROM python:3.10-slim
 
-# 兼容新版 debian，换源前先判断文件是否存在
-RUN if [ -f /etc/apt/sources.list ]; then \
-      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
-      sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
-    fi && \
-    if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
-      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-      sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; \
-    fi
+# 设置APT镜像源为阿里云，提高下载速度和稳定性
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
 
 # 设置工作目录
 WORKDIR /ragforge
@@ -19,43 +13,20 @@ ENV PYTHONPATH=/ragforge
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 安装系统依赖，带重试机制
-RUN set -eux; \
-    for i in 1 2 3; do \
-      apt-get update --fix-missing && \
-      apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        wget \
-        git \
-        build-essential \
-        pkg-config \
-        libicu-dev \
-        libglib2.0-0 \
-        libglx-mesa0 \
-        libgl1 \
-        libgdiplus \
-        default-jdk \
-        libatk-bridge2.0-0 \
-        libpython3-dev \
-        libgtk-4-1 \
-        libnss3 \
-        xdg-utils \
-        libgbm-dev \
-        libjemalloc-dev \
-        libreoffice \
-        libreoffice-l10n-zh-cn \
-        fonts-wqy-zenhei \
-        fonts-wqy-microhei \
-        unixodbc \
-        unixodbc-dev \
-      && rm -rf /var/lib/apt/lists/* && break || sleep 5; \
-    done
+# 安装系统依赖 - 分阶段安装以提高成功率
+RUN apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends ca-certificates curl wget git && \
+    apt-get install -y --no-install-recommends build-essential pkg-config libicu-dev && \
+    apt-get install -y --no-install-recommends libglib2.0-0 libglx-mesa0 libgl1 libgdiplus && \
+    apt-get install -y --no-install-recommends default-jdk libatk-bridge2.0-0 libpython3-dev && \
+    apt-get install -y --no-install-recommends libgtk-4-1 libnss3 xdg-utils libgbm-dev && \
+    apt-get install -y --no-install-recommends libjemalloc-dev libreoffice libreoffice-l10n-zh-cn && \
+    apt-get install -y --no-install-recommends fonts-wqy-zenhei fonts-wqy-microhei && \
+    apt-get install -y --no-install-recommends unixodbc unixodbc-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# 安装uv包管理器，使用国内镜像源和重试机制
-RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple/ --trusted-host pypi.tuna.tsinghua.edu.cn uv || \
-    pip install -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com uv || \
-    pip install uv
+# 安装uv包管理器
+RUN pip install uv
 
 # 复制项目文件
 COPY pyproject.toml uv.lock ./
@@ -69,15 +40,10 @@ COPY tests/ ./tests/
 COPY graphrag/ ./graphrag/
 COPY agentic_reasoning/ ./agentic_reasoning/
 COPY mcp/ ./mcp/
-# COPY sdk/ ./sdk/  # 已删除
-# COPY helm/ ./helm/  # 已删除
-# COPY intergrations/ ./intergrations/  # 已删除
 COPY flask_session/ ./flask_session/
 
-# 安装Python依赖，使用国内镜像源
-RUN uv sync --python 3.10 --frozen --index-url https://pypi.tuna.tsinghua.edu.cn/simple/ || \
-    uv sync --python 3.10 --frozen --index-url https://mirrors.aliyun.com/pypi/simple/ || \
-    uv sync --python 3.10 --frozen
+# 安装Python依赖
+RUN uv sync --python 3.10 --frozen
 
 # 下载NLTK数据
 RUN .venv/bin/python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('averaged_perceptron_tagger'); nltk.download('wordnet'); nltk.download('stopwords')"
