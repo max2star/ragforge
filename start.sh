@@ -108,6 +108,11 @@ download_source() {
     else
         print_info "源码已存在，跳过下载"
     fi
+    
+    # 初始化子模块
+    print_info "初始化Git子模块..."
+    git submodule update --init --recursive
+    print_success "子模块初始化完成"
 }
 
 # 安装依赖
