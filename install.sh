@@ -2,6 +2,7 @@
 
 # RAGForge 一键安装脚本
 # 使用方法: curl -fsSL https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh | bash
+# 备用方法: curl -fsSL https://api.github.com/repos/zhaozhilong1993/ragforge/contents/install.sh | jq -r '.content' | base64 -d | bash
 
 set -e
 
@@ -212,6 +213,16 @@ show_usage() {
     echo ""
     print_info "📁 项目位置: $HOME/ragforge"
     print_info "🐳 Docker服务: cd ~/ragforge/docker && docker-compose up -d"
+    echo ""
+}
+
+# 显示下载方法
+show_download_methods() {
+    echo ""
+    print_info "📥 下载方法:"
+    echo "  方法1: curl -fsSL https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh | bash"
+    echo "  方法2: curl -fsSL https://api.github.com/repos/zhaozhilong1993/ragforge/contents/install.sh | jq -r '.content' | base64 -d | bash"
+    echo "  方法3: wget -qO- https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh | bash"
     echo ""
 }
 
