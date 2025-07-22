@@ -159,7 +159,7 @@ start_docker_services() {
         exit 1
     fi
     
-    print_info "🐳 启动Docker容器..."
+    print_info "🐳 启动数据库服务 (MySQL, Redis, Elasticsearch, MinIO)..."
     docker-compose up -d
     
     print_info "⏳ 等待服务启动 (30秒)..."
@@ -169,6 +169,7 @@ start_docker_services() {
     docker-compose ps
     
     print_success "✅ Docker服务启动完成"
+    print_info "📝 数据库服务已启动，接下来将启动 RAGForge 服务器"
 }
 
 # 启动RAGForge服务器
