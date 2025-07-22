@@ -2,20 +2,52 @@
 
 ## 🚀 快速开始
 
-### 一键安装（推荐）
+### 方法一：一键安装（推荐）
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh | bash
 ```
 
-这个命令会自动完成以下操作：
-1. ✅ 检查系统要求
-2. 📦 下载 RAGForge 源码
-3. 🐍 安装 Python 依赖
-4. 🐳 启动 Docker 服务
-5. 🚀 启动 RAGForge 服务器
+### 方法二：备用下载方式
 
-### 系统要求
+如果上面的方法不工作，可以尝试：
+
+```bash
+# 使用 GitHub API
+curl -fsSL https://api.github.com/repos/zhaozhilong1993/ragforge/contents/install.sh | jq -r '.content' | base64 -d | bash
+
+# 使用 wget
+wget -qO- https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh | bash
+
+# 手动下载后执行
+wget https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/install.sh
+chmod +x install.sh
+./install.sh
+```
+
+### 方法三：手动安装
+
+如果自动安装失败，可以手动执行：
+
+```bash
+# 1. 克隆仓库
+git clone https://github.com/zhaozhilong1993/ragforge.git
+cd ragforge
+
+# 2. 安装依赖
+uv sync --python 3.10
+
+# 3. 启动 Docker 服务
+cd docker
+docker-compose up -d
+
+# 4. 启动服务器
+cd ..
+source .venv/bin/activate
+python api/ragforge_server.py
+```
+
+## 📋 系统要求
 
 在运行安装脚本之前，请确保您的系统已安装：
 
@@ -23,6 +55,48 @@ curl -fsSL https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/insta
 - **Docker** - [下载地址](https://docker.com)
 - **Docker Compose** - 通常随 Docker 一起安装
 - **Git** - [下载地址](https://git-scm.com)
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **404 错误 - 文件未找到**
+   ```
+   错误: curl: (56) The requested URL returned error: 404
+   解决: 使用备用下载方式或手动安装
+   ```
+
+2. **GitHub 仓库不存在**
+   ```
+   错误: "message": "Not Found"
+   解决: 检查仓库名称或使用手动安装
+   ```
+
+3. **Python 版本过低**
+   ```
+   错误: Python3 未安装或版本过低
+   解决: 安装 Python 3.10+
+   ```
+
+4. **Docker 未启动**
+   ```
+   错误: Docker 未安装或未启动
+   解决: 安装并启动 Docker
+   ```
+
+### 测试系统要求
+
+运行以下命令测试系统是否满足要求：
+
+```bash
+# 下载测试脚本
+curl -fsSL https://raw.githubusercontent.com/zhaozhilong1993/ragforge/main/test_install.sh | bash
+
+# 或者手动测试
+echo "检查 Python3: $(python3 --version)"
+echo "检查 Docker: $(docker --version)"
+echo "检查 Git: $(git --version)"
+```
 
 ## 📋 安装步骤详解
 
@@ -104,56 +178,6 @@ docker-compose logs -f
 ├── .venv/                  # Python 虚拟环境
 ├── start.sh               # 启动脚本
 └── install.sh             # 安装脚本
-```
-
-## 🔧 故障排除
-
-### 常见问题
-
-1. **Python 版本过低**
-   ```
-   错误: Python3 未安装或版本过低
-   解决: 安装 Python 3.10+
-   ```
-
-2. **Docker 未启动**
-   ```
-   错误: Docker 未安装或未启动
-   解决: 安装并启动 Docker
-   ```
-
-3. **端口被占用**
-   ```
-   错误: 端口 9380 被占用
-   解决: 停止占用端口的服务或修改端口
-   ```
-
-4. **Docker 容器启动失败**
-   ```bash
-   cd ~/ragforge/docker
-   docker-compose logs
-   ```
-
-### 手动安装
-
-如果自动安装失败，可以手动执行：
-
-```bash
-# 1. 克隆仓库
-git clone https://github.com/zhaozhilong1993/ragforge.git
-cd ragforge
-
-# 2. 安装依赖
-uv sync --python 3.10
-
-# 3. 启动 Docker 服务
-cd docker
-docker-compose up -d
-
-# 4. 启动服务器
-cd ..
-source .venv/bin/activate
-python api/ragforge_server.py
 ```
 
 ## 📞 获取帮助
