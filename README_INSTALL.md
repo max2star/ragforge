@@ -34,17 +34,33 @@ chmod +x install.sh
 git clone https://github.com/zhaozhilong1993/ragforge.git
 cd ragforge
 
-# 2. 安装依赖
+# 2. 初始化子模块（重要！）
+git submodule update --init --recursive
+
+# 3. 安装依赖
 uv sync --python 3.10
 
-# 3. 启动 Docker 服务
+# 4. 启动 Docker 服务
 cd docker
 docker-compose up -d
 
-# 4. 启动服务器
+# 5. 启动服务器
 cd ..
+export PYTHONPATH=$(pwd)
 source .venv/bin/activate
 python api/ragforge_server.py
+```
+
+### 方法四：子模块问题修复
+
+如果遇到子模块相关问题，可以运行：
+
+```bash
+# 初始化子模块
+bash init_submodules.sh
+
+# 或者手动执行
+git submodule update --init --recursive
 ```
 
 ## 📋 系统要求
