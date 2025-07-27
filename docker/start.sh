@@ -34,13 +34,13 @@ case $choice in
         check_port 9380
         echo "启动所有服务（生产环境）..."
         if docker-compose up -d 2>&1 | tee /tmp/docker_output.log; then
-          echo "✅ 所有服务已启动"
-          echo "🌐 Web控制台: http://localhost"
-          echo "🔧 API服务: http://localhost:9380"
-          echo "🗄️ MySQL: localhost:3306"
-          echo "🔍 Elasticsearch: localhost:9200"
-          echo "📦 MinIO: localhost:9000"
-          echo "💾 Redis: localhost:6379"
+        echo "✅ 所有服务已启动"
+        echo "🌐 Web控制台: http://localhost"
+        echo "🔧 API服务: http://localhost:9380"
+        echo "🗄️ MySQL: localhost:3306"
+        echo "🔍 Elasticsearch: localhost:9200"
+        echo "📦 MinIO: localhost:9000"
+        echo "💾 Redis: localhost:6379"
         else
           # 检查是否只是网络警告
           if grep -q "network.*not found" /tmp/docker_output.log; then
@@ -76,7 +76,8 @@ case $choice in
         check_port 3000
         check_port 9380
         echo "启动所有服务（开发环境）..."
-        if docker-compose --profile dev up -d 2>&1 | tee /tmp/docker_output.log; then
+        echo "正在下载镜像，请稍候..."
+        if docker-compose --profile dev up -d --quiet-pull 2>&1 | tee /tmp/docker_output.log; then
           echo "✅ 所有服务已启动（开发模式）"
           echo "🌐 Web控制台: http://localhost:3000"
           echo "🔧 API服务: http://localhost:9380"
@@ -97,11 +98,11 @@ case $choice in
               exit 1
             fi
           else
-            echo "❌ 启动失败。常见原因："
-            echo "- 端口被占用"
-            echo "- 残留容器或网络冲突"
+          echo "❌ 启动失败。常见原因："
+          echo "- 端口被占用"
+          echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
-            exit 1
+          exit 1
           fi
         fi
         ;;
@@ -129,11 +130,11 @@ case $choice in
               exit 1
             fi
           else
-            echo "❌ 启动失败。常见原因："
-            echo "- 端口被占用"
-            echo "- 残留容器或网络冲突"
+          echo "❌ 启动失败。常见原因："
+          echo "- 端口被占用"
+          echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
-            exit 1
+          exit 1
           fi
         fi
         ;;
@@ -158,11 +159,11 @@ case $choice in
               exit 1
             fi
           else
-            echo "❌ 启动失败。常见原因："
-            echo "- 端口被占用"
-            echo "- 残留容器或网络冲突"
+          echo "❌ 启动失败。常见原因："
+          echo "- 端口被占用"
+          echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
-            exit 1
+          exit 1
           fi
         fi
         ;;
@@ -204,11 +205,11 @@ case $choice in
               exit 1
             fi
           else
-            echo "❌ 启动失败。常见原因："
-            echo "- 端口被占用"
-            echo "- 残留容器或网络冲突"
+          echo "❌ 启动失败。常见原因："
+          echo "- 端口被占用"
+          echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
-            exit 1
+          exit 1
           fi
         fi
         ;;
