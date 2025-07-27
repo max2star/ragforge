@@ -13,6 +13,10 @@ services:
       - mysql_data:/var/lib/mysql
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   # Elasticsearch 搜索引擎
   ragforge-elasticsearch:
@@ -21,11 +25,24 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
     ports:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
 
   # MinIO 对象存储
   ragforge-minio:
@@ -40,6 +57,11 @@ services:
     volumes:
       - minio_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
   # Redis 缓存
   ragforge-redis:
@@ -50,9 +72,72 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # RAGForge API 服务
+  ragforge-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: ragforge-api
+    depends_on:
+      ragforge-mysql:
+        condition: service_healthy
+      ragforge-redis:
+        condition: service_healthy
+      ragforge-elasticsearch:
+        condition: service_healthy
+      ragforge-minio:
+        condition: service_healthy
+    ports:
+      - "9380:9380"
+    environment:
+      - RAGFORGE_MYSQL_HOST=ragforge-mysql
+      - RAGFORGE_MYSQL_PORT=3306
+      - RAGFORGE_MYSQL_USER=ragforge
+      - RAGFORGE_MYSQL_PASSWORD=ragforge123
+      - RAGFORGE_MYSQL_DATABASE=ragforge
+      - RAGFORGE_REDIS_HOST=ragforge-redis
+      - RAGFORGE_REDIS_PORT=6379
+      - RAGFORGE_REDIS_PASSWORD=ragforge123
+      - RAGFORGE_ES_HOSTS=ragforge-elasticsearch:9200
+      - RAGFORGE_MINIO_HOST=ragforge-minio
+      - RAGFORGE_MINIO_PORT=9000
+      - RAGFORGE_MINIO_ACCESS_KEY=minioadmin
+      - RAGFORGE_MINIO_SECRET_KEY=minioadmin
+    volumes:
+      - ragforge_logs:/app/logs
+    networks:
+      - ragforge
+    restart: unless-stopped
+
+  # RAGForge Web 服务
+  ragforge-web:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    container_name: ragforge-web
+    depends_on:
+      - ragforge-api
+    ports:
+      - "3000:80"
+    environment:
+      - RAGFORGE_BACKEND_API_URL=http://ragforge-api:9380
+    networks:
+      - ragforge
+    restart: unless-stopped
 
 volumes:
   mysql_data:
   es_data:
   minio_data:
   redis_data:
+  ragforge_logs:
+
+networks:
+  ragforge:
+    driver: bridge

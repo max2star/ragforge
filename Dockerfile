@@ -24,31 +24,31 @@ RUN set -eux; \
     for i in 1 2 3; do \
       apt-get update --fix-missing && \
       apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        wget \
-        git \
-        build-essential \
-        pkg-config \
-        libicu-dev \
-        libglib2.0-0 \
-        libglx-mesa0 \
-        libgl1 \
-        libgdiplus \
-        default-jdk \
-        libatk-bridge2.0-0 \
-        libpython3-dev \
-        libgtk-4-1 \
-        libnss3 \
-        xdg-utils \
-        libgbm-dev \
-        libjemalloc-dev \
-        libreoffice \
-        libreoffice-l10n-zh-cn \
-        fonts-wqy-zenhei \
-        fonts-wqy-microhei \
-        unixodbc \
-        unixodbc-dev \
+    ca-certificates \
+    curl \
+    wget \
+    git \
+    build-essential \
+    pkg-config \
+    libicu-dev \
+    libglib2.0-0 \
+    libglx-mesa0 \
+    libgl1 \
+    libgdiplus \
+    default-jdk \
+    libatk-bridge2.0-0 \
+    libpython3-dev \
+    libgtk-4-1 \
+    libnss3 \
+    xdg-utils \
+    libgbm-dev \
+    libjemalloc-dev \
+    libreoffice \
+    libreoffice-l10n-zh-cn \
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    unixodbc \
+    unixodbc-dev \
       && rm -rf /var/lib/apt/lists/* && break || sleep 5; \
     done
 
