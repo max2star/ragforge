@@ -1,6 +1,3 @@
-[submodule "docs"]
-	path = docs
-	url = https://github.com/max2star/ragforge-docs.git
 [submodule "web"]
 	path = web
 	url = https://github.com/max2star/ragforge-webconsole.git
