@@ -17,6 +17,8 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+    networks:
+      - ragforge
 
   # Elasticsearch 搜索引擎
   ragforge-elasticsearch:
@@ -43,6 +45,8 @@ services:
       memlock:
         soft: -1
         hard: -1
+    networks:
+      - ragforge
 
   # MinIO 对象存储
   ragforge-minio:
@@ -62,6 +66,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - ragforge
 
   # Redis 缓存
   ragforge-redis:
@@ -77,6 +83,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - ragforge
 
   # RAGForge API 服务
   ragforge-api:
@@ -104,7 +112,7 @@ services:
       - RAGFORGE_REDIS_HOST=ragforge-redis
       - RAGFORGE_REDIS_PORT=6379
       - RAGFORGE_REDIS_PASSWORD=ragforge123
-      - RAGFORGE_ES_HOSTS=ragforge-elasticsearch:9200
+      - RAGFORGE_ES_HOSTS=http://ragforge-elasticsearch:9200
       - RAGFORGE_MINIO_HOST=ragforge-minio
       - RAGFORGE_MINIO_PORT=9000
       - RAGFORGE_MINIO_ACCESS_KEY=minioadmin
