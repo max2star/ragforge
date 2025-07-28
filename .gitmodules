@@ -1,9 +1,9 @@
 [submodule "docs"]
 	path = docs
-	url = https://github.com/zhaozhilong1993/ragforge-docs.git
+	url = https://github.com/max2star/ragforge-docs.git
 [submodule "web"]
 	path = web
-	url = https://github.com/zhaozhilong1993/ragforge-webconsole.git
+	url = https://github.com/max2star/ragforge-webconsole.git
 [submodule "ragforge-shell"]
 	path = ragforge-shell
-	url = https://github.com/zhaozhilong1993/ragforge-shell.git
+	url = https://github.com/max2star/ragforge-shell.git
