@@ -92,7 +92,7 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
 
 1. **克隆项目**
    ```bash
-   git clone https://gitee.com/wow_ai/ragforge.git
+   git clone https://github.com/max2star/ragforge.git
    cd ragforge/docker
    ```
 
@@ -248,6 +248,9 @@ docker build -f Dockerfile -t ragforge-web:latest .
 
 如有商务合作需求，请联系：business@btdata.com.cn
 
+如需参与社区技术交流，可加群：
+
+<img src="https://ragforge-bucket.oss-cn-hangzhou.aliyuncs.com/wechat.png" alt="RAGForge 社区交流群" width="200" height="200" />
 ---
 
 **注意**：开发环境配置仅用于本地开发和测试，不要在生产环境中使用。
