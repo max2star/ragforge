@@ -98,11 +98,11 @@ case $choice in
               exit 1
             fi
           else
-          echo "❌ 启动失败。常见原因："
-          echo "- 端口被占用"
-          echo "- 残留容器或网络冲突"
-          echo "建议执行：docker-compose down && docker container prune -f"
-          exit 1
+            echo "❌ 启动失败。常见原因："
+            echo "- 端口被占用"
+            echo "- 残留容器或网络冲突"
+            echo "建议执行：docker-compose down && docker container prune -f"
+            exit 1
           fi
         fi
         ;;
@@ -130,19 +130,11 @@ case $choice in
               exit 1
             fi
           else
-<<<<<<< HEAD
-          echo "❌ 启动失败。常见原因："
-          echo "- 端口被占用"
-          echo "- 残留容器或网络冲突"
-            echo "建议执行：docker-compose down && docker container prune -f"
-          exit 1
-=======
             echo "❌ 启动失败。常见原因："
             echo "- 端口被占用"
             echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
             exit 1
->>>>>>> 0b3c82b37a4e3344a75c449939d5df1876cdc367
           fi
         fi
         ;;
@@ -167,19 +159,11 @@ case $choice in
               exit 1
             fi
           else
-<<<<<<< HEAD
-          echo "❌ 启动失败。常见原因："
-          echo "- 端口被占用"
-          echo "- 残留容器或网络冲突"
-            echo "建议执行：docker-compose down && docker container prune -f"
-          exit 1
-=======
             echo "❌ 启动失败。常见原因："
             echo "- 端口被占用"
             echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
             exit 1
->>>>>>> 0b3c82b37a4e3344a75c449939d5df1876cdc367
           fi
         fi
         ;;
@@ -221,19 +205,11 @@ case $choice in
               exit 1
             fi
           else
-<<<<<<< HEAD
-          echo "❌ 启动失败。常见原因："
-          echo "- 端口被占用"
-          echo "- 残留容器或网络冲突"
-            echo "建议执行：docker-compose down && docker container prune -f"
-          exit 1
-=======
             echo "❌ 启动失败。常见原因："
             echo "- 端口被占用"
             echo "- 残留容器或网络冲突"
             echo "建议执行：docker-compose down && docker container prune -f"
             exit 1
->>>>>>> 0b3c82b37a4e3344a75c449939d5df1876cdc367
           fi
         fi
         ;;
