@@ -327,9 +327,12 @@ def queue_tasks(doc: dict, bucket: str, name: str, priority: int):
         file_bin = STORAGE_IMPL.get(bucket, name)
         do_layout = doc["parser_config"].get("layout_recognize", "DeepDOC")
         pages = PdfParser.total_page_number(doc["name"], file_bin)
-        if pages <= 0:
+        
+        # 修复页面数量检查错误
+        if pages is None or pages <= 0:
             pages = 1000
-            logging.error(f"PDF {doc['name']} pages count less than 0, change to {pages}")
+            logging.error(f"PDF {doc['name']} pages count is None or less than 0, change to {pages}")
+        
         page_size = doc["parser_config"].get("task_page_size", 12)
         if doc["parser_id"] == "paper":
             #page_size = 10 ** 9
