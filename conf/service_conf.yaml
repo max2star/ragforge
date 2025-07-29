@@ -24,11 +24,11 @@ mysql:
 minio:
   user: 'minioadmin'
   password: 'minioadmin'
-  host: 'localhost:9000'
+  host: 'ragforge-minio:9000'
   bucket_encryption: false
 
 es:
-  hosts: 'http://localhost:9200'
+  hosts: 'http://ragforge-elasticsearch:9200'
   username: 'elastic'
   password: ''
 
@@ -39,7 +39,7 @@ infinity:
 redis:
   db: 1
   password: 'ragforge123'
-  host: 'localhost'
+  host: 'ragforge-redis'
   port: 6379
 
 user_default_llm:
@@ -64,12 +64,12 @@ user_default_llm:
 minio_backup:
   user: 'minioadmin'
   password: 'minioadmin'
-  host: 'localhost:9000'
+  host: 'ragforge-minio:9000'
 
 s3:
   access_key: 'minioadmin'
   secret_key: 'minioadmin'
-  endpoint_url: 'http://localhost:9000'
+  endpoint_url: 'http://ragforge-minio:9000'
 
 # postgres:
 #   name: 'ragforge'
