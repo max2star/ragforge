@@ -175,24 +175,36 @@ class RAGForgeMinio:
         for _ in range(3):
             try:
                 if not self.conn.bucket_exists(bucket):
-                    self.conn.make_bucket(bucket)
-                    config = VersioningConfig(ENABLED)
-                    self.conn.set_bucket_versioning(bucket, config)
-                    encryption_rule = Rule(
-                        sse_algorithm="aws:kms",  # 指定使用 KMS 加密
-                        kms_master_key_id='my-key-1'# 指定 KMS 密钥 ID
-                    )
-                    sse_config = SSEConfig(rule=encryption_rule)
-                    if self.bucket_encryption:
-                        self.conn.set_bucket_encryption(
-                            bucket, sse_config)
+                    try:
+                        self.conn.make_bucket(bucket)
+                        config = VersioningConfig(ENABLED)
+                        self.conn.set_bucket_versioning(bucket, config)
+                        encryption_rule = Rule(
+                            sse_algorithm="aws:kms",  # 指定使用 KMS 加密
+                            kms_master_key_id='my-key-1'# 指定 KMS 密钥 ID
+                        )
+                        sse_config = SSEConfig(rule=encryption_rule)
+                        if self.bucket_encryption:
+                            self.conn.set_bucket_encryption(
+                                bucket, sse_config)
 
-                    if self.remote_flag:
-                        self.remote_conn.make_bucket(bucket)
-                        self.remote_conn.set_bucket_versioning(bucket, config)
-                        self.config_backup_policy(src_cluster_alias=None,source_bucket=bucket,dest_cluster_alias=None,dest_bucket=bucket)
-                    if self.bucket_encryption:
-                        self.remote_conn.set_bucket_encryption(bucket, sse_config)
+                        if self.remote_flag:
+                            try:
+                                self.remote_conn.make_bucket(bucket)
+                                self.remote_conn.set_bucket_versioning(bucket, config)
+                                self.config_backup_policy(src_cluster_alias=None,source_bucket=bucket,dest_cluster_alias=None,dest_bucket=bucket)
+                            except Exception as e:
+                                if "BucketAlreadyOwnedByYou" not in str(e):
+                                    logging.warning(f"Failed to create backup bucket {bucket}: {e}")
+                        if self.bucket_encryption and self.remote_flag:
+                            try:
+                                self.remote_conn.set_bucket_encryption(bucket, sse_config)
+                            except Exception as e:
+                                logging.warning(f"Failed to set backup bucket encryption for {bucket}: {e}")
+                    except Exception as e:
+                        if "BucketAlreadyOwnedByYou" not in str(e):
+                            logging.exception(f"Failed to create bucket {bucket}: {e}")
+                            continue
 
                 r = self.conn.put_object(bucket, fnm,
                                          BytesIO(binary),
