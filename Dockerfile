@@ -72,7 +72,7 @@ COPY mcp/ ./mcp/
 # COPY sdk/ ./sdk/  # 已删除
 # COPY helm/ ./helm/  # 已删除
 # COPY intergrations/ ./intergrations/  # 已删除
-COPY flask_session/ ./flask_session/
+# COPY flask_session/ ./flask_session/  # 目录不存在，已删除
 
 # 安装Python依赖，使用国内镜像源
 RUN uv sync --python 3.10 --frozen --index-url https://pypi.tuna.tsinghua.edu.cn/simple/ || \
