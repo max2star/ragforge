@@ -983,13 +983,23 @@ class RAGForgePdfParser:
     def total_page_number(fnm, binary=None):
         try:
             with sys.modules[LOCK_KEY_pdfplumber]:
-                pdf = pdfplumber.open(
-                    fnm) if not binary else pdfplumber.open(BytesIO(binary))
-            total_page = len(pdf.pages)
-            pdf.close()
-            return total_page
-        except Exception:
-            logging.exception("total_page_number")
+                if binary:
+                    # 如果有二进制数据，直接使用
+                    pdf = pdfplumber.open(BytesIO(binary))
+                else:
+                    # 如果没有二进制数据，尝试从文件路径读取
+                    if isinstance(fnm, str) and os.path.exists(fnm):
+                        pdf = pdfplumber.open(fnm)
+                    else:
+                        logging.error(f"File not found or invalid path: {fnm}")
+                        return None
+                
+                total_page = len(pdf.pages)
+                pdf.close()
+                return total_page
+        except Exception as e:
+            logging.exception(f"total_page_number error for {fnm}: {e}")
+            return None
 
     def __images__(self, fnm, zoomin=3, page_from=0,
                    page_to=299, callback=None):
