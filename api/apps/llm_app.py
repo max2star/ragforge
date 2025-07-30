@@ -418,3 +418,56 @@ def get_default_models():
         return get_json_result(data=default_models)
     except Exception as e:
         return server_error_response(e)
+
+
+@manager.route('/set_default_model', methods=['POST'])  # noqa: F821
+@login_required
+@validate_request("model_type", "llm_factory", "llm_name")
+def set_default_model():
+    """Set default model for a specific type"""
+    try:
+        req = request.json
+        model_type = req.get("model_type")  # chat, embedding, rerank, asr, image2text
+        llm_factory = req.get("llm_factory")
+        llm_name = req.get("llm_name")
+        
+        # 验证模型是否存在
+        obj = TenantLLMService.query(
+            tenant_id=current_user.id,
+            llm_factory=llm_factory,
+            llm_name=llm_name
+        )
+        
+        if not obj:
+            return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, 
+                                 message=f"Model {llm_name} not found in factory {llm_factory}")
+        
+        # 更新配置文件中的默认模型
+        from api import settings
+        import yaml
+        import os
+        
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'conf', 'service_conf.yaml')
+        
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+        
+        # 更新默认模型配置
+        if 'user_default_llm' not in config:
+            config['user_default_llm'] = {}
+        
+        if 'default_models' not in config['user_default_llm']:
+            config['user_default_llm']['default_models'] = {}
+        
+        # 设置新的默认模型
+        model_key = f"{model_type}_model"
+        config['user_default_llm']['default_models'][model_key] = llm_name
+        
+        # 保存配置文件
+        with open(config_path, 'w', encoding='utf-8') as f:
+            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+        
+        return get_json_result(data=True, message=f"Default {model_type} model set to {llm_name}")
+        
+    except Exception as e:
+        return server_error_response(e)
