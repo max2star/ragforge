@@ -447,7 +447,15 @@ def set_default_model():
         import yaml
         import os
         
-        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'conf', 'service_conf.yaml')
+        # 使用更可靠的配置文件路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        config_path = os.path.join(project_root, 'conf', 'service_conf.yaml')
+        
+        # 检查配置文件是否存在
+        if not os.path.exists(config_path):
+            return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, 
+                                 message=f"Configuration file not found: {config_path}")
         
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
