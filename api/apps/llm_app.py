@@ -393,3 +393,28 @@ def list_app():
         return get_json_result(data=res)
     except Exception as e:
         return server_error_response(e)
+
+
+@manager.route('/default_models', methods=['GET'])  # noqa: F821
+@login_required
+def get_default_models():
+    """Get default model configuration"""
+    try:
+        from api import settings
+        
+        default_models = {
+            'factory': settings.LLM_FACTORY,
+            'base_url': settings.LLM_BASE_URL,
+            'models': {
+                'chat_model': settings.CHAT_MDL,
+                'embedding_model': settings.EMBEDDING_MDL,
+                'rerank_model': settings.RERANK_MDL,
+                'asr_model': settings.ASR_MDL,
+                'image2text_model': settings.IMAGE2TEXT_MDL
+            },
+            'models_config': settings.LLM_DEFAULT_MODELS_CONFIG
+        }
+        
+        return get_json_result(data=default_models)
+    except Exception as e:
+        return server_error_response(e)
