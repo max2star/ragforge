@@ -401,19 +401,43 @@ def get_default_models():
     """Get default model configuration"""
     try:
         from api import settings
+        from api.db.services.user_service import TenantService
         
-        default_models = {
-            'factory': settings.LLM_FACTORY,
-            'base_url': settings.LLM_BASE_URL,
-            'models': {
-                'chat_model': settings.CHAT_MDL,
-                'embedding_model': settings.EMBEDDING_MDL,
-                'rerank_model': settings.RERANK_MDL,
-                'asr_model': settings.ASR_MDL,
-                'image2text_model': settings.IMAGE2TEXT_MDL
-            },
-            'models_config': settings.LLM_DEFAULT_MODELS_CONFIG
-        }
+        # 优先从数据库获取用户的tenant信息
+        tenants = TenantService.get_info_by(current_user.id)
+        
+        if tenants and len(tenants) > 0:
+            tenant = tenants[0]
+            # 从数据库获取默认模型配置
+            default_models = {
+                'factory': 'OpenAI-API-Compatible',  # 默认工厂
+                'base_url': settings.LLM_BASE_URL,
+                'models': {
+                    'chat_model': tenant.get('llm_id', ''),
+                    'embedding_model': tenant.get('embd_id', ''),
+                    'rerank_model': tenant.get('rerank_id', ''),
+                    'asr_model': tenant.get('asr_id', ''),
+                    'image2text_model': tenant.get('img2txt_id', ''),
+                    'tts_model': tenant.get('tts_id', '')
+                },
+                'models_config': settings.LLM_DEFAULT_MODELS_CONFIG,
+                'source': 'database'
+            }
+        else:
+            # 如果数据库中没有tenant信息，则从配置文件获取
+            default_models = {
+                'factory': settings.LLM_FACTORY,
+                'base_url': settings.LLM_BASE_URL,
+                'models': {
+                    'chat_model': settings.CHAT_MDL,
+                    'embedding_model': settings.EMBEDDING_MDL,
+                    'rerank_model': settings.RERANK_MDL,
+                    'asr_model': settings.ASR_MDL,
+                    'image2text_model': settings.IMAGE2TEXT_MDL
+                },
+                'models_config': settings.LLM_DEFAULT_MODELS_CONFIG,
+                'source': 'config'
+            }
         
         return get_json_result(data=default_models)
     except Exception as e:
@@ -427,7 +451,7 @@ def set_default_model():
     """Set default model for a specific type"""
     try:
         req = request.json
-        model_type = req.get("model_type")  # chat, embedding, rerank, asr, image2text
+        model_type = req.get("model_type")  # chat, embedding, rerank, asr, image2text, tts
         llm_factory = req.get("llm_factory")
         llm_name = req.get("llm_name")
         
@@ -442,40 +466,42 @@ def set_default_model():
             return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, 
                                  message=f"Model {llm_name} not found in factory {llm_factory}")
         
-        # 更新配置文件中的默认模型
-        from api import settings
-        import yaml
-        import os
+        # 获取用户的tenant信息
+        from api.db.services.user_service import TenantService
+        tenants = TenantService.get_info_by(current_user.id)
         
-        # 使用更可靠的配置文件路径
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(os.path.dirname(current_dir))
-        config_path = os.path.join(project_root, 'conf', 'service_conf.yaml')
-        
-        # 检查配置文件是否存在
-        if not os.path.exists(config_path):
+        if not tenants or len(tenants) == 0:
             return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, 
-                                 message=f"Configuration file not found: {config_path}")
+                                 message="Tenant not found for current user")
         
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f)
+        tenant = tenants[0]
+        tenant_id = tenant.get('tenant_id')
         
-        # 更新默认模型配置
-        if 'user_default_llm' not in config:
-            config['user_default_llm'] = {}
+        # 构建模型ID（格式：model_name@factory）
+        model_id = f"{llm_name}@{llm_factory}"
         
-        if 'default_models' not in config['user_default_llm']:
-            config['user_default_llm']['default_models'] = {}
+        # 根据模型类型更新对应的字段
+        update_data = {}
+        if model_type == 'chat':
+            update_data['llm_id'] = model_id
+        elif model_type == 'embedding':
+            update_data['embd_id'] = model_id
+        elif model_type == 'rerank':
+            update_data['rerank_id'] = model_id
+        elif model_type == 'asr':
+            update_data['asr_id'] = model_id
+        elif model_type == 'image2text':
+            update_data['img2txt_id'] = model_id
+        elif model_type == 'tts':
+            update_data['tts_id'] = model_id
+        else:
+            return get_json_result(code=settings.RetCode.ARGUMENT_ERROR, 
+                                 message=f"Unsupported model type: {model_type}")
         
-        # 设置新的默认模型
-        model_key = f"{model_type}_model"
-        config['user_default_llm']['default_models'][model_key] = llm_name
+        # 更新数据库中的tenant信息
+        TenantService.update_by_id(tenant_id, update_data)
         
-        # 保存配置文件
-        with open(config_path, 'w', encoding='utf-8') as f:
-            yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
-        
-        return get_json_result(data=True, message=f"Default {model_type} model set to {llm_name}")
+        return get_json_result(data=True, message=f"Default {model_type} model set to {model_id}")
         
     except Exception as e:
         return server_error_response(e)
