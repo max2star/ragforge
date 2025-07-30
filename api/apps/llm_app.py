@@ -410,8 +410,6 @@ def get_default_models():
             tenant = tenants[0]
             # 从数据库获取默认模型配置
             default_models = {
-                'factory': 'OpenAI-API-Compatible',  # 默认工厂
-                'base_url': settings.LLM_BASE_URL,
                 'models': {
                     'chat_model': tenant.get('llm_id', ''),
                     'embedding_model': tenant.get('embd_id', ''),
@@ -420,14 +418,11 @@ def get_default_models():
                     'image2text_model': tenant.get('img2txt_id', ''),
                     'tts_model': tenant.get('tts_id', '')
                 },
-                'models_config': settings.LLM_DEFAULT_MODELS_CONFIG,
                 'source': 'database'
             }
         else:
             # 如果数据库中没有tenant信息，则从配置文件获取
             default_models = {
-                'factory': settings.LLM_FACTORY,
-                'base_url': settings.LLM_BASE_URL,
                 'models': {
                     'chat_model': settings.CHAT_MDL,
                     'embedding_model': settings.EMBEDDING_MDL,
@@ -435,7 +430,6 @@ def get_default_models():
                     'asr_model': settings.ASR_MDL,
                     'image2text_model': settings.IMAGE2TEXT_MDL
                 },
-                'models_config': settings.LLM_DEFAULT_MODELS_CONFIG,
                 'source': 'config'
             }
         
