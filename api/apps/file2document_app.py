@@ -133,7 +133,9 @@ def convert():
                     doc_filter_field['limit_range'] = [current_user.id]
                     doc_filter_field['limit_level'] = 1
                     doc_filter_field['limit_time'] = current_timestamp()
-                    doc['filter_fields'] = doc_filter_field
+                    
+                    # Update the document with filter fields using DocumentService
+                    DocumentService.update_by_id(doc.id, {"filter_fields": doc_filter_field})
 
                     file2document = File2DocumentService.insert({
                         "id": get_uuid(),

@@ -314,6 +314,31 @@ def delete_factory():
     return get_json_result(data=True)
 
 
+@manager.route('/get_llm_config', methods=['GET'])  # noqa: F821
+@login_required
+@validate_request("llm_factory", "llm_name")
+def get_llm_config():
+    req = request.args
+    factory = req.get("llm_factory")
+    llm_name = req.get("llm_name")
+    
+    try:
+        # 获取当前用户的模型配置
+        obj = TenantLLMService.query(
+            tenant_id=current_user.id,
+            llm_factory=factory,
+            llm_name=llm_name
+        )
+        
+        if obj:
+            config = obj[0].to_dict()
+            return get_json_result(data=config)
+        else:
+            return get_json_result(data=None)
+    except Exception as e:
+        return server_error_response(e)
+
+
 @manager.route('/my_llms', methods=['GET'])  # noqa: F821
 @login_required
 def my_llms():

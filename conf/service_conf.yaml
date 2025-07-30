@@ -56,7 +56,7 @@ user_default_llm:
     image2text_model: 'qwen2.5-vl-32b-instruct'
   default_models_config:
     chat_model: 'http://118.193.126.254:1025/v1'
-    embedding_model: 'http://118.193.126.254:8080/'
+    embedding_model: 'https://118.193.126.254:8080'
     rerank_model: 'http://118.193.126.254:1111/rerank'
     asr_model: 'http://118.193.126.254:1111/v1'
     image2text_model: 'http://118.193.126.254:3525/v1'
@@ -98,8 +98,6 @@ s3:
 #   account_url: 'account_url'
 #   client_id: 'client_id'
 #   secret: 'secret'
-#   tenant_id: 'tenant_id'
-#   container_name: 'container_name'
 # user_default_llm:
 #   factory: 'Tongyi-Qianwen'
 #   api_key: 'sk-xxxxxxxxxxxxx'
