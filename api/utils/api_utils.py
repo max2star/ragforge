@@ -146,11 +146,17 @@ def validate_request(*args, **kwargs):
     def wrapper(func):
         @wraps(func)
         def decorated_function(*_args, **_kwargs):
-            # 只在 application/json 时解析 json，否则用 form
-            if flask_request.content_type and flask_request.content_type.startswith('application/json'):
+            # 根据请求方法选择参数来源
+            if flask_request.method == 'GET':
+                # GET请求从args获取参数
+                input_arguments = flask_request.args.to_dict()
+            elif flask_request.content_type and flask_request.content_type.startswith('application/json'):
+                # POST/PUT等请求，如果是JSON格式，从JSON获取
                 input_arguments = flask_request.get_json(silent=True) or {}
             else:
+                # 其他情况从form获取
                 input_arguments = flask_request.form.to_dict()
+            
             no_arguments = []
             error_arguments = []
             for arg in args:
