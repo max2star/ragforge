@@ -402,24 +402,44 @@ def get_default_models():
     try:
         from api import settings
         from api.db.services.user_service import TenantService
+        from api.db.services.llm_service import TenantLLMService
         
         # 优先从数据库获取用户的tenant信息
         tenants = TenantService.get_info_by(current_user.id)
         
         if tenants and len(tenants) > 0:
             tenant = tenants[0]
+            tenant_id = tenant.get('tenant_id')
+            
             # 从数据库获取默认模型配置
             default_models = {
-                'models': {
-                    'chat_model': tenant.get('llm_id', ''),
-                    'embedding_model': tenant.get('embd_id', ''),
-                    'rerank_model': tenant.get('rerank_id', ''),
-                    'asr_model': tenant.get('asr_id', ''),
-                    'image2text_model': tenant.get('img2txt_id', ''),
-                    'tts_model': tenant.get('tts_id', '')
-                },
+                'models': {},
+                'api_configs': {},
                 'source': 'database'
             }
+            
+            # 获取每个默认模型的API配置
+            model_fields = {
+                'chat_model': tenant.get('llm_id', ''),
+                'embedding_model': tenant.get('embd_id', ''),
+                'rerank_model': tenant.get('rerank_id', ''),
+                'asr_model': tenant.get('asr_id', ''),
+                'image2text_model': tenant.get('img2txt_id', ''),
+                'tts_model': tenant.get('tts_id', '')
+            }
+            
+            for model_type, model_id in model_fields.items():
+                if model_id:
+                    default_models['models'][model_type] = model_id
+                    
+                    # 获取模型的API配置
+                    model_config = TenantLLMService.get_api_key(tenant_id, model_id)
+                    if model_config:
+                        default_models['api_configs'][model_type] = {
+                            'api_base': model_config.api_base,
+                            'api_key': '***' if model_config.api_key else None,
+                            'max_tokens': model_config.max_tokens
+                        }
         else:
             # 如果数据库中没有tenant信息，则从配置文件获取
             default_models = {
@@ -430,6 +450,7 @@ def get_default_models():
                     'asr_model': settings.ASR_MDL,
                     'image2text_model': settings.IMAGE2TEXT_MDL
                 },
+                'api_configs': {},
                 'source': 'config'
             }
         
