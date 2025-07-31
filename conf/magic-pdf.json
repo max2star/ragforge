@@ -11,8 +11,8 @@
             "endpoint"
         ]
     },
-    "models-dir": "/root/.cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit-1___0/models",
-    "layoutreader-model-dir": "/root/.cache/modelscope/hub/models/ppaanngggg/layoutreader",
+    "models-dir": "driver/models",
+    "layoutreader-model-dir": "driver/models",
     "device-mode": "cpu",
     "layout-config": {
         "model": "doclayout_yolo"
