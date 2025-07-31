@@ -198,8 +198,14 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
         start = timer()
         callback(msg="开始进行分词")
 
-        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"] ),
-               "title_tks": rag_tokenizer.tokenize(paper["title"] if paper["title"] else filename)}
+        # 检查 paper 是否为 None
+        if paper is None:
+            # 如果 paper 为 None，创建一个基本的文档结构
+            doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(""),
+                   "title_tks": rag_tokenizer.tokenize(filename)}
+        else:
+            doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper.get("authors", "")),
+                   "title_tks": rag_tokenizer.tokenize(paper.get("title", filename))}
         doc["title_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["title_tks"])
         doc["authors_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["authors_tks"])
         # is it English
@@ -208,12 +214,14 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
 
         callback(prog=0.36,msg="完成作者/标题分词 ({:.2f}s)".format(timer()-start))
         start = timer()
-        if paper["tables"]:
+        
+        # 检查 paper 是否为 None 并安全访问其属性
+        if paper is not None and paper.get("tables"):
             res = tokenize_table(paper["tables"], doc, eng)
             callback(prog=0.37,msg="完成表格分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
-        if paper["abstract"]:
+        if paper is not None and paper.get("abstract"):
             d = copy.deepcopy(doc)
             txt = pdf_parser.remove_tag(paper["abstract"])
             d["important_kwd"] = ["abstract", "总结", "概括", "summary", "summarize"]
@@ -226,33 +234,41 @@ def chunk(filename, binary=None, from_page=0, to_page=100000,
             callback(prog=0.40,msg="完成摘要分词 ({:.2f}s)".format(timer()-start))
 
         start = timer()
-        sorted_sections = paper["sections"]
-        res.extend(tokenize_chunks_for_mineru(sorted_sections, doc, eng, pdf_parser))
+        if paper is not None:
+            sorted_sections = paper.get("sections", [])
+            res.extend(tokenize_chunks_for_mineru(sorted_sections, doc, eng, pdf_parser))
         callback(prog=0.40,msg="完成分块分词 ({:.2f}s)".format(timer()-start))
         return res
 
-    doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper["authors"]),
-           "title_tks": rag_tokenizer.tokenize(paper["title"] if paper["title"] else filename)}
+    # 检查 paper 是否为 None
+    if paper is None:
+        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(""),
+               "title_tks": rag_tokenizer.tokenize(filename)}
+        res = []
+        sorted_sections = []
+    else:
+        doc = {"docnm_kwd": filename, "authors_tks": rag_tokenizer.tokenize(paper.get("authors", "")),
+               "title_tks": rag_tokenizer.tokenize(paper.get("title", filename))}
+        res = tokenize_table(paper.get("tables", []), doc, eng)
+
+        if paper.get("abstract"):
+            d = copy.deepcopy(doc)
+            txt = pdf_parser.remove_tag(paper["abstract"])
+            d["important_kwd"] = ["abstract", "总结", "概括", "summary", "summarize"]
+            d["important_tks"] = " ".join(d["important_kwd"])
+            d["image"], poss = pdf_parser.crop(
+                paper["abstract"], need_position=True)
+            add_positions(d, poss)
+            tokenize(d, txt, eng)
+            res.append(d)
+
+        sorted_sections = paper.get("sections", [])
+    
     doc["title_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["title_tks"])
     doc["authors_sm_tks"] = rag_tokenizer.fine_grained_tokenize(doc["authors_tks"])
     # is it English
     eng = lang.lower() == "english"  # pdf_parser.is_english
     logging.debug("It's English.....{}".format(eng))
-
-    res = tokenize_table(paper["tables"], doc, eng)
-
-    if paper["abstract"]:
-        d = copy.deepcopy(doc)
-        txt = pdf_parser.remove_tag(paper["abstract"])
-        d["important_kwd"] = ["abstract", "总结", "概括", "summary", "summarize"]
-        d["important_tks"] = " ".join(d["important_kwd"])
-        d["image"], poss = pdf_parser.crop(
-            paper["abstract"], need_position=True)
-        add_positions(d, poss)
-        tokenize(d, txt, eng)
-        res.append(d)
-
-    sorted_sections = paper["sections"]
     # set pivot using the most frequent type of title,
     # then merge between 2 pivot
     bull = bullets_category([txt for txt, _ in sorted_sections])
