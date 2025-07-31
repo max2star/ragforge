@@ -64,14 +64,15 @@ if __name__ == '__main__':
     print(f'模型下载目录: {actual_model_dir}')
     print(f'LayoutReader模型目录: {layoutreader_model_dir}')
 
-    # 配置文件路径
+    # 配置文件路径 - 创建在conf目录下
     config_file_name = 'magic-pdf.json'
-    config_file = os.path.join(script_dir, config_file_name)
+    conf_dir = os.path.join(os.path.dirname(script_dir), 'conf')
+    config_file = os.path.join(conf_dir, config_file_name)
     print(f'配置文件路径: {config_file}')
 
-    # 使用相对路径
-    relative_model_dir = 'models'
-    relative_layoutreader_dir = 'models'
+    # 使用相对路径 - 从项目根目录的角度
+    relative_model_dir = 'driver/models'
+    relative_layoutreader_dir = 'driver/models'
 
     json_mods = {
         'models-dir': relative_model_dir,
