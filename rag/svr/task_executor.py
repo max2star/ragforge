@@ -27,7 +27,7 @@ import os
 if 'MINERU_TOOLS_CONFIG_JSON' not in os.environ:
     # 获取当前脚本所在目录的上级目录（项目根目录）
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    project_root = os.path.dirname(os.path.dirname(current_dir))
     config_path = os.path.join(project_root, 'conf', 'magic-pdf.json')
     os.environ['MINERU_TOOLS_CONFIG_JSON'] = config_path
 
