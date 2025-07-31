@@ -23,6 +23,10 @@ fi
 export PYTHONPATH=$(pwd)
 echo "✅ 设置PYTHONPATH: $PYTHONPATH"
 
+# 设置 magic_pdf 配置文件路径
+export MINERU_TOOLS_CONFIG_JSON=$(pwd)/conf/magic-pdf.json
+echo "✅ 设置MINERU_TOOLS_CONFIG_JSON: $MINERU_TOOLS_CONFIG_JSON"
+
 # 激活虚拟环境
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
     source .venv/Scripts/activate

@@ -17,11 +17,16 @@ def setup_environment():
     # 设置PYTHONPATH
     os.environ['PYTHONPATH'] = str(project_root)
     
+    # 设置 magic_pdf 配置文件路径
+    config_path = project_root / "conf" / "magic-pdf.json"
+    os.environ['MINERU_TOOLS_CONFIG_JSON'] = str(config_path)
+    
     # 设置工作目录
     os.chdir(project_root)
     
     print(f"项目根目录: {project_root}")
     print(f"PYTHONPATH: {os.environ['PYTHONPATH']}")
+    print(f"MINERU_TOOLS_CONFIG_JSON: {os.environ['MINERU_TOOLS_CONFIG_JSON']}")
 
 def check_dependencies():
     """检查依赖是否安装"""
