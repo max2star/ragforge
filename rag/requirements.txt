@@ -1,7 +1,7 @@
 # Core dependencies
 ultralytics>=8.3.0,<9.0.0
 doclayout-yolo>=0.0.4,<1.0.0
-rapid-table>=2.0.0,<3.0.0
+rapid-table==1.0.0
 valkey>=0.1.0,<1.0.0
 
 # Data processing
@@ -15,6 +15,7 @@ pypdf>=3.0.0,<4.0.0
 pdfplumber>=0.9.0,<1.0.0
 python-docx>=0.8.11,<1.0.0
 openpyxl>=3.0.0,<4.0.0
+PyMuPDF>=1.24.0,<2.0.0
 
 # Deep learning
 torch>=2.6.0,<3.0.0

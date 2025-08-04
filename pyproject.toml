@@ -159,9 +159,10 @@ full = [
     "sentence-transformers>=2.2.2,<3.0.0",
     "ultralytics>=8.3.0,<9.0.0",
     "doclayout-yolo>=0.0.4,<1.0.0",
-    "rapid-table>=2.0.0,<3.0.0",
+    "rapid-table==1.0.0",
     "pycocotools>=2.0.0,<3.0.0",
     "ftfy>=6.3.1,<7.0.0",
+    "PyMuPDF>=1.24.0,<2.0.0",
 ]
 
 [tool.setuptools]
