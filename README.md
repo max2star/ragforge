@@ -198,6 +198,67 @@ docker compose -f docker/docker-compose-base.yml up -d
 - 检查 Docker 服务状态：`docker-compose ps`
 - 检查端口映射和防火墙
 
+## 📁 项目结构
+
+```
+ragforge/
+├── 📄 核心模块
+│   ├── api/                    # RESTful API 服务
+│   │   ├── apps/              # API 应用模块
+│   │   ├── db/                # 数据库模型和服务
+│   │   ├── utils/             # 工具函数
+│   │   └── ragforge_server.py # 主服务器入口
+│   ├── rag/                   # 检索增强生成核心模块
+│   │   ├── app/               # 应用层（文档处理、问答等）
+│   │   ├── llm/               # 大语言模型集成
+│   │   ├── nlp/               # 自然语言处理
+│   │   └── utils/             # RAG 工具函数
+│   └── web/                   # 前端控制台
+│       ├── src/               # 源代码
+│       ├── public/            # 静态资源
+│       └── package.json       # 前端依赖配置
+│
+├── 📄 文档处理模块
+│   ├── minerU/                # 智能文档解析器
+│   │   └── parser/            # PDF、Word、PPT、Excel 解析
+│   ├── deepdoc/               # 传统文档解析
+│   │   ├── parser/            # 基础文本提取
+│   │   └── vision/            # 视觉识别（OCR、布局）
+│   └── graphrag/              # 图数据库增强 RAG
+│
+├── 🤖 智能模块
+│   ├── agent/                 # 智能代理模块
+│   │   ├── component/         # 代理组件
+│   │   └── templates/         # 代理模板
+│   └── agentic_reasoning/     # 智能推理模块
+│
+├── 🛠️ 工具模块
+│   ├── ragforge-shell/        # 命令行工具
+│   ├── driver/                # 模型驱动
+│   │   ├── models/            # AI 模型文件
+│   │   └── download_models.py # 模型下载脚本
+│   └── tools/                 # 辅助工具
+│
+├── ⚙️ 配置和部署
+│   ├── conf/                  # 配置文件
+│   │   ├── service_conf.yaml  # 服务配置
+│   │   ├── magic-pdf.json     # PDF 解析配置
+│   │   └── llm_factories.json # LLM 工厂配置
+│   ├── docker/                # Docker 部署
+│   ├── Dockerfile             # 主镜像构建
+│   └── start.sh               # 启动脚本
+│
+├── 📚 文档和测试
+│   ├── docs/                  # 项目文档
+│   ├── tests/                 # 测试用例
+│   └── README.md              # 项目说明
+│
+└── 🔧 开发工具
+    ├── pyproject.toml         # Python 项目配置
+    ├── uv.lock               # 依赖锁定文件
+    └── .github/              # GitHub 配置
+```
+
 ## 📚 模块说明
 
 ### 🔧 **核心模块**
