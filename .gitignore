@@ -177,3 +177,8 @@ temp/
 
 # RAGForge shell client
 ragforge-shelll/
+
+# Model files (too large for git)
+driver/models/
+deps/
+deps_backup/
