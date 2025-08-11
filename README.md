@@ -124,86 +124,68 @@ RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG�
 - **service_conf.yaml.template**：后端服务配置
 - **docker-compose.yml**：容器编排配置
 
-## 🔧 开发环境设置
+## 🚀 快速开始
 
-### 🚀 推荐开发流程
+### 📋 系统要求
+- CPU >= 4 核
+- RAM >= 16 GB
+- Disk >= 50 GB
+- Docker >= 24.0.0 & Docker Compose >= v2.26.1
 
-#### 方式一：Docker 开发环境（推荐）
+### 🚀 快速部署
 
-1. **进入 docker 目录，使用脚本启动开发环境**
+1. **克隆项目**
    ```bash
-   cd docker
-   ./start.sh   # 选择 2 启动开发环境
+   git clone https://github.com/max2star/ragforge.git
+   cd ragforge/docker
    ```
-   - 开发环境 Web 控制台：http://localhost:3000
-   - 支持热更新，适合前后端联调
 
-2. **停止服务**
+2. **一键启动服务**
+   ```bash
+   # 启动脚本，按提示选择生产环境或开发环境
+   ./start.sh
+   ```
+   - 选择【1】启动所有服务（生产环境，Web 控制台端口 80）
+   - 选择【2】启动所有服务（开发环境，Web 控制台端口 3000，支持热更新）
+
+3. **停止服务**
    ```bash
    ./stop.sh
    ```
 
-3. **常用 Docker 命令**
-   ```bash
-   docker-compose ps         # 查看服务状态
-   docker-compose logs -f    # 查看实时日志
-   docker-compose down       # 停止并移除所有服务
-   ```
+4. **访问系统**
+   - 生产环境 Web 控制台：http://localhost
+   - 开发环境 Web 控制台：http://localhost:3000
+   - API 服务：http://localhost:9380
 
-#### 方式二：Python 源码启动
+5. **配置 LLM API Key**
+   - 编辑 `service_conf.yaml.template`
 
-1. **安装依赖**
-   ```bash
-   # 安装 uv
-   pip install uv
-   
-   # 安装 Python 依赖
-   uv sync --python 3.10 --all-extras
-   ```
+### ⚙️ 配置说明
 
-2. **启动数据库服务**
-   ```bash
-   # 启动基础服务 (MySQL, Redis, Elasticsearch, MinIO)
-   docker compose -f docker/docker-compose-base.yml up -d
-   ```
+- **.env**：基础环境变量（端口、密码等）
+- **service_conf.yaml.template**：后端服务配置
+- **docker-compose.yml**：容器编排配置
 
-3. **启动 RAGForge 服务器**
-   ```bash
-   # 方式一：使用启动脚本（推荐）
-   ./start.sh
-   
-   # 方式二：手动启动
-   source .venv/bin/activate
-   export PYTHONPATH=$(pwd)
-   python api/ragforge_server.py
-   ```
+### 🔧 开发环境
 
-4. **启动前端服务（可选）**
-   ```bash
-   cd web
-   npm install
-   npm run dev
-   ```
-
-5. **访问服务**
-   - 后端 API：http://localhost:9380
-   - API 文档：http://localhost:9380/apidocs/
-   - 前端控制台：http://localhost:3000（如果启动了前端）
-
-### 🛠️ 环境变量配置
-
+#### Docker 开发环境（推荐）
 ```bash
-# 数据库类型
-export DATABASE_TYPE=mysql  # 默认使用 MySQL
-# export DATABASE_TYPE=dm   # 使用达梦数据库
+cd docker
+./start.sh   # 选择 2 启动开发环境
+```
 
-# 文档引擎
-export DOC_ENGINE=elasticsearch  # 默认使用 Elasticsearch
-# export DOC_ENGINE=infinity     # 使用 Infinity 向量数据库
+#### Python 源码启动
+```bash
+# 安装依赖
+pip install uv
+uv sync --python 3.10 --all-extras
 
-# 存储实现
-export STORAGE_IMPL=MINIO  # 默认使用 MinIO
-# export STORAGE_IMPL=AWS_S3  # 使用 AWS S3
+# 启动基础服务
+docker compose -f docker/docker-compose-base.yml up -d
+
+# 启动 RAGForge 服务器
+./start.sh
 ```
 
 ### 🔍 故障排除
@@ -216,309 +198,46 @@ export STORAGE_IMPL=MINIO  # 默认使用 MinIO
 - 检查 Docker 服务状态：`docker-compose ps`
 - 检查端口映射和防火墙
 
-**Python 环境问题**：
-- 设置 PYTHONPATH：`export PYTHONPATH=/path/to/ragforge`
-- 安装依赖：`uv sync --python 3.10 --all-extras`
+## 📚 模块说明
 
-## 📄 PDF 解析程序使用指南
+### 🔧 **核心模块**
+- **RAG**: 检索增强生成核心模块，提供智能检索和答案生成功能
+- **API**: RESTful API 服务，提供完整的接口支持
+- **Web**: 前端控制台，提供直观的 Web 管理界面
 
-RAGForge 集成了强大的 PDF 解析功能，支持多种解析方式，包括 MinerU、DeepDOC 等。本指南将详细介绍如何使用 PDF 解析程序。
+### 📄 **文档处理模块**
+- **MinerU**: 基于深度学习的智能文档解析器，支持 PDF、Word、PPT、Excel
+- **DeepDOC**: 传统文档解析模块，提供基础文本提取和布局识别
+- **GraphRAG**: 图数据库增强的 RAG 功能
 
-### 🎯 支持的解析方式
+### 🤖 **智能模块**
+- **Agent**: 智能代理模块，支持复杂任务编排
+- **Agentic Reasoning**: 智能推理模块，提供深度研究能力
 
-#### 1. **MinerU 解析器**（推荐）
-- **功能**: 基于深度学习的智能文档解析
-- **支持格式**: PDF、Word、PPT、Excel
-- **特点**: 
-  - 自动布局识别
-  - 表格结构识别
-  - 公式识别
-  - 图片内容提取
-  - 多语言支持
+### 🛠️ **工具模块**
+- **RAGForge Shell**: 命令行工具，提供完整的 CLI 操作界面
+- **Driver**: 模型驱动模块，管理各种 AI 模型
 
-#### 2. **DeepDOC 解析器**
-- **功能**: 传统文档解析方式
-- **支持格式**: PDF
-- **特点**: 
-  - 基础文本提取
-  - 布局识别
-  - 表格检测
-
-#### 3. **Plain Text 解析器**
-- **功能**: 纯文本提取
-- **支持格式**: PDF
-- **特点**: 简单快速，适合纯文本文档
-
-### 🚀 快速开始
-
-#### 方式一：通过 Web 控制台使用
-
-1. **启动服务**
-   ```bash
-   cd docker
-   ./start.sh  # 选择开发环境或生产环境
-   ```
-
-2. **访问 Web 控制台**
-   - 开发环境：http://localhost:3000
-   - 生产环境：http://localhost
-
-3. **上传文档**
-   - 登录系统
-   - 创建或选择知识库
-   - 上传 PDF 文档
-
-4. **选择解析方式**
-   - 在文档上传页面选择解析方式：
-     - **MinerU**: 智能解析（推荐）
-     - **DeepDOC**: 传统解析
-     - **Plain Text**: 纯文本提取
-
-5. **查看解析结果**
-   - 解析完成后可在文档详情页查看结果
-   - 支持查看布局分析、表格识别等结果
-
-#### 方式二：通过 API 使用
-
-1. **上传文档**
-   ```bash
-   curl -X POST "http://localhost:9380/api/v1/datasets/{dataset_id}/documents" \
-     -H "Authorization: Bearer {your_token}" \
-     -F "file=@your_document.pdf"
-   ```
-
-2. **启动解析**
-   ```bash
-   curl -X POST "http://localhost:9380/api/v1/datasets/{dataset_id}/documents/{document_id}/parse" \
-     -H "Authorization: Bearer {your_token}" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "parser_config": {
-         "layout_recognize": "MinerU"
-       }
-     }'
-   ```
-
-3. **查询解析结果**
-   ```bash
-   curl -X GET "http://localhost:9380/api/v1/datasets/{dataset_id}/documents/{document_id}" \
-     -H "Authorization: Bearer {your_token}"
-   ```
-
-#### 方式三：通过命令行工具使用
-
-1. **安装 RAGForge Shell**
-   ```bash
-   cd ragforge-shell
-   uv pip install -r requirements.txt
-   ```
-
-2. **配置认证**
-   ```bash
-   # 编辑 config.yaml 文件
-   api:
-     api_token: your-api-token
-     auth_token: your-auth-token
-     base_url: http://localhost:9380
-   ```
-
-3. **上传并解析文档**
-   ```bash
-   # 上传文档
-   uv run python main.py documents upload {dataset_id} --file your_document.pdf
-   
-   # 启动解析
-   uv run python main.py documents parse {dataset_id} {document_id}
-   
-   # 查看解析结果
-   uv run python main.py documents get {dataset_id} {document_id}
-   ```
-
-### ⚙️ 配置说明
-
-#### 模型路径配置
-
-PDF 解析程序需要下载相应的模型文件。模型文件默认存储在 `driver/models` 目录下：
-
-```json
-// conf/magic-pdf.json
-{
-  "models-dir": "driver/models/opendatalab/PDF-Extract-Kit-1___0/models",
-  "layoutreader-model-dir": "driver/models/ppaanngggg/layoutreader",
-  "device-mode": "cpu"
-}
-```
-
-#### 解析配置选项
-
-```json
-{
-  "parser_config": {
-    "layout_recognize": "MinerU",  // 解析方式：MinerU, DeepDOC, Plain Text
-    "extractor": {
-      "keyvalues": []  // 自定义提取字段
-    }
-  }
-}
-```
-
-### 🔧 高级配置
-
-#### 1. 自定义模型路径
-
-如果需要使用自定义模型，可以修改 `conf/magic-pdf.json` 文件：
-
-```json
-{
-  "models-dir": "/path/to/your/models",
-  "layoutreader-model-dir": "/path/to/your/layoutreader/models"
-}
-```
-
-#### 2. 设备配置
-
-```json
-{
-  "device-mode": "cpu",  // 或 "cuda" 用于 GPU 加速
-  "layout-config": {
-    "model": "doclayout_yolo"
-  },
-  "formula-config": {
-    "enable": true
-  },
-  "table-config": {
-    "enable": true,
-    "max_time": 400
-  }
-}
-```
-
-#### 3. 解析参数调整
-
-```python
-# 在代码中调整解析参数
-parser_config = {
-    "layout_recognize": "MinerU",
-    "from_page": 0,        # 起始页码
-    "to_page": 100,        # 结束页码
-    "zoomin": 3,           # 缩放因子
-    "callback": progress_callback  # 进度回调函数
-}
-```
-
-### 📊 解析结果说明
-
-#### MinerU 解析结果包含：
-
-1. **文本内容**: 提取的文本内容，包含位置信息
-2. **布局分析**: 文档布局结构分析结果
-3. **表格识别**: 表格结构识别和内容提取
-4. **图片内容**: 图片中的文本和内容描述
-5. **公式识别**: 数学公式识别和 LaTeX 转换
-6. **Markdown 输出**: 结构化的 Markdown 格式输出
-
-#### 结果文件：
-
-- `{document_name}.md`: Markdown 格式的解析结果
-- `{document_name}_layout.pdf`: 布局分析可视化结果
-- `{document_name}_content_list.json`: 结构化内容列表
-- `images/`: 提取的图片和表格图片
-
-### 🛠️ 故障排除
-
-#### 常见问题：
-
-1. **模型文件下载失败**
-   ```bash
-   # 手动下载模型文件
-   cd driver
-   python download_models.py
-   ```
-
-2. **内存不足**
-   ```bash
-   # 调整设备配置为 CPU 模式
-   # 修改 conf/magic-pdf.json 中的 "device-mode": "cpu"
-   ```
-
-3. **解析速度慢**
-   ```bash
-   # 使用 GPU 加速（如果可用）
-   # 修改 conf/magic-pdf.json 中的 "device-mode": "cuda"
-   ```
-
-4. **特定格式解析失败**
-   ```bash
-   # 尝试不同的解析方式
-   # MinerU -> DeepDOC -> Plain Text
-   ```
-
-#### 日志查看：
-
-```bash
-# 查看解析日志
-docker-compose logs -f ragforge
-
-# 查看详细错误信息
-docker-compose logs ragforge | grep -i error
-```
-
-### 📝 示例代码
-
-#### Python 代码示例：
-
-```python
-from minerU.parser import MinerUPdf
-
-# 创建解析器实例
-pdf_parser = MinerUPdf()
-
-# 解析 PDF 文件
-def progress_callback(**kwargs):
-    print(f"进度: {kwargs.get('prog', 0)}, 消息: {kwargs.get('msg', '')}")
-
-result = pdf_parser.call_function(
-    bucketname='your_bucket',
-    filename='document.pdf',
-    kb_id='your_kb_id',
-    doc_id='your_doc_id',
-    tenant_id='your_tenant_id',
-    parser_config={'layout_recognize': 'MinerU'},
-    pdf_flag=True,
-    callback=progress_callback
-)
-```
-
-#### 测试示例：
-
-```bash
-# 运行测试
-cd tests
-python test_minerU.py
-```
+### 📖 **详细文档**
+- [RAG 模块使用指南](rag/README.md) - 检索增强生成功能详解
+- [PDF 解析使用指南](deepdoc/README.md) - 文档解析功能说明
+- [API 文档](api/README.md) - 接口使用说明
+- [命令行工具](ragforge-shell/README.md) - CLI 工具使用指南
 
 ---
 
 ## 🔧 源码编译
-```bash
-# 在项目根目录执行
-docker build -f Dockerfile -t ragforge:latest .
-```
 
-### 构建 Web 控制台镜像
 ```bash
-# 在 web 目录执行
+# 构建 RAGForge 镜像
+docker build -f Dockerfile -t ragforge:latest .
+
+# 构建 Web 控制台镜像
 cd web
 docker build -f Dockerfile -t ragforge-web:latest .
 ```
 
-### 多架构支持
-项目支持 x86_64 和 ARM64 架构。在 ARM64 平台（如 Apple Silicon Mac）上构建时，Docker 会自动使用适合的架构。
-
-### 构建优化
-- 使用 `--no-cache` 参数强制重新构建：`docker build --no-cache -f Dockerfile -t ragforge:latest .`
-- 使用多阶段构建减少镜像大小（可选）
-- 构建时间约 10-15 分钟，取决于网络和硬件性能
+**多架构支持**: 项目支持 x86_64 和 ARM64 架构，Docker 会自动选择适合的架构。
 
 
 ## 🤝 商务合作
