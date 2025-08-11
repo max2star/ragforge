@@ -11,7 +11,7 @@
             "endpoint"
         ]
     },
-    "models-dir": "driver/models/opendatalab/PDF-Extract-Kit-1.0/models",
+    "models-dir": "driver/models/opendatalab/PDF-Extract-Kit-1___0/models",
     "layoutreader-model-dir": "driver/models/ppaanngggg/layoutreader",
     "device-mode": "cpu",
     "layout-config": {

@@ -32,15 +32,6 @@ def download_and_modify_json(url, local_filename, modifications):
 
 
 if __name__ == '__main__':
-    # 获取脚本所在目录（driver目录）
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    print(f'脚本目录: {script_dir}')
-    
-    # 创建models目录
-    models_dir = os.path.join(script_dir, 'models')
-    os.makedirs(models_dir, exist_ok=True)
-    print(f'模型目录: {models_dir}')
-    
     mineru_patterns = [
         # "models/Layout/LayoutLMv3/*",
         "models/Layout/YOLO/*",
@@ -50,112 +41,34 @@ if __name__ == '__main__':
         # "models/TabRec/TableMaster/*",
         # "models/TabRec/StructEqTable/*",
     ]
-    
-    # 下载模型到driver/models目录
-    print('开始下载模型...')
-    model_dir = snapshot_download('opendatalab/PDF-Extract-Kit-1.0', 
-                                 allow_patterns=mineru_patterns,
-                                 cache_dir=models_dir)
-    layoutreader_model_dir = snapshot_download('ppaanngggg/layoutreader',
-                                             cache_dir=models_dir)
-    
-    # 获取实际的模型目录路径
-    actual_model_dir = os.path.join(model_dir, 'models')
-    print(f'模型下载目录: {actual_model_dir}')
-    print(f'LayoutReader模型目录: {layoutreader_model_dir}')
+    model_dir = snapshot_download('opendatalab/PDF-Extract-Kit-1.0', allow_patterns=mineru_patterns)
+    layoutreader_model_dir = snapshot_download('ppaanngggg/layoutreader')
+    model_dir = model_dir + '/models'
+    print(f'model_dir is: {model_dir}')
+    print(f'layoutreader_model_dir is: {layoutreader_model_dir}')
 
-    # 配置文件路径 - 创建在conf目录下
+    # paddleocr_model_dir = model_dir + '/OCR/paddleocr'
+    # user_paddleocr_dir = os.path.expanduser('~/.paddleocr')
+    # if os.path.exists(user_paddleocr_dir):
+    #     shutil.rmtree(user_paddleocr_dir)
+    # shutil.copytree(paddleocr_model_dir, user_paddleocr_dir)
+
+    #json_url = 'https://gcore.jsdelivr.net/gh/opendatalab/MinerU@master/magic-pdf.json'
     config_file_name = 'magic-pdf.json'
-    conf_dir = os.path.join(os.path.dirname(script_dir), 'conf')
-    config_file = os.path.join(conf_dir, config_file_name)
-    print(f'配置文件路径: {config_file}')
+    home_dir = os.path.expanduser('~')
+    config_file = os.path.join(home_dir, config_file_name)
 
-    # 使用相对路径 - 从项目根目录的角度
-    relative_model_dir = 'driver/models'
-    relative_layoutreader_dir = 'driver/models'
-
+    # 获取项目根目录
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # 计算相对路径
+    models_rel_path = os.path.relpath(model_dir, project_root)
+    layoutreader_rel_path = os.path.relpath(layoutreader_model_dir, project_root)
+    
     json_mods = {
-        'models-dir': relative_model_dir,
-        'layoutreader-model-dir': relative_layoutreader_dir,
+        'models-dir': models_rel_path,
+        'layoutreader-model-dir': layoutreader_rel_path,
     }
 
-    # 如果配置文件不存在，创建默认配置
-    if not os.path.exists(config_file):
-        default_config = {
-            "bucket_info": {
-                "bucket-name-1": [
-                    "ak",
-                    "sk", 
-                    "endpoint"
-                ],
-                "bucket-name-2": [
-                    "ak",
-                    "sk",
-                    "endpoint"
-                ]
-            },
-            "models-dir": relative_model_dir,
-            "layoutreader-model-dir": relative_layoutreader_dir,
-            "device-mode": "cpu",
-            "layout-config": {
-                "model": "doclayout_yolo"
-            },
-            "formula-config": {
-                "mfd_model": "yolo_v8_mfd",
-                "mfr_model": "unimernet_small",
-                "enable": True
-            },
-            "table-config": {
-                "model": "rapid_table",
-                "sub_model": "slanet_plus",
-                "enable": True,
-                "max_time": 400
-            },
-            "latex-delimiter-config": {
-                "display": {
-                    "left": "$$",
-                    "right": "$$"
-                },
-                "inline": {
-                    "left": "$",
-                    "right": "$"
-                }
-            },
-            "llm-aided-config": {
-                "formula_aided": {
-                    "api_key": "your_api_key",
-                    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-                    "model": "qwen2.5-7b-instruct",
-                    "enable": False
-                },
-                "text_aided": {
-                    "api_key": "your_api_key",
-                    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-                    "model": "qwen2.5-7b-instruct",
-                    "enable": False
-                },
-                "title_aided": {
-                    "api_key": "your_api_key",
-                    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
-                    "model": "qwen2.5-32b-instruct",
-                    "enable": False
-                }
-            },
-            "config_version": "1.2.1"
-        }
-        
-        # 应用修改
-        for key, value in json_mods.items():
-            default_config[key] = value
-            
-        # 保存配置文件
-        with open(config_file, 'w', encoding='utf-8') as f:
-            json.dump(default_config, f, ensure_ascii=False, indent=4)
-    else:
-        # 如果配置文件存在，更新路径
-        download_and_modify_json(None, config_file, json_mods)
-
-    print(f'✅ 模型下载完成！')
-    print(f'✅ 配置文件已更新: {config_file}')
-    print(f'✅ 模型目录: {actual_model_dir}')
-    print(f'✅ 使用相对路径配置，便于项目迁移')
+    #download_and_modify_json(json_url, config_file, json_mods)
+    print(f'The configuration file has been configured successfully, the path is: {config_file}')
