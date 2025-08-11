@@ -1,6 +1,6 @@
 # RAG 模块使用指南
 
-RAG（Retrieval-Augmented Generation）是 RAGForge 的核心模块，提供强大的检索增强生成功能。本指南将详细介绍如何使用 RAG 模块。
+RAG（Retrieval-Augmented Generation）是 RAGForge 的核心模块，提供强大的检索增强生成功能。本指南将重点介绍文档解析任务执行器的使用方法。
 
 ## 🎯 核心功能
 
@@ -75,91 +75,111 @@ infinity:
   db_name: 'default_db'
 ```
 
-### 4. 启动 RAG 服务
+### 4. 启动文档解析服务
 
 ```bash
-# 启动 RAG 服务器
-python api/ragforge_server.py
+# 启动文档解析任务执行器（核心服务）
+python rag/svr/task_executor.py
 ```
 
 ## 📚 使用指南
 
-### 1. 创建知识库
+### 使用 RAGForge Shell 命令行工具
 
-```python
-from api.db.services.dataset_service import DatasetService
+RAGForge 提供了便捷的命令行工具 `ragforge-shell`，可以轻松完成所有 RAG 操作：
+
+#### 1. 安装和配置
+
+```bash
+# 进入 ragforge-shell 目录
+cd ragforge-shell
+
+# 安装依赖
+uv pip install -r requirements.txt
+
+# 配置认证信息
+# 编辑 config.yaml 文件
+api:
+  api_token: your-api-token
+  auth_token: your-auth-token
+  base_url: http://localhost:9380
+```
+
+#### 2. 基本操作流程
+
+```bash
+# 检查系统状态
+uv run python main.py system status
+
+# 查看数据集列表
+uv run python main.py datasets list
 
 # 创建数据集
-dataset_service = DatasetService()
-dataset = dataset_service.create_dataset(
-    name="我的知识库",
-    description="用于测试的知识库"
-)
-```
-
-### 2. 上传文档
-
-```python
-from api.db.services.file2document_service import File2DocumentService
+uv run python main.py datasets create "我的知识库" --description "用于测试的知识库"
 
 # 上传文档
-file_service = File2DocumentService()
-doc_id = file_service.upload_file(
-    dataset_id=dataset.id,
-    file_path="document.pdf",
-    file_name="document.pdf"
-)
+uv run python main.py documents upload <dataset_id> --file document.pdf
+
+# 启动文档解析
+uv run python main.py documents parse <dataset_id> <document_id>
+
+# 检索文档内容
+uv run python main.py retrieval search "查询内容" <dataset_id>
 ```
 
-### 3. 文档解析
+#### 3. 完整工作流示例
 
-```python
-from rag.app.paper import chunk
+```bash
+# 1. 系统检查
+uv run python main.py system status
 
-# 解析文档
-def progress_callback(**kwargs):
-    print(f"进度: {kwargs.get('prog', 0)}, 消息: {kwargs.get('msg', '')}")
+# 2. 创建知识库
+dataset_id=$(uv run python main.py datasets create "技术文档库" --description "技术文档集合" --output-format json | jq -r '.id')
 
-chunk(
-    filename="document.pdf",
-    from_page=0,
-    to_page=100,
-    callback=progress_callback,
-    parser_config={
-        "layout_recognize": "MinerU"
-    }
-)
+# 3. 上传文档
+uv run python main.py documents upload $dataset_id --file tech_doc.pdf
+
+# 4. 查看文档列表
+uv run python main.py documents list $dataset_id
+
+# 5. 启动解析（使用 MinerU 解析器）
+uv run python main.py documents parse $dataset_id <document_id> --parser-config '{"layout_recognize": "MinerU"}'
+
+# 6. 检索问答
+uv run python main.py retrieval search "如何配置数据库连接？" $dataset_id
 ```
 
-### 4. 检索和问答
+### 核心服务：task_executor.py
 
-```python
-from rag.nlp import search
-from rag.llm import ChatModel
+`rag/svr/task_executor.py` 是文档解析的核心服务，负责：
 
-# 检索相关文档
-query = "什么是机器学习？"
-search_results = search.search(
-    query=query,
-    dataset_id=dataset.id,
-    top_k=5
-)
+- **文档解析任务处理**: 接收并处理文档解析请求
+- **多解析器支持**: 支持 MinerU、DeepDOC、Plain Text 等解析方式
+- **进度回调**: 实时反馈解析进度
+- **错误处理**: 完善的错误处理和日志记录
 
-# 生成答案
-chat_model = ChatModel["OpenAI"](
-    key="your-api-key",
-    model_name="gpt-3.5-turbo"
-)
+#### 启动解析服务
 
-answer = chat_model.chat(
-    query=query,
-    context=search_results
-)
+```bash
+# 启动文档解析任务执行器
+python rag/svr/task_executor.py
+
+# 或者使用后台运行
+nohup python rag/svr/task_executor.py > task_executor.log 2>&1 &
 ```
+
+#### 服务配置
+
+解析服务会自动读取以下配置：
+- `conf/service_conf.yaml`: 服务配置
+- `conf/magic-pdf.json`: PDF 解析配置
+- 环境变量: 数据库连接、模型路径等
 
 ## ⚙️ 配置说明
 
-### 1. LLM 配置
+### 核心配置文件
+
+#### 1. 服务配置
 
 ```yaml
 # conf/service_conf.yaml
@@ -171,253 +191,165 @@ user_default_llm:
     chat_model: 'gpt-3.5-turbo'
     embedding_model: 'text-embedding-ada-002'
     rerank_model: 'text-embedding-ada-002'
+
+es:
+  hosts: 'http://localhost:9200'
+  username: 'elastic'
+  password: ''
+
+redis:
+  host: 'localhost'
+  port: 6379
+  password: 'your-password'
 ```
 
-### 2. 向量模型配置
+#### 2. PDF 解析配置
 
-```python
-# 支持的 Embedding 模型
-EMBEDDING_MODELS = {
-    "BAAI/bge-large-zh-v1.5": "中文向量模型",
-    "text-embedding-ada-002": "OpenAI 向量模型",
-    "sentence-transformers/all-MiniLM-L6-v2": "轻量级向量模型"
-}
-```
-
-### 3. 检索配置
-
-```python
-# 检索参数配置
-search_config = {
-    "top_k": 5,           # 检索数量
-    "threshold": 0.7,      # 相似度阈值
-    "rerank": True,        # 是否启用重排序
-    "fusion": True         # 是否启用多路融合
+```json
+// conf/magic-pdf.json
+{
+  "models-dir": "driver/models/opendatalab/PDF-Extract-Kit-1___0/models",
+  "layoutreader-model-dir": "driver/models/ppaanngggg/layoutreader",
+  "device-mode": "cpu",
+  "layout-config": {
+    "model": "doclayout_yolo"
+  },
+  "formula-config": {
+    "enable": true
+  },
+  "table-config": {
+    "enable": true,
+    "max_time": 400
+  }
 }
 ```
 
 ## 🔧 高级功能
 
-### 1. 自定义分块策略
+### 解析器选择
 
-```python
-from rag.nlp import rag_tokenizer
+RAGForge 支持多种文档解析器，可通过命令行参数选择：
 
-# 自定义分块参数
-chunk_config = {
-    "chunk_size": 1000,        # 分块大小
-    "chunk_overlap": 200,      # 重叠大小
-    "separators": ["\n\n", "\n", "。", "！", "？"],  # 分隔符
-    "min_chunk_size": 100      # 最小分块大小
-}
+```bash
+# 使用 MinerU 解析器（推荐）
+uv run python main.py documents parse <dataset_id> <document_id> --parser-config '{"layout_recognize": "MinerU"}'
+
+# 使用 DeepDOC 解析器
+uv run python main.py documents parse <dataset_id> <document_id> --parser-config '{"layout_recognize": "DeepDOC"}'
+
+# 使用 Plain Text 解析器
+uv run python main.py documents parse <dataset_id> <document_id> --parser-config '{"layout_recognize": "Plain Text"}'
 ```
 
-### 2. 多路检索
+### 批量处理
 
-```python
-# 启用多路检索
-search_results = search.multi_search(
-    query=query,
-    dataset_id=dataset.id,
-    methods=["semantic", "keyword", "hybrid"],
-    weights=[0.6, 0.2, 0.2]
-)
-```
+```bash
+# 批量上传文档
+for file in *.pdf; do
+    uv run python main.py documents upload $dataset_id --file "$file"
+done
 
-### 3. 重排序
-
-```python
-from rag.llm import RerankModel
-
-# 使用重排序模型
-rerank_model = RerankModel["BAAI"](
-    key="your-key",
-    model_name="BAAI/bge-reranker-v2-m3"
-)
-
-reranked_results = rerank_model.rerank(
-    query=query,
-    documents=search_results
-)
-```
-
-## 📊 性能优化
-
-### 1. 向量数据库优化
-
-```yaml
-# Elasticsearch 优化配置
-es:
-  hosts: 'http://localhost:9200'
-  username: 'elastic'
-  password: ''
-  # 性能优化参数
-  max_connections: 100
-  timeout: 30
-  retry_on_timeout: true
-```
-
-### 2. 缓存配置
-
-```python
-# Redis 缓存配置
-redis_config = {
-    "host": "localhost",
-    "port": 6379,
-    "db": 1,
-    "password": "your-password"
-}
-```
-
-### 3. 批处理优化
-
-```python
-# 批量处理配置
-batch_config = {
-    "batch_size": 32,      # 批处理大小
-    "max_workers": 4,      # 最大工作线程
-    "timeout": 300         # 超时时间
-}
+# 批量解析文档
+uv run python main.py documents list $dataset_id | grep "pending" | awk '{print $1}' | xargs -I {} uv run python main.py documents parse $dataset_id {}
 ```
 
 ## 🛠️ 故障排除
 
 ### 常见问题
 
-1. **模型下载失败**
+1. **task_executor.py 启动失败**
    ```bash
-   # 检查网络连接
-   ping huggingface.co
+   # 检查依赖是否安装
+   pip install -r requirements.txt
    
-   # 使用镜像源
-   export HF_ENDPOINT=https://hf-mirror.com
+   # 检查配置文件
+   ls -la conf/service_conf.yaml
+   ls -la conf/magic-pdf.json
+   
+   # 检查模型文件
+   ls -la driver/models/
    ```
 
-2. **内存不足**
+2. **文档解析失败**
    ```bash
-   # 调整模型配置
-   # 使用更小的模型或启用模型量化
+   # 查看解析日志
+   tail -f logs/task_executor.log
+   
+   # 检查模型路径配置
+   cat conf/magic-pdf.json | grep models-dir
    ```
 
-3. **检索速度慢**
+3. **ragforge-shell 连接失败**
    ```bash
-   # 优化向量数据库配置
-   # 启用缓存机制
-   # 调整批处理参数
+   # 检查 API 服务状态
+   curl http://localhost:9380/api/v1/system/status
+   
+   # 检查认证配置
+   cat ragforge-shell/config.yaml
    ```
 
 ### 日志查看
 
 ```bash
-# 查看 RAG 服务日志
+# 查看任务执行器日志
+tail -f logs/task_executor.log
+
+# 查看 API 服务日志
 tail -f logs/ragforge.log
 
 # 查看错误日志
-grep -i error logs/ragforge.log
+grep -i error logs/*.log
 ```
 
-## 📝 示例代码
+## 📝 使用示例
 
-### 完整的 RAG 工作流
+### 完整工作流脚本
 
-```python
-import os
-from api.db.services.dataset_service import DatasetService
-from api.db.services.file2document_service import File2DocumentService
-from rag.app.paper import chunk
-from rag.nlp import search
-from rag.llm import ChatModel
+创建一个 `workflow.sh` 脚本：
 
-# 1. 创建知识库
-dataset_service = DatasetService()
-dataset = dataset_service.create_dataset(
-    name="技术文档库",
-    description="包含各种技术文档的知识库"
-)
+```bash
+#!/bin/bash
 
-# 2. 上传文档
-file_service = File2DocumentService()
-doc_id = file_service.upload_file(
-    dataset_id=dataset.id,
-    file_path="tech_doc.pdf",
-    file_name="tech_doc.pdf"
-)
+# 配置变量
+API_BASE="http://localhost:9380"
+DATASET_NAME="技术文档库"
 
-# 3. 解析文档
-def progress_callback(**kwargs):
-    print(f"解析进度: {kwargs.get('prog', 0):.2%} - {kwargs.get('msg', '')}")
+echo "=== RAGForge 完整工作流 ==="
 
-chunk(
-    filename="tech_doc.pdf",
-    from_page=0,
-    to_page=100,
-    callback=progress_callback,
-    parser_config={"layout_recognize": "MinerU"}
-)
+# 1. 检查系统状态
+echo "1. 检查系统状态..."
+uv run python main.py system status
 
-# 4. 检索和问答
-query = "如何配置数据库连接？"
+# 2. 创建数据集
+echo "2. 创建数据集..."
+dataset_id=$(uv run python main.py datasets create "$DATASET_NAME" --output-format json | jq -r '.id')
+echo "数据集ID: $dataset_id"
 
-# 检索相关文档
-search_results = search.search(
-    query=query,
-    dataset_id=dataset.id,
-    top_k=5
-)
+# 3. 上传文档
+echo "3. 上传文档..."
+for file in *.pdf; do
+    echo "上传: $file"
+    uv run python main.py documents upload $dataset_id --file "$file"
+done
 
-# 生成答案
-chat_model = ChatModel["OpenAI"](
-    key=os.getenv("OPENAI_API_KEY"),
-    model_name="gpt-3.5-turbo"
-)
+# 4. 启动解析
+echo "4. 启动文档解析..."
+uv run python main.py documents list $dataset_id | grep "pending" | awk '{print $1}' | while read doc_id; do
+    echo "解析文档: $doc_id"
+    uv run python main.py documents parse $dataset_id $doc_id --parser-config '{"layout_recognize": "MinerU"}'
+done
 
-answer = chat_model.chat(
-    query=query,
-    context=search_results
-)
+# 5. 检索测试
+echo "5. 检索测试..."
+uv run python main.py retrieval search "什么是机器学习？" $dataset_id
 
-print(f"问题: {query}")
-print(f"答案: {answer}")
+echo "=== 工作流完成 ==="
 ```
 
-### 批量处理示例
-
-```python
-from concurrent.futures import ThreadPoolExecutor
-import time
-
-def process_document(doc_path, dataset_id):
-    """处理单个文档"""
-    try:
-        # 上传文档
-        doc_id = file_service.upload_file(
-            dataset_id=dataset_id,
-            file_path=doc_path,
-            file_name=os.path.basename(doc_path)
-        )
-        
-        # 解析文档
-        chunk(
-            filename=doc_path,
-            callback=lambda **kwargs: None
-        )
-        
-        return f"成功处理: {doc_path}"
-    except Exception as e:
-        return f"处理失败: {doc_path} - {str(e)}"
-
-# 批量处理文档
-documents = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-dataset_id = "your_dataset_id"
-
-with ThreadPoolExecutor(max_workers=3) as executor:
-    results = list(executor.map(
-        lambda doc: process_document(doc, dataset_id),
-        documents
-    ))
-
-for result in results:
-    print(result)
+使用方法：
+```bash
+chmod +x workflow.sh
+./workflow.sh
 ```
 
 ## 🔗 相关链接
