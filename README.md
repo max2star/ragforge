@@ -220,9 +220,286 @@ export STORAGE_IMPL=MINIO  # 默认使用 MinIO
 - 设置 PYTHONPATH：`export PYTHONPATH=/path/to/ragforge`
 - 安装依赖：`uv sync --python 3.10 --all-extras`
 
-## 🔧 源码编译
+## 📄 PDF 解析程序使用指南
 
-### 构建 RAGForge 镜像
+RAGForge 集成了强大的 PDF 解析功能，支持多种解析方式，包括 MinerU、DeepDOC 等。本指南将详细介绍如何使用 PDF 解析程序。
+
+### 🎯 支持的解析方式
+
+#### 1. **MinerU 解析器**（推荐）
+- **功能**: 基于深度学习的智能文档解析
+- **支持格式**: PDF、Word、PPT、Excel
+- **特点**: 
+  - 自动布局识别
+  - 表格结构识别
+  - 公式识别
+  - 图片内容提取
+  - 多语言支持
+
+#### 2. **DeepDOC 解析器**
+- **功能**: 传统文档解析方式
+- **支持格式**: PDF
+- **特点**: 
+  - 基础文本提取
+  - 布局识别
+  - 表格检测
+
+#### 3. **Plain Text 解析器**
+- **功能**: 纯文本提取
+- **支持格式**: PDF
+- **特点**: 简单快速，适合纯文本文档
+
+### 🚀 快速开始
+
+#### 方式一：通过 Web 控制台使用
+
+1. **启动服务**
+   ```bash
+   cd docker
+   ./start.sh  # 选择开发环境或生产环境
+   ```
+
+2. **访问 Web 控制台**
+   - 开发环境：http://localhost:3000
+   - 生产环境：http://localhost
+
+3. **上传文档**
+   - 登录系统
+   - 创建或选择知识库
+   - 上传 PDF 文档
+
+4. **选择解析方式**
+   - 在文档上传页面选择解析方式：
+     - **MinerU**: 智能解析（推荐）
+     - **DeepDOC**: 传统解析
+     - **Plain Text**: 纯文本提取
+
+5. **查看解析结果**
+   - 解析完成后可在文档详情页查看结果
+   - 支持查看布局分析、表格识别等结果
+
+#### 方式二：通过 API 使用
+
+1. **上传文档**
+   ```bash
+   curl -X POST "http://localhost:9380/api/v1/datasets/{dataset_id}/documents" \
+     -H "Authorization: Bearer {your_token}" \
+     -F "file=@your_document.pdf"
+   ```
+
+2. **启动解析**
+   ```bash
+   curl -X POST "http://localhost:9380/api/v1/datasets/{dataset_id}/documents/{document_id}/parse" \
+     -H "Authorization: Bearer {your_token}" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "parser_config": {
+         "layout_recognize": "MinerU"
+       }
+     }'
+   ```
+
+3. **查询解析结果**
+   ```bash
+   curl -X GET "http://localhost:9380/api/v1/datasets/{dataset_id}/documents/{document_id}" \
+     -H "Authorization: Bearer {your_token}"
+   ```
+
+#### 方式三：通过命令行工具使用
+
+1. **安装 RAGForge Shell**
+   ```bash
+   cd ragforge-shell
+   uv pip install -r requirements.txt
+   ```
+
+2. **配置认证**
+   ```bash
+   # 编辑 config.yaml 文件
+   api:
+     api_token: your-api-token
+     auth_token: your-auth-token
+     base_url: http://localhost:9380
+   ```
+
+3. **上传并解析文档**
+   ```bash
+   # 上传文档
+   uv run python main.py documents upload {dataset_id} --file your_document.pdf
+   
+   # 启动解析
+   uv run python main.py documents parse {dataset_id} {document_id}
+   
+   # 查看解析结果
+   uv run python main.py documents get {dataset_id} {document_id}
+   ```
+
+### ⚙️ 配置说明
+
+#### 模型路径配置
+
+PDF 解析程序需要下载相应的模型文件。模型文件默认存储在 `driver/models` 目录下：
+
+```json
+// conf/magic-pdf.json
+{
+  "models-dir": "driver/models/opendatalab/PDF-Extract-Kit-1___0/models",
+  "layoutreader-model-dir": "driver/models/ppaanngggg/layoutreader",
+  "device-mode": "cpu"
+}
+```
+
+#### 解析配置选项
+
+```json
+{
+  "parser_config": {
+    "layout_recognize": "MinerU",  // 解析方式：MinerU, DeepDOC, Plain Text
+    "extractor": {
+      "keyvalues": []  // 自定义提取字段
+    }
+  }
+}
+```
+
+### 🔧 高级配置
+
+#### 1. 自定义模型路径
+
+如果需要使用自定义模型，可以修改 `conf/magic-pdf.json` 文件：
+
+```json
+{
+  "models-dir": "/path/to/your/models",
+  "layoutreader-model-dir": "/path/to/your/layoutreader/models"
+}
+```
+
+#### 2. 设备配置
+
+```json
+{
+  "device-mode": "cpu",  // 或 "cuda" 用于 GPU 加速
+  "layout-config": {
+    "model": "doclayout_yolo"
+  },
+  "formula-config": {
+    "enable": true
+  },
+  "table-config": {
+    "enable": true,
+    "max_time": 400
+  }
+}
+```
+
+#### 3. 解析参数调整
+
+```python
+# 在代码中调整解析参数
+parser_config = {
+    "layout_recognize": "MinerU",
+    "from_page": 0,        # 起始页码
+    "to_page": 100,        # 结束页码
+    "zoomin": 3,           # 缩放因子
+    "callback": progress_callback  # 进度回调函数
+}
+```
+
+### 📊 解析结果说明
+
+#### MinerU 解析结果包含：
+
+1. **文本内容**: 提取的文本内容，包含位置信息
+2. **布局分析**: 文档布局结构分析结果
+3. **表格识别**: 表格结构识别和内容提取
+4. **图片内容**: 图片中的文本和内容描述
+5. **公式识别**: 数学公式识别和 LaTeX 转换
+6. **Markdown 输出**: 结构化的 Markdown 格式输出
+
+#### 结果文件：
+
+- `{document_name}.md`: Markdown 格式的解析结果
+- `{document_name}_layout.pdf`: 布局分析可视化结果
+- `{document_name}_content_list.json`: 结构化内容列表
+- `images/`: 提取的图片和表格图片
+
+### 🛠️ 故障排除
+
+#### 常见问题：
+
+1. **模型文件下载失败**
+   ```bash
+   # 手动下载模型文件
+   cd driver
+   python download_models.py
+   ```
+
+2. **内存不足**
+   ```bash
+   # 调整设备配置为 CPU 模式
+   # 修改 conf/magic-pdf.json 中的 "device-mode": "cpu"
+   ```
+
+3. **解析速度慢**
+   ```bash
+   # 使用 GPU 加速（如果可用）
+   # 修改 conf/magic-pdf.json 中的 "device-mode": "cuda"
+   ```
+
+4. **特定格式解析失败**
+   ```bash
+   # 尝试不同的解析方式
+   # MinerU -> DeepDOC -> Plain Text
+   ```
+
+#### 日志查看：
+
+```bash
+# 查看解析日志
+docker-compose logs -f ragforge
+
+# 查看详细错误信息
+docker-compose logs ragforge | grep -i error
+```
+
+### 📝 示例代码
+
+#### Python 代码示例：
+
+```python
+from minerU.parser import MinerUPdf
+
+# 创建解析器实例
+pdf_parser = MinerUPdf()
+
+# 解析 PDF 文件
+def progress_callback(**kwargs):
+    print(f"进度: {kwargs.get('prog', 0)}, 消息: {kwargs.get('msg', '')}")
+
+result = pdf_parser.call_function(
+    bucketname='your_bucket',
+    filename='document.pdf',
+    kb_id='your_kb_id',
+    doc_id='your_doc_id',
+    tenant_id='your_tenant_id',
+    parser_config={'layout_recognize': 'MinerU'},
+    pdf_flag=True,
+    callback=progress_callback
+)
+```
+
+#### 测试示例：
+
+```bash
+# 运行测试
+cd tests
+python test_minerU.py
+```
+
+---
+
+## 🔧 源码编译
 ```bash
 # 在项目根目录执行
 docker build -f Dockerfile -t ragforge:latest .
