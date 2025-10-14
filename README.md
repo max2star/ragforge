@@ -282,10 +282,11 @@ ragforge/
 - **Driver**: 模型驱动模块，管理各种 AI 模型
 
 ### 📖 **详细文档**
+- [产品官网](http://www.ragforge.cn) - RAGForge 官方网站
+- [在线文档](http://www.ragforge.cn/docs/) - 完整的产品文档
 - [RAG 模块使用指南](rag/README.md) - 检索增强生成功能详解
-- [PDF 解析使用指南](deepdoc/README.md) - 文档解析功能说明
 - [API 文档](api/README.md) - 接口使用说明
-- [命令行工具](ragforge-shell/README.md) - CLI 工具使用指南
+- [命令行工具](https://github.com/max2star/ragforge-shell/blob/main/README.md) - CLI 工具使用指南
 
 ---
 
