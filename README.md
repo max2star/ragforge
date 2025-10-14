@@ -12,6 +12,12 @@
 
 RAGForge 是基于 RAGFlow、MinerU等项目，进行功能增强的开源 RAG（Retrieval-Augmented Generation）引擎。在保持原有 RAGFlow 核心功能的基础上，新增了多项企业级功能增强，为开发人员提供更强大的 RAG 解决方案。
 
+### 📖 **详细文档**
+- [产品官网](http://www.ragforge.cn) - RAGForge 官方网站
+- [在线文档](http://www.ragforge.cn/docs/) - 完整的产品文档
+- [RAG 模块使用指南](rag/README.md) - 检索增强生成功能详解
+- [命令行工具](https://github.com/max2star/ragforge-shell/blob/main/README.md) - CLI 工具使用指南
+
 ## 🌟 核心功能
 
 ### 🔍 **深度文档理解**
@@ -280,12 +286,6 @@ ragforge/
 ### 🛠️ **工具模块**
 - **RAGForge Shell**: 命令行工具，提供完整的 CLI 操作界面
 - **Driver**: 模型驱动模块，管理各种 AI 模型
-
-### 📖 **详细文档**
-- [产品官网](http://www.ragforge.cn) - RAGForge 官方网站
-- [在线文档](http://www.ragforge.cn/docs/) - 完整的产品文档
-- [RAG 模块使用指南](rag/README.md) - 检索增强生成功能详解
-- [命令行工具](https://github.com/max2star/ragforge-shell/blob/main/README.md) - CLI 工具使用指南
 
 ---
 
